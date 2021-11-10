@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SettingsService {
 
-    public SettingResponse getGlobalSettings(){
+    public SettingResponse getGlobalSettings() {
 
         SettingResponse settingResponse = new SettingResponse();
         settingResponse.setMultiuserMode(true);

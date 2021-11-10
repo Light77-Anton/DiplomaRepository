@@ -10,9 +10,9 @@ public class TagToPost{
     @EmbeddedId
     private Key id;
 
-    @Column(name = "post_id")
+    @Column(name = "post_id",insertable = false, updatable = false)
     private int postId;
 
-    @Column(name = "tag_id")
+    @Column(name = "tag_id",insertable = false, updatable=false)
     private int tagId;
 }

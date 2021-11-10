@@ -1,15 +1,25 @@
 package main.api.response;
 import lombok.Data;
-import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
-import java.text.SimpleDateFormat;
+import org.springframework.stereotype.Component;
 
+@Component
 @Data
 public class PostResponse {
 
-    @Value("posts")
-    JSONArray posts;
+    @Value("${posts.count}")
+    private int count;
+    @Value("${posts.query}")
+    private String posts;
+    @Value("${posts.offset}")
+    private int offset;
+    @Value("${posts.limit}")
+    private int limit;
+    @Value("${posts.mode}")
+    private String mode;
     /*
+    @Value("${postsList}")
+    JSONArray posts;
     @Value("posts.count")
     int count;
     @Value("posts.post.id")

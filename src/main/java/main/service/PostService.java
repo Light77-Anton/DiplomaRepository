@@ -1,16 +1,16 @@
 package main.service;
 import main.api.response.PostResponse;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
 @Service
 public class PostService {
 
+    /*
     Integer offset;
     Integer limit;
     String mode;
 
-    List<String> modes = List.of("recent","popular","best","early"); // может заменить на Enum?
+    List<String> modes = List.of("recent","popular","best","early"); // может заменить на Enum
 
     public PostService(Integer offset,Integer limit,String mode){
         this.offset = offset;
@@ -26,9 +26,9 @@ public class PostService {
             mode = "recent";
         }
     }
+     */
 
-    public PostResponse getPostsList(){
-
+    public PostResponse getPostsList() {
         return new PostResponse();
     }
 }

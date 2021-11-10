@@ -5,21 +5,20 @@ spring:
     username: root
     password: 77Light78MySQL79
   server:
-      port: 8080
+    port: 3306
   jpa:
-    database: dfschema
-    show-sql: true
-    hibernate:
-      ddl-auto: update
-      dialect: org.hibernate.dialect.MySQL5Dialect
-      connection pool_size: 10
-  blog:
-    title: DevPub
-    subtitle: Рассказы разработчиков
-    phone: +7 903 666-44-55
-    email: mail@mail.ru
-    copyright: Дмитрий Сергеев
-    copyrightFrom: 2005
+    properties:
+      hibernate:
+        ddl-auto: update
+        dialect: org.hibernate.dialect.MySQL5Dialect
+        connection pool_size: 10
+blog:
+  title: DevPub
+  subtitle: Рассказы разработчиков
+  phone: +7 903 666-44-55
+  email: mail@mail.ru
+  copyright: Дмитрий Сергеев
+  copyrightFrom: 2005
   authorization:
     result: false
     user:
@@ -30,8 +29,25 @@ spring:
       moderation: false
       moderationCount: 0
       settings: false
-  posts:
-      count: 0
+posts:
+  count: 10
+  countWithTag: 10
+  query: Java
+  offset: 0
+  limit: 10
+  mode: recent
+postsList:
+  - firstPost:
+      key: value
+  - secondPost:
+      key: value
+
+
+
+
+
+
+
 
 
 

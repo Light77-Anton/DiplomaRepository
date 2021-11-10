@@ -18,7 +18,11 @@ public class ApiGeneralController {
     private final PostService postService;
     private final TagService tagService;
 
-    public ApiGeneralController(InitResponse initResponse, SettingsService settingsService, AuthCheckResponse authCheckResponse, PostResponse postResponse, PostService postService, TagService tagService){
+    public ApiGeneralController(InitResponse initResponse,
+                                SettingsService settingsService,
+                                AuthCheckResponse authCheckResponse,
+                                PostService postService,
+                                TagService tagService) {
         this.initResponse = initResponse;
         this.settingsService = settingsService;
         this.authCheckResponse = authCheckResponse;
@@ -27,27 +31,33 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/api/init")
-    private ResponseEntity<InitResponse> init(){
-        return new ResponseEntity<>(initResponse,HttpStatus.OK);
+    private ResponseEntity<InitResponse> init() {
+        return new ResponseEntity<>(initResponse, HttpStatus.OK);
     }
 
     @GetMapping("/api/settings")
-    private ResponseEntity<SettingResponse> settings(){
-        return new ResponseEntity<>(settingsService.getGlobalSettings(),HttpStatus.OK);
+    private ResponseEntity<SettingResponse> settings() {
+        return new ResponseEntity<>(settingsService.getGlobalSettings(),
+                HttpStatus.OK);
     }
 
     @GetMapping("/api/auth/check")
-    private ResponseEntity<AuthCheckResponse> authCheck(){
-        return new ResponseEntity<>(authCheckResponse,HttpStatus.OK);
+    private ResponseEntity<AuthCheckResponse> authCheck() {
+        return new ResponseEntity<>(authCheckResponse, HttpStatus.OK);
     }
 
     @GetMapping("/api/post")
-    private ResponseEntity<PostResponse> post(@RequestParam("offset") Integer offset,@RequestParam("limit") Integer limit,@RequestParam("mode") String mode){
-        return new ResponseEntity<>(postService.getPostsList(),HttpStatus.OK);
+    private ResponseEntity<PostResponse> post(
+            @RequestParam(value = "offset", required = false) Integer offset,
+            @RequestParam(value = "limit", required = false) Integer limit,
+            @RequestParam(value = "mode", required = false) String mode) {
+
+        return new ResponseEntity<>(postService.getPostsList(), HttpStatus.OK);
     }
 
     @GetMapping("/api/tag")
-    private ResponseEntity<TagResponse> tag(@RequestParam("query") String query){
+    private ResponseEntity<TagResponse> tag(
+            @RequestParam(value = "query", required = false) String query) {
 
         return new ResponseEntity<>(tagService.getTagList(), HttpStatus.OK);
     }
