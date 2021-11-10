@@ -17,13 +17,13 @@ public class Post {
     private boolean isActive;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "moderation_status",columnDefinition = "enum")
+    @Column(name = "moderation_status", columnDefinition = "enum")
     private ModerationStatus moderationStatus;
 
     @Column(name = "moderator_id")
     private int moderatorId;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", insertable = false, updatable = false)
     private int userId;
 
     @Temporal(TemporalType.TIMESTAMP)

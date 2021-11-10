@@ -12,10 +12,10 @@ public class Vote {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
-    @Column(name = "user_id")
+    @Column(name = "user_id", insertable = false, updatable = false)
     private int userId;
 
-    @Column(name = "post_id")
+    @Column(name = "post_id", insertable = false, updatable = false)
     private int postId;
 
     @Temporal(TemporalType.TIMESTAMP)

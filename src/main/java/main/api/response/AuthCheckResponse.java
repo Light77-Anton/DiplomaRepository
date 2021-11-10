@@ -7,20 +7,20 @@ import org.springframework.stereotype.Component;
 @Data
 public class AuthCheckResponse {
 
-    @Value("${authorization.result}")
-    boolean result;
-    @Value("${authorization.user.id}")
-    int id;
-    @Value("${authorization.user.name}")
-    String name;
-    @Value("${authorization.user.photo}")
-    String photo;
-    @Value("${authorization.user.email}")
-    String email;
-    @Value("${authorization.user.moderation}")
-    boolean moderation;
-    @Value("${user.moderationCount}")
-    int moderationCount;
-    @Value("${authorization.user.settings}")
-    boolean settings;
+    @Value("${blog.authorization.result}")
+    private boolean result;
+    @Value("${blog.authorization.user.id}")
+    private int id;
+    @Value("${blog.authorization.user.name}")
+    private String name;
+    @Value("${blog.authorization.user.photo}")
+    private String photo;
+    @Value("${blog.authorization.user.email}")
+    private String email;
+    @Value("${blog.authorization.user.moderation}")
+    private boolean moderation;
+    @Value("${blog.authorization.user.moderationCount}")
+    private int moderationCount;
+    @Value("${blog.authorization.user.settings}")
+    private boolean settings;
 }

@@ -8,15 +8,15 @@ import org.springframework.stereotype.Component;
 public class InitResponse {
 
     @Value("${blog.title}")
-    String title;
+    private String title;
     @Value("${blog.subtitle}")
-    String subtitle;
+    private String subtitle;
     @Value("${blog.phone}")
-    String phone;
+    private String phone;
     @Value("${blog.email}")
-    String email;
+    private String email;
     @Value("${blog.copyright}")
-    String copyright;
+    private String copyright;
     @Value("${blog.copyrightFrom}")
-    String copyrightFrom;
+    private String copyrightFrom;
 }
