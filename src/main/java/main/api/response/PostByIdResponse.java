@@ -1,12 +1,12 @@
 package main.api.response;
 import lombok.Data;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 @Component
 @Data
-public class PostResponse {
+public class PostByIdResponse {
 
-    private long count;
-    private JSONArray posts;
+    private JSONObject postData;
 }

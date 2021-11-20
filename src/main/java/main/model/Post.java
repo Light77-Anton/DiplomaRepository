@@ -1,5 +1,6 @@
 package main.model;
 import lombok.Data;
+import main.support.ModerationStatus;
 import javax.persistence.*;
 import java.util.Date;
 import java.util.List;

@@ -1,5 +1,6 @@
 package main.api.response;
 import lombok.Data;
+import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -7,6 +8,8 @@ import org.springframework.stereotype.Component;
 @Data
 public class TagResponse {
 
+    private JSONArray tags;
+    /*
     @Value("${posts.query}")
     private String name;
     @Value("${posts.count}")
@@ -23,4 +26,6 @@ public class TagResponse {
     private double calculateIrrationedWeight() {
         return (double) postCountWithTag / postCount;
     }
+
+     */
 }

@@ -9,8 +9,8 @@ import java.util.Date;
 public class CaptchaCode {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date time;
@@ -19,7 +19,4 @@ public class CaptchaCode {
 
     @Column(name = "secret_code")
     private String secretCode;
-
-    @ManyToOne(cascade = CascadeType.ALL)
-    private User user;
 }
