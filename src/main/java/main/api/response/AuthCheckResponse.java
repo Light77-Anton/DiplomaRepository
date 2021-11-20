@@ -1,14 +1,13 @@
 package main.api.response;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
 @Data
 public class AuthCheckResponse {
 
-    @Value("${blog.authorization.result}")
-    private boolean result;
+    private boolean result = false; // пока авторизация пользователя не реализована
+    /*
     @Value("${blog.authorization.user.id}")
     private int id;
     @Value("${blog.authorization.user.name}")
@@ -23,4 +22,5 @@ public class AuthCheckResponse {
     private int moderationCount;
     @Value("${blog.authorization.user.settings}")
     private boolean settings;
+     */
 }

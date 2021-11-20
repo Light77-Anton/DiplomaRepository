@@ -38,7 +38,4 @@ public class User {
 
     @OneToMany(cascade = CascadeType.ALL)
     private List<Comment> comments;
-
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<CaptchaCode> captchaCodes;
 }

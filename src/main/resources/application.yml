@@ -19,28 +19,7 @@ blog:
   email: mail@mail.ru
   copyright: Дмитрий Сергеев
   copyrightFrom: 2005
-  authorization:
-    result: false
-    user:
-      id: 576
-      name: Дмитрий Петров
-      photo: /avatars/ab/cd/ef/52461.jpg
-      email: petrov@petroff.ru
-      moderation: false
-      moderationCount: 0
-      settings: false
-posts:
-  count: 10
-  countWithTag: 10
-  query: Java
-  offset: 0
-  limit: 10
-  mode: recent
-postsList:
-  - firstPost:
-      key: value
-  - secondPost:
-      key: value
+captchaTimeExistenсe: 3600000
 
 
 
