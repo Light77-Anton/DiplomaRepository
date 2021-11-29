@@ -62,10 +62,7 @@ public class CaptchaService {
     }
 
     public void deleteOldCaptchasFromRepository() {
-        LocalDate date = Instant.ofEpochMilli(System.currentTimeMillis()).
-                atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate testDate = date.plusDays(-1);
-        captchaCodeRepository.deleteByTimeIsAfter(testDate);
+        captchaCodeRepository.deleteByTimeIsAfter(LocalDate.now().plusDays(-1)); // 
     }
 
 }
