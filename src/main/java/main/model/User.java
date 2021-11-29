@@ -1,7 +1,7 @@
 package main.model;
 import lombok.Data;
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -16,9 +16,8 @@ public class User {
     @Column(name = "is_moderator")
     private boolean isModerator;
 
-    @Column(name = "reg_time")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date registrationTime;
+    @Column(name = "reg_time")//@Temporal(TemporalType.TIMESTAMP)
+    private LocalDate registrationTime;
 
     private String name;
 
@@ -33,9 +32,16 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL)
     private List<Post> posts;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
     private List<Vote> votes;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
     private List<Comment> comments;
+
+    /*
+    public Role getRole() {
+        return isModerator == false ? Role.USER : Role.MODERATOR;
+    }
+
+     */
 }

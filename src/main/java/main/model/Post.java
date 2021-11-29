@@ -2,7 +2,7 @@ package main.model;
 import lombok.Data;
 import main.support.ModerationStatus;
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -22,13 +22,13 @@ public class Post {
     private ModerationStatus moderationStatus;
 
     @Column(name = "moderator_id")
-    private int moderatorId;
+    private Integer moderatorId;
 
     @Column(name = "user_id", insertable = false, updatable = false)
     private int userId;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date time;
+    //@Temporal(TemporalType.TIMESTAMP)
+    private LocalDate time;
 
     private String title;
 
@@ -40,7 +40,7 @@ public class Post {
     @ManyToOne(cascade = CascadeType.ALL)
     private User user;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "postId")
     private List<Vote> votes;
 
     @ManyToMany(cascade = CascadeType.ALL)
@@ -49,6 +49,6 @@ public class Post {
             inverseJoinColumns = {@JoinColumn(name = "user_id")})
     private List<Tag> tags;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "postId")
     private List<Comment> commentaries;
 }

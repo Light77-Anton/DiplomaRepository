@@ -1,6 +1,8 @@
 package main.model;
 import lombok.Data;
 import javax.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -15,20 +17,25 @@ public class Comment {
     @Column(name = "parent_id")
     private int parentId;
 
+    //@ManyToOne(cascade = CascadeType.ALL)
     @Column(name = "post_id", insertable = false, updatable = false)
     private int postId;
 
+    //@ManyToOne(cascade = CascadeType.ALL)
     @Column(name = "user_id", insertable = false, updatable = false)
     private int userId;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date time;
+    //@Temporal(TemporalType.TIMESTAMP)
+    private LocalDate time;
 
     private String text;
 
+    /*
     @ManyToOne(cascade = CascadeType.ALL)
     private User user;
 
     @ManyToOne(cascade = CascadeType.ALL)
     private Post post;
+
+     */
 }
