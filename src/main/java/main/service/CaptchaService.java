@@ -3,9 +3,17 @@ import com.github.cage.Cage;
 import com.github.cage.YCage;
 import main.api.response.CaptchaResponse;
 import main.model.CaptchaCode;
-import main.model.CaptchaCodeRepository;
+import main.model.repositories.CaptchaCodeRepository;
+import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Random;
@@ -16,7 +24,6 @@ public class CaptchaService {
     @Autowired
     private CaptchaCodeRepository captchaCodeRepository;
 
-    final private long CAPTCHA_TIME_EXISTENCE = 3600000;
     final private String TITLE = "data:image/png;base64, ";
 
     public CaptchaResponse generateAndGetCaptcha() throws Exception {
@@ -34,14 +41,19 @@ public class CaptchaService {
         }
         captchaResponse.setSecret(randomSecretCode.toString());
         Cage cage = new YCage();
-        byte[] fileContent = cage.draw(randomCode.toString());
+        BufferedImage bf = cage.drawImage(randomCode.toString());
+        BufferedImage scaledImage = Scalr.
+                resize(bf, 100, 35, Scalr.OP_GRAYSCALE);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(scaledImage, "png", baos);
+        byte[] fileContent = baos.toByteArray();
         String encodedString = Base64.getEncoder().encodeToString(fileContent);
         captchaResponse.setImage(TITLE + encodedString);
         /**
          * encodedString в base64 - это то,что нужно передавать в image + заголовок.Как понял.
          */
         CaptchaCode captchaCode = new CaptchaCode();
-        captchaCode.setTime(new Date());
+        captchaCode.setTime(LocalDate.now());
         captchaCode.setCode(randomCode.toString());
         captchaCode.setSecretCode(randomSecretCode.toString());
         captchaCodeRepository.save(captchaCode);
@@ -50,13 +62,10 @@ public class CaptchaService {
     }
 
     public void deleteOldCaptchasFromRepository() {
-       Iterable<CaptchaCode> captchas = captchaCodeRepository.findAll();
-       for (CaptchaCode captchaCode : captchas) {
-           if (System.currentTimeMillis() > captchaCode.getTime().getTime()
-                   + CAPTCHA_TIME_EXISTENCE) {
-               captchaCodeRepository.delete(captchaCode);
-           }
-       }
+        LocalDate date = Instant.ofEpochMilli(System.currentTimeMillis()).
+                atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate testDate = date.plusDays(-1);
+        captchaCodeRepository.deleteByTimeIsAfter(testDate);
     }
 
 }

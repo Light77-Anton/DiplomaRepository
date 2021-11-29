@@ -1,48 +1,90 @@
 package main.controllers;
-import main.api.request.RegisterRequest;
-import main.api.response.CaptchaResponse;
-import main.api.response.RegisterResponse;
+import main.api.response.PostResponse;
 import main.service.CaptchaService;
+import main.service.PostService;
 import main.service.RegisterService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 @Controller
+//@RequestMapping(/api/post/)  предположительно, здесь будет все,что связано с post
 public class ApiPostController {
 
-    private RegisterService registerService;
-    private CaptchaService captchaService;
+    private final RegisterService registerService;
+    private final CaptchaService captchaService;
+    private final PostService postService;
 
     public ApiPostController(RegisterService registerService,
-                             CaptchaService captchaService) {
+                             CaptchaService captchaService, PostService postService) {
         this.registerService = registerService;
         this.captchaService = captchaService;
+        this.postService = postService;
     }
 
-    @PostMapping("/api/auth/register")
-    private ResponseEntity authRegister(
-            @RequestBody RegisterRequest registerRequest) throws Exception {
+    @GetMapping("/api/post")
+    private ResponseEntity post(
+            @RequestParam(value = "offset", required = false) Integer offset,
+            @RequestParam(value = "limit", required = false) Integer limit,
+            @RequestParam(value = "mode", required = false) String mode) {
 
-        CaptchaResponse captchaResponse = captchaService.generateAndGetCaptcha();
-        String response = registerService.checkData(registerRequest.getEmail(),
-                registerRequest.getPassword(),
-                registerRequest.getName(),
-                registerRequest.getCaptcha(),
-                captchaResponse.getSecret());
-        RegisterResponse registerResponse = new RegisterResponse();
-        registerResponse.setDescription(response);
-        if (!response.equals("все верно,пользователь создан")) {
-            registerResponse.setResult(false);
+        return new ResponseEntity(postService.getPostsList(offset, limit, mode),
+                HttpStatus.OK);
+    }
 
-            return new ResponseEntity(registerResponse, HttpStatus.BAD_REQUEST);
+    @GetMapping("/api/post/search")
+    private ResponseEntity<PostResponse> postSearch(
+            @RequestParam(value = "offset", required = false) Integer offset,
+            @RequestParam(value = "limit", required = false) Integer limit,
+            @RequestParam(value = "query", required = false) String query
+    ) {
+
+        if (query == null) {
+            return new ResponseEntity(post(offset, limit, query),
+                    HttpStatus.OK);
         }
-        registerResponse.setResult(true);
+        if (query.equals("") || query.matches("\\s+")) {
+            return new ResponseEntity(post(offset, limit, query),
+                    HttpStatus.OK);
+        }
 
-        return new ResponseEntity(registerResponse, HttpStatus.OK);
+        return new ResponseEntity(postService.
+                getPostsListByQuery(offset, limit, query), HttpStatus.OK);
     }
 
+    @GetMapping("/api/post/byDate")
+    private ResponseEntity postByDate(
+            @RequestParam(value = "date", required = false) String date,
+            @RequestParam(value = "offset", required = false) Integer offset,
+            @RequestParam(value = "limit", required = false) Integer limit) {
+
+        return new ResponseEntity(postService.
+                getPostsByDate(offset, limit, date), HttpStatus.OK);
+    }
+
+    @GetMapping("/api/post/byTag")
+    private ResponseEntity<PostResponse> postByTag(
+            @RequestParam(value = "offset", required = false) Integer offset,
+            @RequestParam(value = "limit", required = false) Integer limit,
+            @RequestParam(value = "tag", required = false) String tagName) {
+        if (tagName == null) {
+            return new ResponseEntity(post(offset, limit, tagName),
+                    HttpStatus.OK);
+        }
+
+        return new ResponseEntity<>(postService.
+                getPostsByTag(offset, limit, tagName), HttpStatus.OK);
+    }
+
+    @GetMapping("/api/post/{ID}")
+    private ResponseEntity postById(@PathVariable Integer id) { // пока без авторизации,логика полностью не реализована
+
+        if (postService.getPostById(id) == null) {
+            return new ResponseEntity("документ не найден",
+                    HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity(postService.getPostById(id), HttpStatus.OK);
+    }
 
 }

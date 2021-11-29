@@ -1,7 +1,7 @@
 package main.model;
 import lombok.Data;
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "post_votes")
@@ -12,20 +12,25 @@ public class Vote {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
+    //@ManyToOne(cascade = CascadeType.ALL)
     @Column(name = "user_id", insertable = false, updatable = false)
     private int userId;
 
+    //@ManyToOne(cascade = CascadeType.ALL)
     @Column(name = "post_id", insertable = false, updatable = false)
     private int postId;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date time;
+    //@Temporal(TemporalType.TIMESTAMP)
+    private LocalDate time;
 
     private int value;
 
+    /*
     @ManyToOne(cascade = CascadeType.ALL)
     private Post post;
 
     @ManyToOne(cascade = CascadeType.ALL)
     private User user;
+
+     */
 }

@@ -15,5 +15,5 @@ public class RegisterRequest {
     private String name;
     @JsonProperty("captcha")
     private String captcha;
-    //private String captchaSecret; это же не должен вводить пользователь
+    //private String captchaSecret; пока точно непонятно откуда передавать secretCode
 }

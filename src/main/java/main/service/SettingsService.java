@@ -1,6 +1,6 @@
 package main.service;
 import main.api.response.SettingResponse;
-import main.model.GlobalSettingsRepository;
+import main.model.repositories.GlobalSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

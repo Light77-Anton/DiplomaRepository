@@ -1,8 +1,8 @@
 package main.service;
 import main.api.response.TagResponse;
-import main.model.PostRepository;
+import main.model.repositories.PostRepository;
 import main.model.Tag;
-import main.model.TagRepository;
+import main.model.repositories.TagRepository;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,16 +23,14 @@ public class TagService {
 
     public TagResponse getTagList(String query) {
         TagResponse tagResponse = new TagResponse();
-        Iterable<Tag> tags = tagRepository.findAll();
+        List<Tag> tags = tagRepository.findAllByNameContaining(query);
         JSONArray array = new JSONArray();
         for (Tag tag : tags) {
-            if (tag.getName().contains(query)) {
-                JSONObject obj = new JSONObject();
-                obj.put("name", tag.getName());
-                obj.put("weight", calculateAndGetRationedWeight(tags,
-                        calculateAndGetIrrationedWeight(tag)));
-                array.put(obj);
-            }
+            JSONObject obj = new JSONObject();
+            obj.put("name", tag.getName());
+            obj.put("weight", calculateAndGetRationedWeight(tags,
+                    calculateAndGetIrrationedWeight(tag)));
+            array.put(obj);
         }
         tagResponse.setTags(array);
 

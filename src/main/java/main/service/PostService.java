@@ -2,13 +2,24 @@ package main.service;
 import main.api.response.PostByIdResponse;
 import main.api.response.PostResponse;
 import main.model.*;
+import main.model.repositories.PostRepository;
+import main.model.repositories.TagRepository;
+import main.model.repositories.UserRepository;
 import main.support.*;
+import main.support.dto.CommentsDataDTO;
+import main.support.dto.PostByIdDTO;
+import main.support.dto.PostDTO;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 
 @Service
@@ -22,31 +33,9 @@ public class PostService {
     @Autowired
     private TagRepository tagRepository;
 
-    private Integer checkedOffset;
-    private Integer checkedLimit;
-
-
     public PostService() {
 
     }
-
-    /*
-    public PostResponse getPostsForModeration() {
-
-        PostResponse postResponse = new PostResponse();
-        if (!checkParamsWithModerationStatus(offset, limit, status)) {
-            return postResponse;
-        }
-        postResponse.setCount(postRepository.count());
-        Iterable<Post> posts = postRepository.findAll();
-        for (Post post : posts) {
-            if () {
-
-            }
-        }
-
-    }
-     */
 
     public PostByIdResponse getPostById(Integer id) {
         PostByIdResponse postByIdResponse = null;
@@ -55,178 +44,129 @@ public class PostService {
             return postByIdResponse;
         }
         postByIdResponse = new PostByIdResponse();
-        JSONObject obj = new JSONObject();
-        obj.put("id", post.get().getId());
-        obj.put("timestamp", post.get().getTime().getTime());
-        obj.put("active", post.get().isActive());
+        PostByIdDTO postByIdDTO = new PostByIdDTO();
+        postByIdDTO.setPostId(post.get().getId());
+        //Instant instant = post.get().getTime().atTime(LocalTime.now()).atZone(ZoneId.systemDefault()).toInstant(); // требует проверки
+        postByIdDTO.setTimestamp(post.get().getTime());
+        postByIdDTO.setActive(post.get().isActive());
         JSONObject userObj = new JSONObject();
         userObj.put("id", post.get().getUserId());
         userObj.put("name", post.get().getUser().getName());
-        obj.put("user", userObj);
-        obj.put("title", post.get().getTitle());
-        obj.put("text", post.get().getText());
-        obj.put("likesCount", getLikesCount(post.get()));
-        obj.put("dislikesCount", getDislikesCount(post.get()));
-        obj.put("viewsCount", post.get().getViewCount());
+        postByIdDTO.setUserData(userObj);
+        postByIdDTO.setTitle(post.get().getTitle());
+        postByIdDTO.setText(post.get().getText());
+        postByIdDTO.setLikesCount(getLikesCount(post.get()));
+        postByIdDTO.setDislikeCount(getDislikesCount(post.get()));
+        postByIdDTO.setViewCount(post.get().getViewCount());
         JSONArray commentsArray = new JSONArray();
         List<Comment> commentList = post.get().getCommentaries();
         for (Comment comment : commentList) {
-            JSONObject commentObj = new JSONObject();
-            commentObj.put("id", comment.getId());
-            commentObj.put("timestamp", comment.getTime().getTime());
-            commentObj.put("text", comment.getText());
+            CommentsDataDTO commentsDataDTO = new CommentsDataDTO();
+            commentsDataDTO.setId(comment.getId());
+            //Instant commentInstant = comment.getTime().atTime(LocalTime.now()).atZone(ZoneId.systemDefault()).toInstant(); // требует проверки
+            commentsDataDTO.setTimestamp(comment.getTime());
+            commentsDataDTO.setText(comment.getText());
             JSONObject commentUserObj = new JSONObject();
-            commentUserObj.put("id", comment.getUser().getId());
-            commentUserObj.put("name", comment.getUser().getName());
-            commentUserObj.put("photo", comment.getUser().getPhoto());
-            commentObj.put("user", commentUserObj);
+            Optional<User> user = userRepository.findById(comment.getUserId());
+            commentUserObj.put("id", user.get().getId());
+            commentUserObj.put("name", user.get().getName());
+            commentUserObj.put("photo", user.get().getPhoto());
+            commentsDataDTO.setUserData(commentUserObj);
+            commentsArray.put(commentsDataDTO);
         }
-        obj.put("comments", commentsArray);
+        postByIdDTO.setCommentsData(commentsArray);
         JSONArray tagsArray = new JSONArray();
         List<Tag> tagsList = post.get().getTags();
         for (Tag tag : tagsList) {
             tagsArray.put(tag.getName());
         }
-        obj.put("tags", tagsArray);
-        postByIdResponse.setPostData(obj);
+        postByIdDTO.setTagsData(tagsArray);
+        postByIdResponse.setPostData(postByIdDTO);
 
         return postByIdResponse;
     }
 
-    public PostResponse getPostsByTag(Integer offset,Integer limit, String stringTag) {
-        checkParams(offset, limit);
-        Tag requiredTag = checkAndGetRequiredTag(stringTag);
+    public PostResponse getPostsByTag(Integer offset,
+                                      Integer limit, String stringTag) {
+        Tag requiredTag = tagRepository.findByNameContaining(stringTag);
         PostResponse postResponse = new PostResponse();
         if (requiredTag == null) {
             postResponse.setCount(0);
             postResponse.setPosts(new JSONArray());
             return postResponse;
         }
-        List<Post> listWithPosts = requiredTag.getPosts();
-        postResponse.setCount(listWithPosts.size());
-        postResponse.setPosts(fillAndGetArrayWithPosts(checkedOffset, checkedLimit, listWithPosts));
+        Pageable page = PageRequest.of(checkAndGetOffset(offset),
+                checkAndGetLimit(limit));
+        List<Post> postsList = postRepository.findByTagsContaining(requiredTag, page);
+        postResponse.setCount(postsList.size());
+        postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
 
-    public PostResponse getPostsByDate(Integer offset, Integer limit, String stringDate) {
-        checkParams(offset, limit);
+    public PostResponse getPostsByDate(Integer offset,
+                                       Integer limit, String stringDate) {
         PostResponse postResponse = new PostResponse();
-        Iterable<Post> posts = postRepository.findAll();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        List<Post> listWithPosts = new ArrayList<>();
-        int postsCountForRequiredDate = 0;
-        for (Post post : posts) {
-            String date = simpleDateFormat.format(post.getTime());
-            if (date.equals(stringDate)) {
-                listWithPosts.add(post);
-                postsCountForRequiredDate++;
-            }
-        }
-        postResponse.setCount(postsCountForRequiredDate);
-        postResponse.setPosts(fillAndGetArrayWithPosts(checkedOffset, checkedLimit, listWithPosts));
+        //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd"); возможно нужна доп. проверка,что переданная дата в правильном формате
+        List<Post> postsList =
+                getPostsListWithRequiredDate(checkAndGetOffset(offset),
+                checkAndGetLimit(limit), stringDate);
+        postResponse.setCount(postsList.size());
+        postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
 
-    public PostResponse getPostsListByQuery(Integer offset, Integer limit, String query) {
-        checkParams(offset, limit);
+    public PostResponse getPostsListByQuery(Integer offset,
+                                            Integer limit, String query) {
         PostResponse postResponse = new PostResponse();
-        Iterable<Post> posts = postRepository.findAll();
-        List<Post> bufferPostsList = new ArrayList<>();
-        for (Post post : posts) {
-            if (post.getText().contains(query) && post.isActive()
-                    && post.getModerationStatus() == ModerationStatus.ACCEPTED
-                    && post.getTime().getTime() <= System.currentTimeMillis()) {
-                bufferPostsList.add(post);
-            }
-        }
-        postResponse.setCount(bufferPostsList.size());
-        List<Post> postsList = sortListByMode(checkAndGetMode(query), bufferPostsList);
-        /**
-         * передаем query на место mode т.к. если метод не находит совпадения в Enum values() - вернет Mode.RECENT
-         */
-        postResponse.setPosts(fillAndGetArrayWithPosts(checkedOffset, checkedLimit, postsList));
+        List<Post> postsList =
+                getPostsListWithRequiredQuery(checkAndGetOffset(offset),
+                        checkAndGetLimit(limit), query);
+        postResponse.setCount(postsList.size());
+        postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
 
-    public PostResponse getPostsList(Integer offset, Integer limit, String stringMode) {
-        checkParams(offset, limit);
+    public PostResponse getPostsList(Integer offset,
+                                     Integer limit, String stringMode) {
         PostResponse postResponse = new PostResponse();
-        postResponse.setCount(postRepository.count());
-        Iterable<Post> posts = postRepository.findAll();
-        List<Post> bufferPostsList = new ArrayList<>();
-        for (Post post : posts) {
-            bufferPostsList.add(post);
-        }
-        List<Post> postsList = sortListByMode(checkAndGetMode(stringMode), bufferPostsList);
-        postResponse.setPosts(fillAndGetArrayWithPosts(checkedOffset, checkedLimit, postsList));
+        List<Post> postsList =
+                getPostsListWithRequiredMode(checkAndGetOffset(offset),
+                        checkAndGetLimit(limit), checkAndGetMode(stringMode));
+        postResponse.setCount(postsList.size());
+        postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
 
-    private Tag checkAndGetRequiredTag(String stringTag) {
-        Iterable<Tag> tags = tagRepository.findAll();
-        for (Tag tag : tags) {
-            if (tag.getName().equals(stringTag)) {
-                return tag;
-            }
-        }
-
-        return null;
-    }
-
-    /*
-    private boolean checkParamsWithModerationStatus (Integer offset, Integer limit, String stringStatus) {
-        if (offset == null) {
-            offset = 0;
-            this.offset = offset;
-        }
-        if (limit == null) {
-            limit = 10;
-            this.limit = limit;
-        }
-        for (ModerationStatus statusValue : ModerationStatus.values()) {
-            if (statusValue.name().equals(status.name())) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-     */
-
-    private JSONArray fillAndGetArrayWithPosts(Integer offset, Integer limit, List<Post> postsList) {
+    private JSONArray fillAndGetArrayWithPosts(List<Post> postsList) {
         JSONArray array = new JSONArray();
         for (Post post : postsList) {
-            if (array.length() >= limit) {
-                break;
-            } else if (offset != 0) {
-                offset--;
-            } else {
-                JSONObject obj = new JSONObject();
-                obj.put("id", post.getId());
-                obj.put("timestamp", post.getTime().getTime());
-                JSONObject userObj = new JSONObject();
-                userObj.put("id", post.getUserId());
-                userObj.put("name", post.getUser().getName());
-                obj.put("user", userObj);
-                obj.put("title", post.getTitle());
-                obj.put("announce", getAnnounce(post.getText()));
-                obj.put("likesCount", getLikesCount(post));
-                obj.put("dislikesCount", getDislikesCount(post));
-                obj.put("commentCount", post.getCommentaries().size());
-                obj.put("viewsCount", post.getViewCount());
-                array.put(obj);
-            }
+            PostDTO postDTO = new PostDTO();
+            postDTO.setPostId(post.getId());
+            //Instant instant = post.getTime().atTime(LocalTime.now()).atZone(ZoneId.systemDefault()).toInstant(); // требует проверки
+            postDTO.setTimestamp(post.getTime());
+            JSONObject userObj = new JSONObject();
+            userObj.put("id", post.getUserId());
+            userObj.put("name", post.getUser().getName());
+            postDTO.setUserData(userObj);
+            postDTO.setTitle(post.getTitle());
+            postDTO.setAnnounce(getAnnounce(post.getText()));
+            postDTO.setLikesCount(getLikesCount(post));
+            postDTO.setDislikeCount(getDislikesCount(post));
+            postDTO.setCommentCount(post.getCommentaries().size());
+            postDTO.setViewCount(post.getViewCount());
+            array.put(postDTO);
         }
-
         return array;
     }
 
     private Mode checkAndGetMode(String stringMode) {
+        if (stringMode == null) {
+            return Mode.RECENT;
+        }
         Mode mode = null;
         boolean isValidMode = false;
         for (Mode modeValue : Mode.values()) {
@@ -243,26 +183,82 @@ public class PostService {
         return mode;
     }
 
-    private void checkParams(Integer offset, Integer limit) {
+    private Integer checkAndGetOffset(Integer offset) {
         if (offset == null || offset < 0) {
             offset = 0;
-            this.checkedOffset = offset;
         }
-        if (limit == null || limit < 0) {
-            limit = 10;
-            this.checkedLimit = limit;
-        }
+
+        return offset;
     }
 
-    private List<Post> sortListByMode(Mode mode, List<Post> list) {
+    private Integer checkAndGetLimit(Integer limit) {
+        if (limit == null || limit < 0) {
+            limit = 10;
+        }
 
+        return limit;
+    }
+
+    private List<Post> checkAndGetPostsList(List<Post> bufferList) {
+        List<Post> list = new ArrayList<>();
+        for (Post post : bufferList) {
+            //Instant instant = post.getTime().atTime(LocalTime.now()).atZone(ZoneId.systemDefault()).toInstant(); // требует проверки
+            if (post.isActive()
+                    && post.getModerationStatus() == ModerationStatus.ACCEPTED
+                    && post.getTime().isAfter(LocalDate.now())) {
+                list.add(post);
+            }
+        }
+
+        return list;
+    }
+
+    private List<Post> getPostsListWithRequiredDate(Integer offset,
+                                                    Integer limit,
+                                                    String stringDate) {
+        List<Post> bufferList;
+        List<Post> list;
+        Pageable page = PageRequest.of(offset, limit);
+        bufferList = postRepository.findByTimeEquals(stringDate, page);
+        list = checkAndGetPostsList(bufferList);
+        return list;
+    }
+
+    private List<Post> getPostsListWithRequiredQuery(Integer offset,
+                                                     Integer limit,
+                                                     String query) {
+        List<Post> bufferList;
+        List<Post> list;
+        Pageable page = PageRequest.of(offset, limit);
+        bufferList = postRepository.findByTextContaining(query, page);
+        list = checkAndGetPostsList(bufferList);
+        list.sort(new TimestampComparator());
+        return list;
+    }
+
+    private List<Post> getPostsListWithRequiredMode(Integer offset,
+                                                    Integer limit, Mode mode) {
+        List<Post> bufferList;
+        List<Post> list;
         if (mode == Mode.RECENT) {
+            Pageable page = PageRequest.of(offset, limit);
+            bufferList = postRepository.findAll(page).getContent();
+            list = checkAndGetPostsList(bufferList);
             list.sort(new TimestampComparator());
         } else if (mode == Mode.POPULAR) {
+            Pageable page = PageRequest.of(offset, limit);
+            bufferList = postRepository.findAll(page).getContent();
+            list = checkAndGetPostsList(bufferList);
             list.sort(new CommentsComparator());
         } else if (mode == Mode.BEST) {
+            Pageable page = PageRequest.of(offset, limit);
+            bufferList = postRepository.findAll(page).getContent();
+            list = checkAndGetPostsList(bufferList);
             list.sort(new VotesComparator());
-        } else if (mode == Mode.EARLY) {
+        } else { // EARLY
+            Pageable page = PageRequest.of(offset, limit);
+            bufferList = postRepository.findAll(page).getContent();
+            list = checkAndGetPostsList(bufferList);
             list.sort(new TimestampComparator().reversed());
         }
 

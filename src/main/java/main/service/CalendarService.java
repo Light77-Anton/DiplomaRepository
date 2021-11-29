@@ -1,7 +1,7 @@
 package main.service;
 import main.api.response.CalendarResponse;
 import main.model.Post;
-import main.model.PostRepository;
+import main.model.repositories.PostRepository;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ public class CalendarService {
     public CalendarResponse getPostsPerYear(String stringYear) {
         String year = checkAndGetYear(stringYear);
         CalendarResponse calendarResponse = new CalendarResponse();
-        Iterable<Post> posts = postRepository.findAll();
+        Iterable<Post> posts = postRepository.findByTimeContaining(year);
         List<String> listWithDates = new ArrayList<>();
         List<Integer> listWithYears = new ArrayList<>();
         /**
@@ -47,7 +47,7 @@ public class CalendarService {
             if (!listWithYears.contains(yyyy)) {
                 listWithYears.add(yyyy);
             }
-            if (date.substring(0, 5).equals(checkAndGetYear(year))) {
+            if (date.substring(0, 5).equals(year)) {
                 listWithDates.add(date);
             }
         }
