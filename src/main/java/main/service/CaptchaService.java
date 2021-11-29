@@ -62,7 +62,7 @@ public class CaptchaService {
     }
 
     public void deleteOldCaptchasFromRepository() {
-        captchaCodeRepository.deleteByTimeIsAfter(LocalDate.now().plusDays(-1));
+        captchaCodeRepository.deleteByTimeIsAfter(LocalDate.now().plusDays(-1)); // 
     }
 
 }
