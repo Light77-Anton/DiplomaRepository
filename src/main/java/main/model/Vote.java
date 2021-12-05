@@ -1,7 +1,7 @@
 package main.model;
 import lombok.Data;
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "post_votes")
@@ -21,7 +21,7 @@ public class Vote {
     private int postId;
 
     //@Temporal(TemporalType.TIMESTAMP)
-    private LocalDate time;
+    private LocalDateTime time;
 
     private int value;
 

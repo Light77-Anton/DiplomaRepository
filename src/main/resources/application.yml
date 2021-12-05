@@ -1,13 +1,12 @@
 spring:
   flyway:
-    enabled: false
+    enabled: true
+    baselineOnMigrate: true
   datasource:
     url: jdbc:mysql://localhost:3306/dfschema?useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 77Light78MySQL79
-  server:
-    port: 3306
   jpa:
     properties:
       show-sql: true

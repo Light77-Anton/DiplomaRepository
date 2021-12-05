@@ -7,7 +7,7 @@ import java.time.LocalDate;
 public class CommentsDataDTO {
 
     private int id;
-    private LocalDate timestamp;
+    private long timestamp;
     private String text;
     private JSONObject userData;
 }

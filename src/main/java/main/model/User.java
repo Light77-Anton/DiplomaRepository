@@ -1,7 +1,7 @@
 package main.model;
 import lombok.Data;
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -17,7 +17,7 @@ public class User {
     private boolean isModerator;
 
     @Column(name = "reg_time")//@Temporal(TemporalType.TIMESTAMP)
-    private LocalDate registrationTime;
+    private LocalDateTime registrationTime;
 
     private String name;
 
