@@ -5,7 +5,7 @@ import main.model.User;
 import main.model.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -51,7 +51,7 @@ public class RegisterService {
         if (captchaCode.isPresent()) {
             if (captchaCode.get().getCode().equals(captcha)) {
                 User newUser = new User();
-                newUser.setRegistrationTime(LocalDate.now());
+                newUser.setRegistrationTime(LocalDateTime.now());
                 newUser.setName(name);
                 newUser.setEmail(email);
                 newUser.setPassword(password);

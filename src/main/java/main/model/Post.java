@@ -2,7 +2,7 @@ package main.model;
 import lombok.Data;
 import main.support.ModerationStatus;
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -28,7 +28,7 @@ public class Post {
     private int userId;
 
     //@Temporal(TemporalType.TIMESTAMP)
-    private LocalDate time;
+    private LocalDateTime time;
 
     private String title;
 
@@ -37,7 +37,7 @@ public class Post {
     @Column(name = "view_count")
     private int viewCount;
 
-    @ManyToOne(cascade = CascadeType.ALL)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private User user;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "postId")

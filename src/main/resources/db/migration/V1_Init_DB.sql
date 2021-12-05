@@ -3,12 +3,12 @@ CREATE TABLE IF NOT EXISTS `users` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `is_moderator` int NOT NULL,
-    `reg_time` timestamp NOT NULL,
+    `reg_time` DATETIME NOT NULL,
     `name` VARCHAR(255) NOT NULL,
     `email` VARCHAR(255) NOT NULL,
     `password` VARCHAR(255) NOT NULL,
     `code` VARCHAR(255),
-    `photo` STRING
+    `photo` TEXT
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS `posts` (
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `is_active` int NOT NULL,
     `moderation_status` ENUM("NEW", "ACCEPTED","DECLINED") NOT NULL DEFAULT "NEW",
-    `time` timestamp NOT NULL,
+    `time` DATETIME NOT NULL,
     `title` VARCHAR(255) NOT NULL,
-    `text` STRING NOT NULL,
+    `text` TEXT NOT NULL,
     `view_count` int NOT NULL
 
 
@@ -31,7 +31,7 @@ ALTER TABLE `posts` ADD `user_id` int NOT NULL AFTER `moderator_id`;
 CREATE TABLE IF NOT EXISTS `post_votes` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `time` timestamp NOT NULL,
+    `time` DATETIME NOT NULL,
     `value` int NOT NULL
 
 
@@ -59,8 +59,8 @@ ALTER TABLE `tag2post` ADD `tag_id` int NOT NULL AFTER `post_id`;
 CREATE TABLE IF NOT EXISTS `post_comments` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `time` timestamp NOT NULL,
-    `text` STRING NOT NULL
+    `time` DATETIME NOT NULL,
+    `text` TEXT NOT NULL
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
@@ -71,7 +71,7 @@ ALTER TABLE `post_comments` ADD `user_id` int NOT NULL AFTER `post_id`;
 CREATE TABLE IF NOT EXISTS `captcha_codes` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `time` timestamp NOT NULL,
+    `time` DATETIME NOT NULL,
     `code` int NOT NULL,
     `secret_code` int NOT NULL
 
@@ -84,4 +84,12 @@ CREATE TABLE IF NOT EXISTS `global_settings` (
     `value` VARCHAR(255)
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (1, now(), 'Василий', 'vasily@mail.ru', '12345');
+
+INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (0, now(), 'Петр', 'petr@mail.ru', '54321');
+
+INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (1, "ACCEPTED", 0, now(), 'заголовок первого поста', 'текст первого поста', 0);
+
+INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (0, "NEW", 0, now(), 'заголовок второго поста', 'текст второго поста', 0);
 

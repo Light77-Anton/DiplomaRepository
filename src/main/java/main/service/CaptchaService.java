@@ -7,15 +7,11 @@ import main.model.repositories.CaptchaCodeRepository;
 import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.Date;
 import java.util.Random;
 
 @Service
@@ -53,7 +49,7 @@ public class CaptchaService {
          * encodedString в base64 - это то,что нужно передавать в image + заголовок.Как понял.
          */
         CaptchaCode captchaCode = new CaptchaCode();
-        captchaCode.setTime(LocalDate.now());
+        captchaCode.setTime(LocalDateTime.now());
         captchaCode.setCode(randomCode.toString());
         captchaCode.setSecretCode(randomSecretCode.toString());
         captchaCodeRepository.save(captchaCode);
@@ -62,7 +58,8 @@ public class CaptchaService {
     }
 
     public void deleteOldCaptchasFromRepository() {
-        captchaCodeRepository.deleteByTimeIsAfter(LocalDate.now().plusDays(-1)); // 
+        captchaCodeRepository.deleteByTimeIsAfter(LocalDateTime
+                .now().plusDays(-1));
     }
 
 }

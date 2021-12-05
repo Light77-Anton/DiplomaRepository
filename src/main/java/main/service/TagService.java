@@ -3,8 +3,7 @@ import main.api.response.TagResponse;
 import main.model.repositories.PostRepository;
 import main.model.Tag;
 import main.model.repositories.TagRepository;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import main.support.dto.TagDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.*;
@@ -23,20 +22,23 @@ public class TagService {
 
     public TagResponse getTagList(String query) {
         TagResponse tagResponse = new TagResponse();
-        List<Tag> tags = tagRepository.findAllByNameContaining(query);
-        JSONArray array = new JSONArray();
+        List<Tag> tags = tagRepository.findAllByNameContaining(query); //1
+        List<TagDTO> list = new ArrayList<>();
         for (Tag tag : tags) {
-            JSONObject obj = new JSONObject();
-            obj.put("name", tag.getName());
-            obj.put("weight", calculateAndGetRationedWeight(tags,
-                    calculateAndGetIrrationedWeight(tag)));
-            array.put(obj);
+            TagDTO tagDTO = new TagDTO();
+            tagDTO.setName(tag.getName());
+            tagDTO.setWeight(tagRepository
+                    .getMultiplicationByIrrationedWeightAndTheMostPopularTagWeight(
+                            tagRepository.getIrrationedWeightByTag(tag),
+                            tagRepository.getTheMostPopularTagWeight()));
+           list.add(tagDTO);
         }
-        tagResponse.setTags(array);
+        tagResponse.setTags(list);
 
         return tagResponse;
     }
 
+    /*
     private double calculateAndGetRationedWeight(Iterable<Tag> tags,
                                                  Double irrationedWeightOfTag) {
         Map<Tag, Double> mapWithWeight = new HashMap();
@@ -62,4 +64,5 @@ public class TagService {
 
         return postCountWithTag / postCount;
     }
+     */
 }
