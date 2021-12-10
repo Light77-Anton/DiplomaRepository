@@ -7,32 +7,39 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.TreeSet;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
 Page<Post> findByTextContaining(String query, Pageable pageable);
 
-Page<Post> findByTimeEquals(String date, Pageable pageable);
+@Query(value = "SELECT * FROM posts AS p WHERE DATE(p.time) = STR_TO_DATE(?1, '%Y-%m-%d')", nativeQuery = true)
+Page<Post> findByDate(String date, Pageable pageable);
 
 Page<Post> findByTagsContaining(Tag tag, Pageable pageable);
 
-List<Post> findByTimeContaining(String year);
+@Query(value = "SELECT * FROM posts AS p WHERE YEAR(DATE(p.time)) = YEAR(STR_TO_DATE(?1, '%Y'))", nativeQuery = true)
+List<Post> findByYear(String year);
 
-@Query("select p from posts p order by p.commentaries.size() desc") // должен подсчитать кол-во комментов и выводить с большего
-Page<Post> findAllAndOrderByCommentariesSize(Pageable pageable);
+@Query(value = "SELECT YEAR(DATE(p.time)) FROM posts AS p", nativeQuery = true)
+TreeSet<Integer> findAllYears();
+
+@Query(value = "SELECT p.* FROM posts AS p "
+        + "INNER JOIN post_comments AS pc on p.id = pc.post_id "
+        + "GROUP BY p ORDER BY COUNT(pc.id) desc", nativeQuery = true)
+Page<Post> findAllAndOrderByCommentariesSize(Pageable pageable); // должен подсчитать кол-во комментов и выводить с большего
 
 // должен вычислить кол-во лайков и выводить с большего
-//@Query("select p from posts p order by count(p.votes v where v.value = 1) desc")
-//@Query("with cte_likes_count as (select count(*) from post_votes v where v.value = 1) select p from posts p order by p.cte_likes_count desc")
-@Query("with cte_likes_count as (select count(v) from post_votes v where v.value = 1)"
-       + " select p from posts p inner join post_votes on post_votes.postId = posts.id order by p.cte_likes_count desc")
+@Query(value = "SELECT p.* FROM posts AS p"
+       + "INNER JOIN post_votes AS pv on pv.post_id = p.id AND pv.value = 1 "
+       + "GROUP BY p ORDER BY COUNT(pv.id) desc", nativeQuery = true)
 Page<Post> findAllAndOrderByVotesCount(Pageable pageable);
 
-@Query("select p from posts p order by p.time desc") // должен выводить с самого раннего по времени
+@Query("select p from Post p order by p.time desc") // должен выводить с самого раннего по времени
 Page<Post> findAllAndOrderByTimeDesc(Pageable pageable);
 
-@Query("select p from posts p order by p.time asc") // должен выводить с самого старого по времени
+@Query("select p from Post p order by p.time asc") // должен выводить с самого старого по времени
 Page<Post> findAllAndOrderByTimeAsc(Pageable pageable);
 
 }

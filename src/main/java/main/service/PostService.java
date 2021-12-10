@@ -6,9 +6,7 @@ import main.model.repositories.PostRepository;
 import main.model.repositories.TagRepository;
 import main.model.repositories.UserRepository;
 import main.support.*;
-import main.support.dto.CommentsDataDTO;
-import main.support.dto.PostByIdDTO;
-import main.support.dto.PostDTO;
+import main.support.dto.*;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
@@ -43,10 +41,10 @@ public class PostService {
         postByIdDTO.setPostId(post.get().getId());
         postByIdDTO.setTimestamp(post.get().getTime().toEpochSecond(ZoneOffset.UTC));
         postByIdDTO.setActive(post.get().isActive());
-        JSONObject userObj = new JSONObject();
-        userObj.put("id", post.get().getUserId());
-        userObj.put("name", post.get().getUser().getName());
-        postByIdDTO.setUserData(userObj);
+        UserDataDTO userDataDTO = new UserDataDTO();
+        userDataDTO.setId(post.get().getUserId());
+        userDataDTO.setName(post.get().getUser().getName());
+        postByIdDTO.setUserData(userDataDTO);
         postByIdDTO.setTitle(post.get().getTitle());
         postByIdDTO.setText(post.get().getText());
         postByIdDTO.setLikesCount(getLikesCount(post.get()));
@@ -59,12 +57,12 @@ public class PostService {
             commentsDataDTO.setId(comment.getId());
             commentsDataDTO.setTimestamp(comment.getTime().toEpochSecond(ZoneOffset.UTC));
             commentsDataDTO.setText(comment.getText());
-            JSONObject commentUserObj = new JSONObject();
+            ExtendedUserDataDTO extendedUserDataDTO = new ExtendedUserDataDTO();
             Optional<User> user = userRepository.findById(comment.getUserId());
-            commentUserObj.put("id", user.get().getId());
-            commentUserObj.put("name", user.get().getName());
-            commentUserObj.put("photo", user.get().getPhoto());
-            commentsDataDTO.setUserData(commentUserObj);
+            extendedUserDataDTO.setId(user.get().getId());
+            extendedUserDataDTO.setName(user.get().getName());
+            extendedUserDataDTO.setPhoto(user.get().getPhoto());
+            commentsDataDTO.setUserData(extendedUserDataDTO);
             commentsDataDTOList.add(commentsDataDTO);
         }
         postByIdDTO.setCommentsData(commentsDataDTOList);
@@ -131,7 +129,7 @@ public class PostService {
         Page<Post> postsPage =
                 getPostsListWithRequiredMode(checkAndGetOffset(offset),
                         checkAndGetLimit(limit), checkAndGetMode(stringMode));
-        postResponse.setCount(postsPage.getTotalPages());
+        postResponse.setCount(postsPage.getTotalElements());
         List<Post> postsList = postsPage.getContent();
         postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
@@ -144,10 +142,10 @@ public class PostService {
             PostDTO postDTO = new PostDTO();
             postDTO.setPostId(post.getId());
             postDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
-            JSONObject userObj = new JSONObject();
-            userObj.put("id", post.getUserId());
-            userObj.put("name", post.getUser().getName());
-            postDTO.setUserData(userObj);
+            UserDataDTO userDataDTO = new UserDataDTO();
+            userDataDTO.setId(post.getUserId());
+            userDataDTO.setName(post.getUser().getName());
+            postDTO.setUserData(userDataDTO);
             postDTO.setTitle(post.getTitle());
             postDTO.setAnnounce(getAnnounce(post.getText()));
             postDTO.setLikesCount(getLikesCount(post));
@@ -200,7 +198,7 @@ public class PostService {
         for (Post post : bufferPostsList) {
             if (post.isActive()
                     && post.getModerationStatus() == ModerationStatus.ACCEPTED
-                    && post.getTime().isAfter(LocalDateTime.now())) {
+                    && LocalDateTime.now().isAfter(post.getTime())) {
                 list.add(post);
             }
         }
@@ -213,7 +211,7 @@ public class PostService {
                                                     String stringDate) {
         Page<Post> bufferPostsPage;
         Pageable page = PageRequest.of(offset, limit);
-        bufferPostsPage = postRepository.findByTimeEquals(stringDate, page);
+        bufferPostsPage = postRepository.findByDate(stringDate, page);
         return checkAndGetPostsList(bufferPostsPage);
     }
 

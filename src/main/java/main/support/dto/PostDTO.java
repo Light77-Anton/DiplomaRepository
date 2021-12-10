@@ -1,6 +1,5 @@
 package main.support.dto;
 import lombok.Data;
-import org.json.JSONObject;
 
 
 @Data
@@ -8,7 +7,7 @@ public class PostDTO {
 
     private int postId;
     private long timestamp;
-    private JSONObject userData;
+    private UserDataDTO userData;
     private String title;
     private String announce;
     private int likesCount;

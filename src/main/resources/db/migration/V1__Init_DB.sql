@@ -1,5 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS `users` (
+CREATE TABLE `users` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `is_moderator` int NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
-CREATE TABLE IF NOT EXISTS `posts` (
+CREATE TABLE `posts` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `is_active` int NOT NULL,
@@ -22,13 +22,12 @@ CREATE TABLE IF NOT EXISTS `posts` (
     `text` TEXT NOT NULL,
     `view_count` int NOT NULL
 
-
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
 ALTER TABLE `posts` ADD `moderator_id` int AFTER `moderation_status`;
 ALTER TABLE `posts` ADD `user_id` int NOT NULL AFTER `moderator_id`;
 
-CREATE TABLE IF NOT EXISTS `post_votes` (
+CREATE TABLE `post_votes` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `time` DATETIME NOT NULL,
@@ -40,14 +39,14 @@ CREATE TABLE IF NOT EXISTS `post_votes` (
 ALTER TABLE `post_votes` ADD `user_id` int NOT NULL AFTER `id`;
 ALTER TABLE `post_votes` ADD `post_id` int NOT NULL AFTER `user_id`;
 
-CREATE TABLE IF NOT EXISTS `tags` (
+CREATE TABLE `tags` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
-CREATE TABLE IF NOT EXISTS `tag2post` (
+CREATE TABLE `tag2post` (
 
      `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY
 
@@ -56,7 +55,7 @@ CREATE TABLE IF NOT EXISTS `tag2post` (
 ALTER TABLE `tag2post` ADD `post_id` int NOT NULL AFTER `id`;
 ALTER TABLE `tag2post` ADD `tag_id` int NOT NULL AFTER `post_id`;
 
-CREATE TABLE IF NOT EXISTS `post_comments` (
+CREATE TABLE `post_comments` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `time` DATETIME NOT NULL,
@@ -68,7 +67,7 @@ ALTER TABLE `post_comments` ADD `parent_id` int NOT NULL AFTER `id`;
 ALTER TABLE `post_comments` ADD `post_id` int NOT NULL AFTER `parent_id`;
 ALTER TABLE `post_comments` ADD `user_id` int NOT NULL AFTER `post_id`;
 
-CREATE TABLE IF NOT EXISTS `captcha_codes` (
+CREATE TABLE `captcha_codes` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `time` DATETIME NOT NULL,
@@ -77,7 +76,7 @@ CREATE TABLE IF NOT EXISTS `captcha_codes` (
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
-CREATE TABLE IF NOT EXISTS `global_settings` (
+CREATE TABLE `global_settings` (
 
     `code` VARCHAR(255),
     `name` VARCHAR(255),
@@ -89,7 +88,6 @@ INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (1, now(), 
 
 INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (0, now(), 'Петр', 'petr@mail.ru', '54321');
 
-INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (1, "ACCEPTED", 0, now(), 'заголовок первого поста', 'текст первого поста', 0);
+INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (1, "ACCEPTED", 1, now(), 'заголовок первого поста', 'текст первого поста', 0);
 
-INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (0, "NEW", 0, now(), 'заголовок второго поста', 'текст второго поста', 0);
-
+INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (0, "NEW", 2, now(), 'заголовок второго поста', 'текст второго поста', 0);

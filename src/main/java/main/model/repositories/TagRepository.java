@@ -2,7 +2,6 @@ package main.model.repositories;
 import main.model.Tag;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
@@ -13,14 +12,18 @@ List<Tag> findAllByNameContaining(String stringTag);
 
 Tag findByNameContaining(String query);
 
-@Query("with cte_posts_count as (select count(*) from posts) select count(tag.posts) / cte_posts_count from tags tag where tag = :tag") // вычислить ненормированный вес у требуемого тэга
-double getIrrationedWeightByTag(@Param("tag")Tag tag);
+@Query(value = "WITH cte_posts_count as (SELECT count(*) FROM posts) "
+           + "SELECT (count(*) / cte_posts_count) FROM posts "
+           + "INNER JOIN tag2post on tag2post.postId = posts.id "
+           + "INNER JOIN tags on tags.id = tag2post.tagId "
+           + "WHERE tags.name = ?1", nativeQuery = true)
+double getIrrationedWeightByTagName(String tagName);
 
-@Query("with cte_posts_count as (select count(*) from posts) select max(1 / (count(t.posts) / cte_posts_count)) from tags t") // вычислить самый популярный ненормированный тег и поделить на 1
+@Query(value = "WITH cte_posts_count as (SELECT count(*) FROM posts) "
+       + "SELECT MAX(1 / (count(*) / cte_posts_count)) from posts "
+       + "INNER JOIN tag2post on tag2post.postId = posts.id "
+       + "INNER JOIN tags on tags.id = tag2post.tagId", nativeQuery = true)
 double getTheMostPopularTagWeight();
-
-double getMultiplicationByIrrationedWeightAndTheMostPopularTagWeight(double irrationedWeight,
-                                                                     double theMostPopularTagWeight); // Результат умножить на ненормированный вес требуемого тэга
 
 
 

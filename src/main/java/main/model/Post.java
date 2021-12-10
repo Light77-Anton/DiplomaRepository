@@ -44,9 +44,9 @@ public class Post {
     private List<Vote> votes;
 
     @ManyToMany(cascade = CascadeType.ALL)
-    @JoinTable(name = "TagToPost",
+    @JoinTable(name = "tag2post",
             joinColumns = {@JoinColumn(name = "post_id")},
-            inverseJoinColumns = {@JoinColumn(name = "user_id")})
+            inverseJoinColumns = {@JoinColumn(name = "tag_id")})
     private List<Tag> tags;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "postId")

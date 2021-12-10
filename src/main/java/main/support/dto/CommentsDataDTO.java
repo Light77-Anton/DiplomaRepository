@@ -1,7 +1,5 @@
 package main.support.dto;
 import lombok.Data;
-import org.json.JSONObject;
-import java.time.LocalDate;
 
 @Data
 public class CommentsDataDTO {
@@ -9,5 +7,5 @@ public class CommentsDataDTO {
     private int id;
     private long timestamp;
     private String text;
-    private JSONObject userData;
+    private ExtendedUserDataDTO userData;
 }

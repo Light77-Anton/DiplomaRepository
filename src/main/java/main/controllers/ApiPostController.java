@@ -77,7 +77,7 @@ public class ApiPostController {
                 getPostsByTag(offset, limit, tagName), HttpStatus.OK);
     }
 
-    @GetMapping("/api/post/{ID}")
+    @GetMapping("/api/post/{id}")
     private ResponseEntity postById(@PathVariable Integer id) { // пока без авторизации,логика полностью не реализована
 
         if (postService.getPostById(id) == null) {
