@@ -45,9 +45,6 @@ public class CaptchaService {
         byte[] fileContent = baos.toByteArray();
         String encodedString = Base64.getEncoder().encodeToString(fileContent);
         captchaResponse.setImage(TITLE + encodedString);
-        /**
-         * encodedString в base64 - это то,что нужно передавать в image + заголовок.Как понял.
-         */
         CaptchaCode captchaCode = new CaptchaCode();
         captchaCode.setTime(LocalDateTime.now());
         captchaCode.setCode(randomCode.toString());

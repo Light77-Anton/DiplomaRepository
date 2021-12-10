@@ -21,21 +21,31 @@ public class TagService {
     }
 
     public TagResponse getTagList(String query) {
-        TagResponse tagResponse = new TagResponse();
-        List<Tag> tags = tagRepository.findAllByNameContaining(query); //1
+        TagResponse tagResponse;
+        List<Tag> tags;
+        if (query == null) {
+            tags = tagRepository.findAll();
+            tagResponse = new TagResponse();
+            tagResponse.setTags(fillAndGetTagsList(tags));
+        }
+        tagResponse = new TagResponse();
+        tags = tagRepository.findAllByNameContaining(query);
+        tagResponse.setTags(fillAndGetTagsList(tags));
+        return tagResponse;
+    }
+
+    private List<TagDTO> fillAndGetTagsList(List<Tag> tags) {
         List<TagDTO> list = new ArrayList<>();
         for (Tag tag : tags) {
             TagDTO tagDTO = new TagDTO();
             tagDTO.setName(tag.getName());
-            tagDTO.setWeight(tagRepository
-                    .getMultiplicationByIrrationedWeightAndTheMostPopularTagWeight(
-                            tagRepository.getIrrationedWeightByTag(tag),
-                            tagRepository.getTheMostPopularTagWeight()));
-           list.add(tagDTO);
+            tagDTO.setWeight(
+                    tagRepository.getIrrationedWeightByTagName(tag.getName())
+                            * tagRepository.getTheMostPopularTagWeight());
+            list.add(tagDTO);
         }
-        tagResponse.setTags(list);
 
-        return tagResponse;
+        return list;
     }
 
     /*
