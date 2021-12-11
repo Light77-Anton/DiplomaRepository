@@ -1,6 +1,6 @@
 spring:
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baselineOnMigrate: true
   datasource:
@@ -11,7 +11,7 @@ spring:
   jpa:
     show-sql: true
     format_sql: true
-    hibernate.ddl-auto: create
+    hibernate.ddl-auto: none
     hibernate.use-new-id-generator-mappings: false
     properties:
       hibernate:
