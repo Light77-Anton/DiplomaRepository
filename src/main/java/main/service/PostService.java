@@ -7,7 +7,6 @@ import main.model.repositories.TagRepository;
 import main.model.repositories.UserRepository;
 import main.support.*;
 import main.support.dto.*;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.domain.*;
@@ -89,7 +88,7 @@ public class PostService {
         Pageable page = PageRequest.of(checkAndGetOffset(offset),
                 checkAndGetLimit(limit));
         Page<Post> postsPage = postRepository.findByTagsContaining(requiredTag, page);
-        postResponse.setCount(postsPage.getTotalElements());
+        postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
         postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
@@ -103,7 +102,7 @@ public class PostService {
         Page<Post> postsPage =
                 getPostsListWithRequiredDate(checkAndGetOffset(offset),
                 checkAndGetLimit(limit), stringDate);
-        postResponse.setCount(postsPage.getTotalElements());
+        postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
         postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
@@ -116,7 +115,7 @@ public class PostService {
         Page<Post> postsPage =
                 getPostsListWithRequiredQuery(checkAndGetOffset(offset),
                         checkAndGetLimit(limit), query);
-        postResponse.setCount(postsPage.getTotalElements());
+        postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
         postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
@@ -129,7 +128,7 @@ public class PostService {
         Page<Post> postsPage =
                 getPostsListWithRequiredMode(checkAndGetOffset(offset),
                         checkAndGetLimit(limit), checkAndGetMode(stringMode));
-        postResponse.setCount(postsPage.getTotalElements());
+        postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
         postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
 
