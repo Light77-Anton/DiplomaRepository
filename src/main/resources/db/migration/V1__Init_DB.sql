@@ -16,7 +16,8 @@ CREATE TABLE `posts` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `is_active` int NOT NULL,
-    `moderation_status` ENUM("NEW", "ACCEPTED","DECLINED") NOT NULL DEFAULT "NEW",
+    `moderation_status` ENUM('NEW', 'ACCEPTED','DECLINED') NOT NULL DEFAULT 'NEW',
+    `moderator_id` int,
     `time` DATETIME NOT NULL,
     `title` VARCHAR(255) NOT NULL,
     `text` TEXT NOT NULL,
@@ -24,7 +25,6 @@ CREATE TABLE `posts` (
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
-ALTER TABLE `posts` ADD `moderator_id` int AFTER `moderation_status`;
 ALTER TABLE `posts` ADD `user_id` int NOT NULL AFTER `moderator_id`;
 
 CREATE TABLE `post_votes` (
@@ -58,12 +58,12 @@ ALTER TABLE `tag2post` ADD `tag_id` int NOT NULL AFTER `post_id`;
 CREATE TABLE `post_comments` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `parent_id` int NOT NULL,
     `time` DATETIME NOT NULL,
     `text` TEXT NOT NULL
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
 
-ALTER TABLE `post_comments` ADD `parent_id` int NOT NULL AFTER `id`;
 ALTER TABLE `post_comments` ADD `post_id` int NOT NULL AFTER `parent_id`;
 ALTER TABLE `post_comments` ADD `user_id` int NOT NULL AFTER `post_id`;
 
