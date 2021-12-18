@@ -16,16 +16,15 @@ CREATE TABLE `posts` (
 
     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `is_active` int NOT NULL,
-    `moderation_status` ENUM('NEW', 'ACCEPTED','DECLINED') NOT NULL DEFAULT 'NEW',
+    `moderation_status` ENUM('NEW','ACCEPTED','DECLINED') NOT NULL DEFAULT 'NEW',
     `moderator_id` int,
+    `user_id` int NOT NULL,
     `time` DATETIME NOT NULL,
     `title` VARCHAR(255) NOT NULL,
     `text` TEXT NOT NULL,
     `view_count` int NOT NULL
 
 )ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-ALTER TABLE `posts` ADD `user_id` int NOT NULL AFTER `moderator_id`;
 
 CREATE TABLE `post_votes` (
 
@@ -91,3 +90,7 @@ INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (0, now(), 
 INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (1, "ACCEPTED", 1, now(), 'заголовок первого поста', 'текст первого поста', 0);
 
 INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (0, "NEW", 2, now(), 'заголовок второго поста', 'текст второго поста', 0);
+
+INSERT INTO tags (name) VALUES ("первый тэг");
+
+INSERT INTO tags (name) VALUES ("второй тэг");
