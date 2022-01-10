@@ -1,4 +1,5 @@
 package main.service;
+import main.api.response.MyPostResponse;
 import main.api.response.PostByIdResponse;
 import main.api.response.PostResponse;
 import main.model.*;
@@ -24,9 +25,48 @@ public class PostService {
     private UserRepository userRepository;
     @Autowired
     private TagRepository tagRepository;
+    private final SubmethodsForService submethodsForService = new SubmethodsForService(); // возможно надо сделать методы класса статиками,под вопросом
 
     public PostService() {
 
+    }
+
+    public MyPostResponse getMyPost(Integer offset,
+                                    Integer limit, String status) {
+
+        MyPostResponse myPostResponse = new MyPostResponse();
+        Page<Post> postsPage = submethodsForService
+                .getPostsPageWithRequiredStatus(
+                submethodsForService.checkAndGetOffset(offset),
+                submethodsForService.checkAndGetLimit(limit),
+                submethodsForService.checkAndGetPostStatus(status));
+        if (postsPage == null) {
+            myPostResponse.setCount(0);
+            myPostResponse.setPosts(new ArrayList<>());
+            return myPostResponse;
+        }
+        myPostResponse.setCount(postsPage.getTotalPages());
+        List<Post> postsList = postsPage.getContent();
+        List<MyPostDTO> myPostsList = new ArrayList<>();
+        for (Post post : postsList) {
+            MyPostDTO myPostDTO = new MyPostDTO();
+            myPostDTO.setPostId(post.getId());
+            myPostDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
+            myPostDTO.setTitle(post.getTitle());
+            myPostDTO.setAnnounce(submethodsForService.getAnnounce(post.getText()));
+            myPostDTO.setLikeCount(submethodsForService.getLikesCount(post));
+            myPostDTO.setDislikeCount(submethodsForService.getDislikesCount(post));
+            myPostDTO.setCommentCount(post.getCommentaries().size());
+            myPostDTO.setViewCount(post.getViewCount());
+            UserDataDTO userDataDTO = new UserDataDTO();
+            userDataDTO.setId(post.getUserId());
+            userDataDTO.setName(post.getUser().getName());
+            myPostDTO.setUserData(userDataDTO);
+            myPostsList.add(myPostDTO);
+        }
+        myPostResponse.setPosts(myPostsList);
+
+        return myPostResponse;
     }
 
     public PostByIdResponse getPostById(Integer id) {
@@ -46,8 +86,8 @@ public class PostService {
         postByIdDTO.setUserData(userDataDTO);
         postByIdDTO.setTitle(post.get().getTitle());
         postByIdDTO.setText(post.get().getText());
-        postByIdDTO.setLikesCount(getLikesCount(post.get()));
-        postByIdDTO.setDislikeCount(getDislikesCount(post.get()));
+        postByIdDTO.setLikesCount(submethodsForService.getLikesCount(post.get()));
+        postByIdDTO.setDislikeCount(submethodsForService.getDislikesCount(post.get()));
         postByIdDTO.setViewCount(post.get().getViewCount());
         List<CommentsDataDTO> commentsDataDTOList = new ArrayList<>();
         List<Comment> commentList = post.get().getCommentaries();
@@ -85,12 +125,13 @@ public class PostService {
             postResponse.setPosts(new ArrayList<>());
             return postResponse;
         }
-        Pageable page = PageRequest.of(checkAndGetOffset(offset),
-                checkAndGetLimit(limit));
-        Page<Post> postsPage = postRepository.findByTagsContaining(requiredTag, page);
+        Pageable page = PageRequest.of(
+                submethodsForService.checkAndGetOffset(offset),
+                submethodsForService.checkAndGetLimit(limit));
+        Page<Post> postsPage = postRepository.findByTagContaining(requiredTag, page);
         postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
-        postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
+        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
@@ -98,13 +139,14 @@ public class PostService {
     public PostResponse getPostsByDate(Integer offset,
                                        Integer limit, String stringDate) {
         PostResponse postResponse = new PostResponse();
-        //SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd"); возможно нужна доп. проверка,что переданная дата в правильном формате
         Page<Post> postsPage =
-                getPostsListWithRequiredDate(checkAndGetOffset(offset),
-                checkAndGetLimit(limit), stringDate);
+                submethodsForService.getPostsListWithRequiredDate(
+                        submethodsForService.checkAndGetOffset(offset),
+                        submethodsForService.checkAndGetLimit(limit),
+                        stringDate);
         postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
-        postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
+        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
@@ -113,11 +155,13 @@ public class PostService {
                                             Integer limit, String query) {
         PostResponse postResponse = new PostResponse();
         Page<Post> postsPage =
-                getPostsListWithRequiredQuery(checkAndGetOffset(offset),
-                        checkAndGetLimit(limit), query);
+                submethodsForService.getPostsListWithRequiredQuery(
+                        submethodsForService.checkAndGetOffset(offset),
+                        submethodsForService.checkAndGetLimit(limit),
+                        query);
         postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
-        postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
+        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
@@ -126,155 +170,15 @@ public class PostService {
                                      Integer limit, String stringMode) {
         PostResponse postResponse = new PostResponse();
         Page<Post> postsPage =
-                getPostsListWithRequiredMode(checkAndGetOffset(offset),
-                        checkAndGetLimit(limit), checkAndGetMode(stringMode));
+                submethodsForService.getPostsPageWithRequiredMode(
+                        submethodsForService.checkAndGetOffset(offset),
+                        submethodsForService.checkAndGetLimit(limit),
+                        submethodsForService.checkAndGetMode(stringMode));
         postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
-        postResponse.setPosts(fillAndGetArrayWithPosts(postsList));
+        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
-    }
-
-    private List<PostDTO> fillAndGetArrayWithPosts(List<Post> postsList) {
-        List<PostDTO> list = new ArrayList<>();
-        for (Post post : postsList) {
-            PostDTO postDTO = new PostDTO();
-            postDTO.setPostId(post.getId());
-            postDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
-            UserDataDTO userDataDTO = new UserDataDTO();
-            userDataDTO.setId(post.getUserId());
-            userDataDTO.setName(post.getUser().getName());
-            postDTO.setUserData(userDataDTO);
-            postDTO.setTitle(post.getTitle());
-            postDTO.setAnnounce(getAnnounce(post.getText()));
-            postDTO.setLikesCount(getLikesCount(post));
-            postDTO.setDislikeCount(getDislikesCount(post));
-            postDTO.setCommentCount(post.getCommentaries().size());
-            postDTO.setViewCount(post.getViewCount());
-            list.add(postDTO);
-        }
-        return list;
-    }
-
-    private Mode checkAndGetMode(String stringMode) {
-        if (stringMode == null) {
-            return Mode.RECENT;
-        }
-        Mode mode = null;
-        boolean isValidMode = false;
-        for (Mode modeValue : Mode.values()) {
-            if (modeValue.name().equals(stringMode)) {
-                mode = modeValue;
-                isValidMode = true;
-                break;
-            }
-        }
-        if (!isValidMode) {
-            mode = Mode.RECENT;
-        }
-
-        return mode;
-    }
-
-    private Integer checkAndGetOffset(Integer offset) {
-        if (offset == null || offset < 0) {
-            offset = 0;
-        }
-
-        return offset;
-    }
-
-    private Integer checkAndGetLimit(Integer limit) {
-        if (limit == null || limit < 0) {
-            limit = 10;
-        }
-
-        return limit;
-    }
-
-    private Page<Post> checkAndGetPostsList(Page<Post> bufferPostsList) {
-        List<Post> list = new ArrayList<>();
-        for (Post post : bufferPostsList) {
-            if (post.isActive()
-                    && post.getModerationStatus() == ModerationStatus.ACCEPTED
-                    && LocalDateTime.now().isAfter(post.getTime())) {
-                list.add(post);
-            }
-        }
-        Page<Post> page = new PageImpl<>(list);
-        return page;
-    }
-
-    private Page<Post> getPostsListWithRequiredDate(Integer offset,
-                                                    Integer limit,
-                                                    String stringDate) {
-        Page<Post> bufferPostsPage;
-        Pageable page = PageRequest.of(offset, limit);
-        bufferPostsPage = postRepository.findByDate(stringDate, page);
-        return checkAndGetPostsList(bufferPostsPage);
-    }
-
-    private Page<Post> getPostsListWithRequiredQuery(Integer offset,
-                                                     Integer limit,
-                                                     String query) {
-        Page<Post> bufferPostPage;
-        Pageable page = PageRequest.of(offset, limit, Sort.by("time").descending());
-        bufferPostPage = postRepository.findByTextContaining(query, page);
-        return checkAndGetPostsList(bufferPostPage);
-    }
-
-    private Page<Post> getPostsListWithRequiredMode(Integer offset,
-                                                    Integer limit, Mode mode) {
-        Page<Post> bufferPostsPage;
-        Page<Post> postsPage;
-        Pageable pageable = PageRequest.of(offset / limit, limit);
-        if (mode == Mode.RECENT) {
-            bufferPostsPage = postRepository.findAllAndOrderByTimeDesc(pageable);
-            postsPage = checkAndGetPostsList(bufferPostsPage);
-        } else if (mode == Mode.POPULAR) {
-            bufferPostsPage = postRepository.findAllAndOrderByCommentariesSize(pageable);
-            postsPage = checkAndGetPostsList(bufferPostsPage);
-        } else if (mode == Mode.BEST) {
-            bufferPostsPage = postRepository.findAllAndOrderByVotesCount(pageable);
-            postsPage = checkAndGetPostsList(bufferPostsPage);
-        } else { // EARLY
-            bufferPostsPage = postRepository.findAllAndOrderByTimeAsc(pageable);
-            postsPage = checkAndGetPostsList(bufferPostsPage);
-        }
-
-        return postsPage;
-    }
-
-    private String getAnnounce(String text) {
-        String announce;
-        if (text.length() < 150) {
-            announce = text + "...";
-        } else {
-            announce = text.substring(0, 150) + "...";
-        }
-        return announce;
-    }
-
-    private int getLikesCount(Post post) {
-        int likesCount = 0;
-        for (Vote vote : post.getVotes()) {
-            if (vote.getValue() == 1) {
-                likesCount++;
-            }
-        }
-
-        return likesCount;
-    }
-
-    private int getDislikesCount(Post post) {
-        int dislikesCount = 0;
-        for (Vote vote : post.getVotes()) {
-            if (vote.getValue() == -1) {
-                dislikesCount++;
-            }
-        }
-
-        return dislikesCount;
     }
 
 }

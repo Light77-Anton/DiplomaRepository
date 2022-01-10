@@ -4,18 +4,16 @@ spring:
     locations: classpath:db/migration
     baselineOnMigrate: true
   datasource:
-    url: jdbc:mysql://localhost:3306/dfschema?useSSL=false
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: 77Light78MySQL79
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=dfschema&ssl=false
+    username: postgres
+    password: postgretest
   jpa:
     show-sql: true
     format_sql: true
     hibernate.ddl-auto: none
-    hibernate.use-new-id-generator-mappings: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL5Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         connection pool_size: 10
 blog:
   title: DevPub

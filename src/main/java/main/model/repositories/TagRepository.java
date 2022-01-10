@@ -12,18 +12,21 @@ List<Tag> findAllByNameContaining(String stringTag);
 
 Tag findByNameContaining(String query);
 
-@Query(value = "WITH cte_posts_count as (SELECT count(*) FROM posts) "
-           + "SELECT (count(*) / cte_posts_count) FROM posts "
-           + "INNER JOIN tag2post on tag2post.postId = posts.id "
-           + "INNER JOIN tags on tags.id = tag2post.tagId "
-           + "WHERE tags.name = ?1", nativeQuery = true)
-double getIrrationedWeightByTagName(String tagName);
+@Query(value = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+Double getPostsCount();
 
-@Query(value = "WITH cte_posts_count as (SELECT count(*) FROM posts) "
-       + "SELECT MAX(1 / (count(*) / cte_posts_count)) from posts "
-       + "INNER JOIN tag2post on tag2post.postId = posts.id "
-       + "INNER JOIN tags on tags.id = tag2post.tagId", nativeQuery = true)
-double getTheMostPopularTagWeight();
+@Query(value = "SELECT COUNT(*) / ?2 FROM posts AS p "
+        + "LEFT JOIN tag2post AS ttp ON ttp.post_id = p.id "
+        + "RIGHT JOIN tags AS t ON t.id = ttp.tag_id "
+        + "WHERE t.name = ?1", nativeQuery = true)
+Double getIrrationedWeightByTagName(String tagName,double postsCount);
+
+@Query(value = "SELECT MAX(ttp.id) FROM tag2post AS ttp "
+        + "INNER JOIN posts AS p ON ttp.post_id = p.id "
+        + "INNER JOIN tags AS t ON ttp.tag_id = t.id", nativeQuery = true)
+Double getPostsCountWithTheMostPopularTag();
+
+
 
 
 

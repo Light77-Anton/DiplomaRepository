@@ -1,0 +1,100 @@
+CREATE SCHEMA IF NOT EXISTS dfschema;
+
+CREATE TABLE dfschema.users (
+
+    id int NOT NULL AUTO_INCREMENT,
+    is_moderator int NOT NULL,
+    reg_time DATETIME NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    code VARCHAR(255),
+    photo TEXT,
+    PRIMARY KEY (id)
+
+)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+CREATE TABLE dfschema.posts (
+
+    id int NOT NULL AUTO_INCREMENT,
+    is_active int NOT NULL,
+    moderation_status ENUM('NEW','ACCEPTED','DECLINED') NOT NULL DEFAULT 'NEW',
+    moderation_id int,
+    user_id int NOT NULL,
+    time DATETIME NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    text TEXT NOT NULL,
+    view_count int NOT NULL,
+    PRIMARY KEY (id)
+
+)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+CREATE TABLE dfschema.post_votes (
+
+    id int NOT NULL AUTO_INCREMENT,
+    user_id int NOT NULL,
+    post_id int NOT NULL,
+    time DATETIME NOT NULL,
+    value int NOT NULL,
+    PRIMARY KEY (id)
+
+)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+CREATE TABLE dfschema.tags (
+
+    id int NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id)
+
+)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+CREATE TABLE dfschema.tag2post (
+
+     id int NOT NULL AUTO_INCREMENT,
+     post_id int NOT NULL,
+     tag_id int NOT NULL,
+     PRIMARY KEY (id)
+
+)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+CREATE TABLE dfschema.post_comments (
+
+    id int NOT NULL AUTO_INCREMENT,
+    parent_id int NOT NULL,
+    post_id int NOT NULL,
+    user_id int NOT NULL,
+    time DATETIME NOT NULL,
+    text TEXT NOT NULL,
+    PRIMARY KEY (id)
+
+)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+CREATE TABLE dfschema.captcha_codes (
+
+    id int NOT NULL AUTO_INCREMENT,
+    time DATETIME NOT NULL,
+    code int NOT NULL,
+    secret_code int NOT NULL,
+    PRIMARY KEY (id)
+
+)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+CREATE TABLE dfschema.global_settings (
+
+    code VARCHAR(255),
+    name VARCHAR(255),
+    value VARCHAR(255)
+
+)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+
+INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (1, now(), 'Василий', 'vasily@mail.ru', '12345');
+
+INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (0, now(), 'Петр', 'petr@mail.ru', '54321');
+
+INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (1, 'ACCEPTED', 1, now(), 'заголовок первого поста', 'текст первого поста', 0);
+
+INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (0, 'NEW', 2, now(), 'заголовок второго поста', 'текст второго поста', 0);
+
+INSERT INTO tags (name) VALUES ("первый тэг");
+
+INSERT INTO tags (name) VALUES ("второй тэг");

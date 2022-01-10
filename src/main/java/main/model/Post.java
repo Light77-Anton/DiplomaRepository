@@ -21,17 +21,19 @@ public class Post {
     @Column(name = "moderation_status", columnDefinition = "enum")
     private ModerationStatus moderationStatus;
 
-    @Column(name = "moderator_id")
+    @Column(name = "moderation_id")
     private Integer moderatorId;
 
     @Column(name = "user_id", insertable = false, updatable = false)
     private int userId;
 
-    //@Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "time")
     private LocalDateTime time;
 
+    @Column(name = "title")
     private String title;
 
+    @Column(name = "text")
     private String text;
 
     @Column(name = "view_count")

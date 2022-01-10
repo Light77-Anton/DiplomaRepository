@@ -1,4 +1,4 @@
-/*
+
 package main.support;
 
 public enum Permission {
@@ -18,4 +18,4 @@ public enum Permission {
 
 }
 
- */
+

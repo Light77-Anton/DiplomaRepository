@@ -3,13 +3,9 @@ import main.api.response.CalendarResponse;
 import main.model.Post;
 import main.model.repositories.PostRepository;
 import main.support.ModerationStatus;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 

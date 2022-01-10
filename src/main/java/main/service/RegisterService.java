@@ -25,11 +25,12 @@ public class RegisterService {
                             String captchaSecret) {
 
         if (email == null || name == null
-                || password == null || captcha == null) {
+                || password == null || captcha == null
+        || captchaSecret == null) {
             return "запрос не принят,нужно обязательно ввести"
-                    + " эмэйл,имя,пароль и надпись с картинки для регистрации";
+                    + " эмэйл,имя,пароль,секретный код капчи и надпись с картинки для регистрации";
         }
-        if (!email.contains("@") || email.equals("")) {
+        if (!email.contains("@")) {
             return "это явно не эмэйл";
         }
         if (name.equals("")) {
@@ -61,8 +62,10 @@ public class RegisterService {
                 return "Код с картинки введён неверно";
             }
         }
-
-        return "";
+        else {
+            return "Похоже время время существование капчи истекло" +
+                    ",нужно сгенерировать новую";
+        }
     }
 
     private void createNewUser(User newUser) {

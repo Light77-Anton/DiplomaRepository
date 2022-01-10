@@ -1,4 +1,4 @@
-/*
+
 package main.security;
 import lombok.Data;
 import main.model.User;
@@ -61,4 +61,3 @@ public class SecurityUser implements UserDetails {
     }
 }
 
- */

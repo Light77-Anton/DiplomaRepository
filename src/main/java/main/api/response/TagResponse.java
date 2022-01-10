@@ -12,5 +12,4 @@ import java.util.List;
 public class TagResponse {
 
     private List<TagDTO> tags;
-
 }

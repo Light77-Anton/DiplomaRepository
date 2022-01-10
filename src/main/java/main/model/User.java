@@ -1,5 +1,6 @@
 package main.model;
 import lombok.Data;
+import main.support.Role;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,10 +39,7 @@ public class User {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "userId")
     private List<Comment> comments;
 
-    /*
     public Role getRole() {
         return isModerator == false ? Role.USER : Role.MODERATOR;
     }
-
-     */
 }

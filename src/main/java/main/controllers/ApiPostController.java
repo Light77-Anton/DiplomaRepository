@@ -5,6 +5,7 @@ import main.service.PostService;
 import main.service.RegisterService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post")
+    @PreAuthorize("permitAll()")
     private ResponseEntity post(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -34,6 +36,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/search")
+    @PreAuthorize("permitAll()")
     private ResponseEntity<PostResponse> postSearch(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -54,6 +57,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/byDate")
+    @PreAuthorize("permitAll()")
     private ResponseEntity postByDate(
             @RequestParam(value = "date", required = false) String date,
             @RequestParam(value = "offset", required = false) Integer offset,
@@ -64,6 +68,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/byTag")
+    @PreAuthorize("permitAll()")
     private ResponseEntity<PostResponse> postByTag(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -78,6 +83,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/{id}")
+    @PreAuthorize("permitAll()")
     private ResponseEntity postById(@PathVariable Integer id) { // пока без авторизации,логика полностью не реализована
 
         if (postService.getPostById(id) == null) {
@@ -85,6 +91,15 @@ public class ApiPostController {
                     HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity(postService.getPostById(id), HttpStatus.OK);
+    }
+
+    @GetMapping("/api/post/my")
+    @PreAuthorize("user:write")
+    private ResponseEntity myPost(@RequestParam(value = "offset", required = false) Integer offset,
+                                  @RequestParam(value = "limit", required = false) Integer limit,
+                                  @RequestParam(value = "status", required = true) String status) {
+
+        return new ResponseEntity(postService.getMyPost(offset, limit, status), HttpStatus.OK);
     }
 
 }

@@ -9,16 +9,10 @@ import org.springframework.stereotype.Component;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisterRequest {
+public class LoginRequest {
 
     @JsonProperty("e_mail")
     private String email;
     @JsonProperty("password")
     private String password;
-    @JsonProperty("name")
-    private String name;
-    @JsonProperty("captcha")
-    private String captcha;
-    @JsonProperty("secret_code")
-    private String secretCode;
 }

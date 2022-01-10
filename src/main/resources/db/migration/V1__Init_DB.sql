@@ -1,96 +1,89 @@
 
-CREATE TABLE `users` (
+CREATE TABLE users (
 
-    `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `is_moderator` int NOT NULL,
-    `reg_time` DATETIME NOT NULL,
-    `name` VARCHAR(255) NOT NULL,
-    `email` VARCHAR(255) NOT NULL,
-    `password` VARCHAR(255) NOT NULL,
-    `code` VARCHAR(255),
-    `photo` TEXT
+    id SERIAL NOT NULL,
+    is_moderator INT NOT NULL,
+    reg_time TIMESTAMP NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    code VARCHAR(255),
+    photo TEXT,
+    PRIMARY KEY (id)
+);
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+CREATE TYPE status AS ENUM ('NEW','ACCEPTED','DECLINED');
 
-CREATE TABLE `posts` (
+CREATE TABLE posts (
 
-    `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `is_active` int NOT NULL,
-    `moderation_status` ENUM('NEW','ACCEPTED','DECLINED') NOT NULL DEFAULT 'NEW',
-    `moderator_id` int,
-    `user_id` int NOT NULL,
-    `time` DATETIME NOT NULL,
-    `title` VARCHAR(255) NOT NULL,
-    `text` TEXT NOT NULL,
-    `view_count` int NOT NULL
+    id SERIAL NOT NULL,
+    is_active INT NOT NULL,
+    moderation_status status default 'NEW',
+    moderation_id INT,
+    user_id INT NOT NULL,
+    time TIMESTAMP NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    text TEXT NOT NULL,
+    view_count INT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id)
+);
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+CREATE TABLE post_votes (
 
-CREATE TABLE `post_votes` (
+    id SERIAL NOT NULL,
+    user_id INT NOT NULL,
+    post_id INT NOT NULL,
+    time TIMESTAMP NOT NULL,
+    value INT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id),
+    CONSTRAINT fk_post FOREIGN KEY(post_id) REFERENCES posts(id)
+);
 
-    `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `time` DATETIME NOT NULL,
-    `value` int NOT NULL
+CREATE TABLE tags (
 
+    id SERIAL NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id)
+);
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+CREATE TABLE tag2post (
 
-ALTER TABLE `post_votes` ADD `user_id` int NOT NULL AFTER `id`;
-ALTER TABLE `post_votes` ADD `post_id` int NOT NULL AFTER `user_id`;
+     id SERIAL NOT NULL,
+     post_id INT NOT NULL,
+     tag_id INT NOT NULL,
+     PRIMARY KEY (id),
+     CONSTRAINT fk_post FOREIGN KEY(post_id) REFERENCES posts(id),
+     CONSTRAINT fk_tag FOREIGN KEY(tag_id) REFERENCES tags(id)
+);
 
-CREATE TABLE `tags` (
+CREATE TABLE post_comments (
 
-    `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL
+    id SERIAL NOT NULL,
+    parent_id INT NOT NULL,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    time TIMESTAMP NOT NULL,
+    text TEXT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_post FOREIGN KEY(post_id) REFERENCES posts(id),
+    CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id)
+);
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+CREATE TABLE captcha_codes (
 
-CREATE TABLE `tag2post` (
+    id SERIAL NOT NULL,
+    time TIMESTAMP NOT NULL,
+    code TEXT NOT NULL,
+    secret_code TEXT NOT NULL,
+    PRIMARY KEY (id)
+);
 
-     `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY
+CREATE TABLE global_settings (
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-ALTER TABLE `tag2post` ADD `post_id` int NOT NULL AFTER `id`;
-ALTER TABLE `tag2post` ADD `tag_id` int NOT NULL AFTER `post_id`;
-
-CREATE TABLE `post_comments` (
-
-    `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `parent_id` int NOT NULL,
-    `time` DATETIME NOT NULL,
-    `text` TEXT NOT NULL
-
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-ALTER TABLE `post_comments` ADD `post_id` int NOT NULL AFTER `parent_id`;
-ALTER TABLE `post_comments` ADD `user_id` int NOT NULL AFTER `post_id`;
-
-CREATE TABLE `captcha_codes` (
-
-    `id` int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `time` DATETIME NOT NULL,
-    `code` int NOT NULL,
-    `secret_code` int NOT NULL
-
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-CREATE TABLE `global_settings` (
-
-    `code` VARCHAR(255),
-    `name` VARCHAR(255),
-    `value` VARCHAR(255)
-
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (1, now(), 'Василий', 'vasily@mail.ru', '12345');
-
-INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (0, now(), 'Петр', 'petr@mail.ru', '54321');
-
-INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (1, "ACCEPTED", 1, now(), 'заголовок первого поста', 'текст первого поста', 0);
-
-INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (0, "NEW", 2, now(), 'заголовок второго поста', 'текст второго поста', 0);
-
-INSERT INTO tags (name) VALUES ("первый тэг");
-
-INSERT INTO tags (name) VALUES ("второй тэг");
+    id SERIAL NOT NULL,
+    code VARCHAR(255) NOt NULL,
+    name VARCHAR(255) NOt NULL,
+    value VARCHAR(255) NOt NULL
+);

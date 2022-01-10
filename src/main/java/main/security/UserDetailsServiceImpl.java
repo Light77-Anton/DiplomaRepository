@@ -1,4 +1,4 @@
-/*
+
 package main.security;
 import main.model.User;
 import main.model.repositories.UserRepository;
@@ -26,4 +26,3 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 }
 
- */

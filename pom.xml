@@ -30,6 +30,16 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -61,6 +71,10 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-commons</artifactId>
         </dependency>
@@ -71,7 +85,7 @@
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>8.0.25</version>
+            <version>8.0.27</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -107,9 +121,14 @@
             <version>4.2</version>
         </dependency>
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-maven-plugin</artifactId>
-            <version>8.0.0</version>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <version>2.6.0</version>
         </dependency>
     </dependencies>
 
@@ -130,13 +149,11 @@
             <plugin>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
-                <version>8.0.0</version>
+                <version>8.1.0</version>
                 <configuration>
-                    <driver>com.mysql.cj.jdbc.Driver</driver>
-                    <url>jdbc:mysql://localhost:3306/dfschema?useSSL=false</url>
-                    <user>root</user>
-                    <password>77Light78MySQL79</password>
-                    <baselineOnMigrate>true</baselineOnMigrate>
+                    <url>jdbc:postgresql://localhost:5432/postgres?currentSchema=dfschema&amp;ssl=false</url>
+                    <user>postgres</user>
+                    <password>postgretest</password>
                     <schemas>
                         <schema>dfschema</schema>
                     </schemas>
