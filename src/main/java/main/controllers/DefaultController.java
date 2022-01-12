@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class DefaultController {
 
     @RequestMapping("/")
-    @PreAuthorize("permitAll()")
     public String index(Model model) {
 
         return "index";

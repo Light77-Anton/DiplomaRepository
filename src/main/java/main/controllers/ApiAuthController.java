@@ -7,17 +7,16 @@ import main.api.response.RegisterResponse;
 import main.service.AuthService;
 import main.service.CaptchaService;
 import main.service.RegisterService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
-@Controller
 //@RequestMapping(/api/auth/)  предположительно, здесь будет все,что связано с auth
+@Controller
 public class ApiAuthController {
 
     private final CaptchaService captchaService;
@@ -32,7 +31,6 @@ public class ApiAuthController {
     }
 
     @GetMapping("/api/auth/check")
-    @PreAuthorize("permitAll()")
     private ResponseEntity<LoginResponse> authCheck(Principal principal) {
 
         if (principal == null) {
@@ -43,23 +41,24 @@ public class ApiAuthController {
                 HttpStatus.OK);
     }
 
-    @PostMapping("/api/auth/login")
-    @PreAuthorize("permitAll()")
+    //@PostMapping("/api/auth/login")
+    @RequestMapping(value = "/api/auth/login", method = { RequestMethod.GET, RequestMethod.POST })
     private ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
         return new ResponseEntity<>(authService.getLogin(loginRequest.getEmail(),
                 loginRequest.getPassword()), HttpStatus.OK);
     }
 
-    @GetMapping("/api/auth/logout")
-    @PreAuthorize("user:write")
+    //@GetMapping("/api/auth/logout")
+    @PreAuthorize("hasAuthority('user:write')")
+    @RequestMapping(value = "/api/auth/logout", method = { RequestMethod.GET, RequestMethod.POST })
     private ResponseEntity<Boolean> logout() {
 
         return new ResponseEntity<>(authService.getLogout(),HttpStatus.OK);
     }
 
-    @PostMapping("/api/auth/register")
-    @PreAuthorize("permitAll()")
+    //@PostMapping("/api/auth/register")
+    @RequestMapping(value = "/api/auth/register", method = { RequestMethod.GET, RequestMethod.POST })
     private ResponseEntity authRegister(
             @RequestBody RegisterRequest registerRequest) throws Exception {
 
@@ -84,8 +83,8 @@ public class ApiAuthController {
         return new ResponseEntity(registerResponse, HttpStatus.OK);
     }
 
-    @GetMapping("/api/auth/captcha")
-    @PreAuthorize("permitAll()")
+    //@GetMapping("/api/auth/captcha")
+    @RequestMapping(value = "/api/auth/captcha", method = { RequestMethod.GET, RequestMethod.POST })
     private ResponseEntity<CaptchaResponse> authCaptcha() throws Exception {
         captchaService.deleteOldCaptchasFromRepository();
 

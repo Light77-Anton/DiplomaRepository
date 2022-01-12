@@ -25,7 +25,6 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post")
-    @PreAuthorize("permitAll()")
     private ResponseEntity post(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -36,7 +35,6 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/search")
-    @PreAuthorize("permitAll()")
     private ResponseEntity<PostResponse> postSearch(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -57,7 +55,6 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/byDate")
-    @PreAuthorize("permitAll()")
     private ResponseEntity postByDate(
             @RequestParam(value = "date", required = false) String date,
             @RequestParam(value = "offset", required = false) Integer offset,
@@ -68,7 +65,6 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/byTag")
-    @PreAuthorize("permitAll()")
     private ResponseEntity<PostResponse> postByTag(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -83,7 +79,6 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/{id}")
-    @PreAuthorize("permitAll()")
     private ResponseEntity postById(@PathVariable Integer id) { // пока без авторизации,логика полностью не реализована
 
         if (postService.getPostById(id) == null) {
@@ -93,8 +88,8 @@ public class ApiPostController {
         return new ResponseEntity(postService.getPostById(id), HttpStatus.OK);
     }
 
+    @PreAuthorize("hasAuthority('user:write')")
     @GetMapping("/api/post/my")
-    @PreAuthorize("user:write")
     private ResponseEntity myPost(@RequestParam(value = "offset", required = false) Integer offset,
                                   @RequestParam(value = "limit", required = false) Integer limit,
                                   @RequestParam(value = "status", required = true) String status) {

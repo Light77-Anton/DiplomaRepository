@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -31,11 +32,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .csrf().disable()
-                //.authorizeRequests()
-                //.antMatchers("/**").permitAll()
-                //.anyRequest()
-                //.authenticated()
-                //.and()
+                .httpBasic().disable()
+                .formLogin().disable()
+                .authorizeRequests()
+                .antMatchers(HttpMethod.GET, "/**").permitAll()
+                .antMatchers(HttpMethod.POST, "/**").permitAll()
+                .anyRequest()
+                .authenticated()
+                .and()
+                .logout()
+                .logoutUrl("api/auth/logout")
+                .clearAuthentication(true);
+    }
+
+    /*
+    http
+                .csrf().disable()
+                .authorizeRequests()
+                .antMatchers("/**").permitAll()
+                .and()
                 .formLogin().disable()
                 .httpBasic()
                 .and()
@@ -45,7 +60,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .clearAuthentication(true)
                 .invalidateHttpSession(true)
                 .logoutSuccessUrl("/api/auth/login");
-    }
+     */
 
     @Bean
     protected DaoAuthenticationProvider daoAuthenticationProvider() {
