@@ -25,7 +25,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post")
-    private ResponseEntity post(
+    public ResponseEntity post(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "mode", required = false) String mode) {
@@ -35,7 +35,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/search")
-    private ResponseEntity<PostResponse> postSearch(
+    public ResponseEntity<PostResponse> postSearch(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "query", required = false) String query
@@ -55,7 +55,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/byDate")
-    private ResponseEntity postByDate(
+    public ResponseEntity postByDate(
             @RequestParam(value = "date", required = false) String date,
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit) {
@@ -65,7 +65,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/byTag")
-    private ResponseEntity<PostResponse> postByTag(
+    public ResponseEntity<PostResponse> postByTag(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "tag", required = false) String tagName) {
@@ -79,7 +79,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/{id}")
-    private ResponseEntity postById(@PathVariable Integer id) { // пока без авторизации,логика полностью не реализована
+    public ResponseEntity postById(@PathVariable Integer id) { // пока без авторизации,логика полностью не реализована
 
         if (postService.getPostById(id) == null) {
             return new ResponseEntity("документ не найден",
@@ -90,7 +90,7 @@ public class ApiPostController {
 
     @PreAuthorize("hasAuthority('user:write')")
     @GetMapping("/api/post/my")
-    private ResponseEntity myPost(@RequestParam(value = "offset", required = false) Integer offset,
+    public ResponseEntity myPost(@RequestParam(value = "offset", required = false) Integer offset,
                                   @RequestParam(value = "limit", required = false) Integer limit,
                                   @RequestParam(value = "status", required = true) String status) {
 

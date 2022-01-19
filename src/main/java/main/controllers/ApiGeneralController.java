@@ -34,19 +34,19 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/api/init")
-    private ResponseEntity<InitResponse> init() {
+    public ResponseEntity<InitResponse> init() {
         return new ResponseEntity<>(initResponse, HttpStatus.OK);
     }
 
     //@GetMapping("/api/settings")
     @RequestMapping(value = "/api/settings", method = { RequestMethod.GET, RequestMethod.POST })
-    private ResponseEntity<SettingResponse> settings() {
+    public ResponseEntity<SettingResponse> settings() {
         return new ResponseEntity<>(settingsService.getGlobalSettings(),
                 HttpStatus.OK);
     }
 
     @GetMapping("/api/tag")
-    private ResponseEntity<TagResponse> tag(
+    public ResponseEntity<TagResponse> tag(
             @RequestParam(value = "query", required = false) String query) {
 
         return new ResponseEntity<>(tagService.getTagList(query),
@@ -54,7 +54,7 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/api/calendar")
-    private ResponseEntity calendar(@RequestParam(value = "year",
+    public ResponseEntity calendar(@RequestParam(value = "year",
             required = false) String year) {
 
         return new ResponseEntity(calendarService.

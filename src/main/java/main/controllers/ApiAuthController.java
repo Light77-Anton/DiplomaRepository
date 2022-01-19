@@ -31,7 +31,7 @@ public class ApiAuthController {
     }
 
     @GetMapping("/api/auth/check")
-    private ResponseEntity<LoginResponse> authCheck(Principal principal) {
+    public ResponseEntity<LoginResponse> authCheck(Principal principal) {
 
         if (principal == null) {
             return new ResponseEntity<>(new LoginResponse(),HttpStatus.OK);
@@ -43,7 +43,7 @@ public class ApiAuthController {
 
     //@PostMapping("/api/auth/login")
     @RequestMapping(value = "/api/auth/login", method = { RequestMethod.GET, RequestMethod.POST })
-    private ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
         return new ResponseEntity<>(authService.getLogin(loginRequest.getEmail(),
                 loginRequest.getPassword()), HttpStatus.OK);
@@ -52,14 +52,14 @@ public class ApiAuthController {
     //@GetMapping("/api/auth/logout")
     @PreAuthorize("hasAuthority('user:write')")
     @RequestMapping(value = "/api/auth/logout", method = { RequestMethod.GET, RequestMethod.POST })
-    private ResponseEntity<Boolean> logout() {
+    public ResponseEntity<Boolean> logout() {
 
         return new ResponseEntity<>(authService.getLogout(),HttpStatus.OK);
     }
 
     //@PostMapping("/api/auth/register")
     @RequestMapping(value = "/api/auth/register", method = { RequestMethod.GET, RequestMethod.POST })
-    private ResponseEntity authRegister(
+    public ResponseEntity authRegister(
             @RequestBody RegisterRequest registerRequest) throws Exception {
 
         String response = registerService.checkData(
@@ -85,7 +85,7 @@ public class ApiAuthController {
 
     //@GetMapping("/api/auth/captcha")
     @RequestMapping(value = "/api/auth/captcha", method = { RequestMethod.GET, RequestMethod.POST })
-    private ResponseEntity<CaptchaResponse> authCaptcha() throws Exception {
+    public ResponseEntity<CaptchaResponse> authCaptcha() throws Exception {
         captchaService.deleteOldCaptchasFromRepository();
 
         return new ResponseEntity<CaptchaResponse>(
