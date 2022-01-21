@@ -55,6 +55,7 @@ public class CaptchaService {
     }
 
     public void deleteOldCaptchasFromRepository() {
+
         captchaCodeRepository.deleteByTimeIsAfter(LocalDateTime
                 .now().plusHours(-1));
     }

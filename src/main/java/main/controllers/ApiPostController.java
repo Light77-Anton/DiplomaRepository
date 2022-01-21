@@ -24,7 +24,8 @@ public class ApiPostController {
         this.postService = postService;
     }
 
-    @GetMapping("/api/post")
+    //@GetMapping("/api/post")
+    @RequestMapping(value = "/api/post", method = { RequestMethod.GET, RequestMethod.POST })
     public ResponseEntity post(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,

@@ -33,7 +33,8 @@ public class ApiGeneralController {
         this.captchaService = captchaService;
     }
 
-    @GetMapping("/api/init")
+    //@GetMapping("/api/init")
+    @RequestMapping(value = "/api/init", method = { RequestMethod.GET, RequestMethod.POST })
     public ResponseEntity<InitResponse> init() {
         return new ResponseEntity<>(initResponse, HttpStatus.OK);
     }
@@ -53,7 +54,8 @@ public class ApiGeneralController {
                 HttpStatus.OK);
     }
 
-    @GetMapping("/api/calendar")
+    //@GetMapping("/api/calendar")
+    @RequestMapping(value = "/api/calendar", method = { RequestMethod.GET, RequestMethod.POST })
     public ResponseEntity calendar(@RequestParam(value = "year",
             required = false) String year) {
 

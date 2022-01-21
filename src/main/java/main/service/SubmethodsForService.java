@@ -1,20 +1,26 @@
-package main.support;
+package main.service;
 import main.model.Post;
 import main.model.Vote;
 import main.model.repositories.PostRepository;
 import main.model.repositories.TagRepository;
 import main.model.repositories.UserRepository;
+import main.support.Mode;
+import main.support.ModerationStatus;
+import main.support.PostStatus;
 import main.support.dto.CountForPostId;
 import main.support.dto.PostDTO;
 import main.support.dto.UserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Component
 public class SubmethodsForService {
 
     @Autowired
@@ -23,10 +29,6 @@ public class SubmethodsForService {
     private UserRepository userRepository;
     @Autowired
     private TagRepository tagRepository;
-
-    public SubmethodsForService() {
-
-    }
 
     /**
      * Добавил дополнительный класс для PostService т.к. сам класс сервис стал неимоверно
