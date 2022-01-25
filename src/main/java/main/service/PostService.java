@@ -7,7 +7,6 @@ import main.model.repositories.PostRepository;
 import main.model.repositories.TagRepository;
 import main.model.repositories.UserRepository;
 import main.support.dto.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
@@ -18,16 +17,19 @@ import java.util.*;
 @Configurable
 public class PostService {
 
-    @Autowired
-    private PostRepository postRepository;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private TagRepository tagRepository;
-    private final SubmethodsForService submethodsForService = new SubmethodsForService(); // возможно надо сделать методы класса статиками,под вопросом
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
+    private final TagRepository tagRepository;
+    private final SubmethodsForService submethodsForService;
 
-    public PostService() {
-
+    public PostService(PostRepository postRepository,
+                       UserRepository userRepository,
+                       TagRepository tagRepository,
+                       SubmethodsForService submethodsForService) {
+        this.postRepository = postRepository;
+        this.userRepository = userRepository;
+        this.tagRepository = tagRepository;
+        this.submethodsForService = submethodsForService;
     }
 
     public MyPostResponse getMyPost(Integer offset,

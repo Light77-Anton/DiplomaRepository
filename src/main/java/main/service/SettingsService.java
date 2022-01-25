@@ -13,11 +13,11 @@ public class SettingsService {
     public SettingResponse getGlobalSettings() {
         SettingResponse settingResponse = new SettingResponse();
         settingResponse.setMultiuserMode(globalSettingsRepository
-                .findById(1).get().getValue().contentEquals("Yes"));
+                .findById(1).get().getValue().contentEquals("YES"));
         settingResponse.setPostPremoderation(globalSettingsRepository
-                .findById(2).get().getValue().contentEquals("Yes"));
+                .findById(2).get().getValue().contentEquals("YES"));
         settingResponse.setStatisticsIsPublic(globalSettingsRepository
-                .findById(3).get().getValue().contentEquals("Yes"));
+                .findById(3).get().getValue().contentEquals("YES"));
 
         return settingResponse;
     }

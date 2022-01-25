@@ -86,7 +86,7 @@ public class ApiAuthController {
     //@GetMapping("/api/auth/captcha")
     @RequestMapping(value = "/api/auth/captcha", method = { RequestMethod.GET, RequestMethod.POST })
     public ResponseEntity<CaptchaResponse> authCaptcha() throws Exception {
-        captchaService.deleteOldCaptchasFromRepository();
+        //captchaService.deleteOldCaptchasFromRepository();
 
         return new ResponseEntity<CaptchaResponse>(
                 captchaService.generateAndGetCaptcha(),
