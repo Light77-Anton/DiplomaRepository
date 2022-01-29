@@ -21,7 +21,7 @@ public class Post {
     @Column(name = "moderation_status", columnDefinition = "enum")
     private ModerationStatus moderationStatus;
 
-    @Column(name = "moderation_id")
+    @Column(name = "moderator_id")
     private Integer moderatorId;
 
     @Column(name = "user_id", insertable = false, updatable = false)

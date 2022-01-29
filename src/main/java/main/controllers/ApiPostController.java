@@ -1,31 +1,38 @@
 package main.controllers;
 import main.api.response.PostResponse;
+import main.model.repositories.UserRepository;
 import main.service.CaptchaService;
 import main.service.PostService;
 import main.service.RegisterService;
+import main.service.SubmethodsForService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import java.security.Principal;
 
-@Controller
 //@RequestMapping(/api/post/)  предположительно, здесь будет все,что связано с post
+@Controller
 public class ApiPostController {
 
     private final RegisterService registerService;
     private final CaptchaService captchaService;
     private final PostService postService;
+    private final SubmethodsForService submethodsForService;
+    private final UserRepository userRepository;
 
     public ApiPostController(RegisterService registerService,
-                             CaptchaService captchaService, PostService postService) {
+                             CaptchaService captchaService, PostService postService, SubmethodsForService submethodsForService, UserRepository userRepository) {
         this.registerService = registerService;
         this.captchaService = captchaService;
         this.postService = postService;
+        this.submethodsForService = submethodsForService;
+        this.userRepository = userRepository;
     }
 
-    //@GetMapping("/api/post")
-    @RequestMapping(value = "/api/post", method = { RequestMethod.GET, RequestMethod.POST })
+    @GetMapping("/api/post")
     public ResponseEntity post(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -79,24 +86,34 @@ public class ApiPostController {
                 getPostsByTag(offset, limit, tagName), HttpStatus.OK);
     }
 
-    //@GetMapping("/api/post/{id}")
-    @RequestMapping(value = "/api/post/{id}", method = { RequestMethod.GET, RequestMethod.POST })
-    public ResponseEntity postById(@PathVariable Integer id) { // пока без авторизации,логика полностью не реализована
+    @RequestMapping(value = "/api/post/{id}", method = { RequestMethod.GET, RequestMethod.PUT })
+    public ResponseEntity postById(@PathVariable Integer id, Principal principal) {
 
-        if (postService.getPostById(id) == null) {
+        if (principal == null) {
+            return new ResponseEntity(postService.getPostById(id, null), HttpStatus.OK);
+        }
+        main.model.User currentUser = userRepository.findByEmail
+                (principal.getName()).orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        if (postService.getPostById(id, currentUser) == null) {
             return new ResponseEntity("документ не найден",
                     HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity(postService.getPostById(id), HttpStatus.OK);
+
+        return new ResponseEntity(postService.getPostById(id, currentUser), HttpStatus.OK);
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @GetMapping("/api/post/my")
     public ResponseEntity myPost(@RequestParam(value = "offset", required = false) Integer offset,
-                                  @RequestParam(value = "limit", required = false) Integer limit,
-                                  @RequestParam(value = "status", required = true) String status) {
+                                 @RequestParam(value = "limit", required = false) Integer limit,
+                                 @RequestParam(value = "status", required = true) String status,
+                                 Principal principal) {
 
-        return new ResponseEntity(postService.getMyPost(offset, limit, status), HttpStatus.OK);
+        if (submethodsForService.checkAndGetPostStatus(status) == null) {
+            return new ResponseEntity("Такого статуса не существует", HttpStatus.BAD_REQUEST);
+        }
+
+        return new ResponseEntity(postService.getMyPost(offset, limit, status, principal), HttpStatus.OK);
     }
 
 }

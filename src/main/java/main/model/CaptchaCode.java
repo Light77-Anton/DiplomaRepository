@@ -12,7 +12,6 @@ public class CaptchaCode {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    //@Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime time;
 
     private String code;

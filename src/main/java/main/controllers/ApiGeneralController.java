@@ -3,7 +3,6 @@ import main.api.response.*;
 import main.service.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,14 +32,12 @@ public class ApiGeneralController {
         this.captchaService = captchaService;
     }
 
-    //@GetMapping("/api/init")
-    @RequestMapping(value = "/api/init", method = { RequestMethod.GET, RequestMethod.POST })
+    @GetMapping("/api/init")
     public ResponseEntity<InitResponse> init() {
         return new ResponseEntity<>(initResponse, HttpStatus.OK);
     }
 
-    //@GetMapping("/api/settings")
-    @RequestMapping(value = "/api/settings", method = { RequestMethod.GET, RequestMethod.POST })
+    @GetMapping("/api/settings")
     public ResponseEntity<SettingResponse> settings() {
         return new ResponseEntity<>(settingsService.getGlobalSettings(),
                 HttpStatus.OK);
@@ -54,8 +51,7 @@ public class ApiGeneralController {
                 HttpStatus.OK);
     }
 
-    //@GetMapping("/api/calendar")
-    @RequestMapping(value = "/api/calendar", method = { RequestMethod.GET, RequestMethod.POST })
+    @GetMapping("/api/calendar")
     public ResponseEntity calendar(@RequestParam(value = "year",
             required = false) String year) {
 

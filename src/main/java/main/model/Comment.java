@@ -15,25 +15,14 @@ public class Comment {
     @Column(name = "parent_id")
     private int parentId;
 
-    //@ManyToOne(cascade = CascadeType.ALL)
     @Column(name = "post_id", insertable = false, updatable = false)
     private int postId;
 
-    //@ManyToOne(cascade = CascadeType.ALL)
     @Column(name = "user_id", insertable = false, updatable = false)
     private int userId;
 
-    //@Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime time;
 
     private String text;
 
-    /*
-    @ManyToOne(cascade = CascadeType.ALL)
-    private User user;
-
-    @ManyToOne(cascade = CascadeType.ALL)
-    private Post post;
-
-     */
 }

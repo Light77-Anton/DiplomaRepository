@@ -7,7 +7,6 @@ import main.api.response.RegisterResponse;
 import main.service.AuthService;
 import main.service.CaptchaService;
 import main.service.RegisterService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,23 +40,20 @@ public class ApiAuthController {
                 HttpStatus.OK);
     }
 
-    //@PostMapping("/api/auth/login")
-    @RequestMapping(value = "/api/auth/login", method = { RequestMethod.GET, RequestMethod.POST })
+    @PostMapping("/api/auth/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
         return new ResponseEntity<>(authService.getLogin(loginRequest.getEmail(),
                 loginRequest.getPassword()), HttpStatus.OK);
     }
 
-    //@GetMapping("/api/auth/logout")
     @PreAuthorize("hasAuthority('user:write')")
-    @RequestMapping(value = "/api/auth/logout", method = { RequestMethod.GET, RequestMethod.POST })
+    @GetMapping("/api/auth/logout")
     public ResponseEntity<Boolean> logout() {
 
         return new ResponseEntity<>(authService.getLogout(),HttpStatus.OK);
     }
 
-    //@PostMapping("/api/auth/register")
     @RequestMapping(value = "/api/auth/register", method = { RequestMethod.GET, RequestMethod.POST })
     public ResponseEntity authRegister(
             @RequestBody RegisterRequest registerRequest) throws Exception {
@@ -83,10 +79,9 @@ public class ApiAuthController {
         return new ResponseEntity(registerResponse, HttpStatus.OK);
     }
 
-    //@GetMapping("/api/auth/captcha")
-    @RequestMapping(value = "/api/auth/captcha", method = { RequestMethod.GET, RequestMethod.POST })
+    @RequestMapping(value = "/api/auth/captcha", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE})
     public ResponseEntity<CaptchaResponse> authCaptcha() throws Exception {
-        //captchaService.deleteOldCaptchasFromRepository();
+        captchaService.deleteOldCaptchasFromRepository();
 
         return new ResponseEntity<CaptchaResponse>(
                 captchaService.generateAndGetCaptcha(),

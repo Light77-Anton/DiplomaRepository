@@ -1,5 +1,6 @@
 package main.service;
 import main.model.Post;
+import main.model.User;
 import main.model.Vote;
 import main.model.repositories.PostRepository;
 import main.model.repositories.TagRepository;
@@ -13,7 +14,6 @@ import main.support.dto.UserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -98,21 +98,23 @@ public class SubmethodsForService {
     }
 
     public Page<Post> getPostsPageWithRequiredStatus(Integer offset,
-                                                     Integer limit, PostStatus postStatus) {
-
+                                                     Integer limit,
+                                                     PostStatus postStatus,
+                                                     User currentUser) {
         Page<Post> postsPage = null;
         Pageable pageable = PageRequest.of(offset / limit, limit);
+        int userId = currentUser.getId();
         if (postStatus == PostStatus.INACTIVE) {
-            postsPage = postRepository.findAllInactivePosts(pageable);
+            postsPage = postRepository.findAllInactivePosts(userId, pageable);
         }
         else if (postStatus == PostStatus.PENDING) {
-            postsPage = postRepository.findAllPendingPosts(pageable);
+            postsPage = postRepository.findAllPendingPosts(userId, pageable);
         }
         else if (postStatus == PostStatus.DECLINED) {
-            postsPage = postRepository.findAllDeclinedPosts(pageable);
+            postsPage = postRepository.findAllDeclinedPosts(userId, pageable);
         }
         else if (postStatus == PostStatus.PUBLISHED) {
-            postsPage = postRepository.findAllAcceptedPosts(pageable);
+            postsPage = postRepository.findAllAcceptedPosts(userId, pageable);
         }
 
         return postsPage;

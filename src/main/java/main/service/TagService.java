@@ -38,7 +38,8 @@ public class TagService {
             TagDTO tagDTO = new TagDTO();
             tagDTO.setName(tag.getName());
             tagDTO.setWeight(tagRepository.getIrrationedWeightByTagName(tag.getName(),postCount)
-                    * (1 / (tagRepository.getPostsCountWithTheMostPopularTag() / tagRepository.getPostsCount())));
+                    * (1 / (tagRepository.getPostsCountWithTheMostPopularTag()
+                    / tagRepository.getPostsCount())));
             list.add(tagDTO);
         }
 

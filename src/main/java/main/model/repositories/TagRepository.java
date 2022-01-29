@@ -4,13 +4,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TagRepository extends JpaRepository<Tag, Integer> {
 
 List<Tag> findAllByNameContaining(String stringTag);
 
-Tag findByNameContaining(String query);
+Optional<Tag> findByNameContaining(String query);
 
 @Query(value = "SELECT COUNT(*) FROM posts", nativeQuery = true)
 Double getPostsCount();

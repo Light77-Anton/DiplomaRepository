@@ -9,7 +9,9 @@ import main.model.repositories.UserRepository;
 import main.support.dto.*;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.domain.*;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import java.security.Principal;
 import java.time.*;
 import java.util.*;
 
@@ -33,18 +35,23 @@ public class PostService {
     }
 
     public MyPostResponse getMyPost(Integer offset,
-                                    Integer limit, String status) {
+                                    Integer limit,
+                                    String status,
+                                    Principal principal) {
 
+        main.model.User currentUser = userRepository.findByEmail
+                (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         MyPostResponse myPostResponse = new MyPostResponse();
         Page<Post> postsPage = submethodsForService
                 .getPostsPageWithRequiredStatus(
                 submethodsForService.checkAndGetOffset(offset),
                 submethodsForService.checkAndGetLimit(limit),
-                submethodsForService.checkAndGetPostStatus(status));
-        if (postsPage == null) {
+                submethodsForService.checkAndGetPostStatus(status),
+                        currentUser);
+        if (postsPage.isEmpty()) {
             myPostResponse.setCount(0);
             myPostResponse.setPosts(new ArrayList<>());
-            return myPostResponse;
         }
         myPostResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
@@ -70,7 +77,7 @@ public class PostService {
         return myPostResponse;
     }
 
-    public PostByIdResponse getPostById(Integer id) {
+    public PostByIdResponse getPostById(Integer id, User currentUser) {
         PostByIdResponse postByIdResponse = null;
         Optional<Post> post = postRepository.findById(id);
         if (!post.isPresent()) {
@@ -114,14 +121,32 @@ public class PostService {
         postByIdDTO.setTagsData(tagsNamesList);
         postByIdResponse.setPostData(postByIdDTO);
 
+        /**
+         * Пока явно неоптимальный способ подсчета просмотров,
+         * потом нужно пересмотреть,как можно использовать Principal
+         */
+
+        if (currentUser == null) {
+            int postId = post.get().getId();
+            int newViewCount = post.get().getViewCount() + 1;
+            int rowsUpdated = postRepository.setNewViewCount(newViewCount, postId);
+        }
+        else {
+            if (!currentUser.isModerator() || post.get().getUserId() != currentUser.getId()) {
+                int postId = post.get().getId();
+                int newViewCount = post.get().getViewCount() + 1;
+                int rowsUpdated = postRepository.setNewViewCount(newViewCount, postId);
+            }
+        }
+
         return postByIdResponse;
     }
 
     public PostResponse getPostsByTag(Integer offset,
                                       Integer limit, String stringTag) {
-        Tag requiredTag = tagRepository.findByNameContaining(stringTag);
+        Optional<Tag> requiredTag = tagRepository.findByNameContaining(stringTag);
         PostResponse postResponse = new PostResponse();
-        if (requiredTag == null) {
+        if (requiredTag.isEmpty()) {
             postResponse.setCount(0);
             postResponse.setPosts(new ArrayList<>());
             return postResponse;
@@ -129,7 +154,7 @@ public class PostService {
         Pageable page = PageRequest.of(
                 submethodsForService.checkAndGetOffset(offset),
                 submethodsForService.checkAndGetLimit(limit));
-        Page<Post> postsPage = postRepository.findByTagContaining(requiredTag, page);
+        Page<Post> postsPage = postRepository.findByTagContaining(requiredTag.get(), page);
         postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
         postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));

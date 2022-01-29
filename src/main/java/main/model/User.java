@@ -17,7 +17,7 @@ public class User {
     @Column(name = "is_moderator")
     private boolean isModerator;
 
-    @Column(name = "reg_time")//@Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "reg_time")
     private LocalDateTime registrationTime;
 
     private String name;

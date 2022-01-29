@@ -1,5 +1,6 @@
 package main.service;
 import main.api.response.LoginResponse;
+import main.model.repositories.PostRepository;
 import main.model.repositories.UserRepository;
 import main.support.dto.LoginDTO;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +24,8 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private PostRepository postRepository;
 
     public AuthService(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
@@ -39,7 +42,12 @@ public class AuthService {
         loginDTO.setEmail(currentUser.getEmail());
         loginDTO.setPhoto(currentUser.getPhoto());
         loginDTO.setModeration(currentUser.isModerator());
-        loginDTO.setModerationCount(null);
+        if (currentUser.isModerator()) {
+            loginDTO.setModerationCount(postRepository.findAllNewPosts().size());
+        }
+        else {
+            loginDTO.setModerationCount(null);
+        }
         loginDTO.setSettings(false);
         loginResponse.setUserData(loginDTO);
 
