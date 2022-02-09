@@ -1,6 +1,6 @@
 package main.api.response;
 import lombok.Data;
-import main.support.dto.PostDTO;
+import main.dto.PostDTO;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

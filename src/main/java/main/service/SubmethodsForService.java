@@ -1,19 +1,19 @@
 package main.service;
-import main.model.Post;
-import main.model.User;
-import main.model.Vote;
+import main.api.request.CommentRequest;
+import main.dto.MyPostDTO;
+import main.model.*;
+import main.model.repositories.CommentRepository;
 import main.model.repositories.PostRepository;
 import main.model.repositories.TagRepository;
 import main.model.repositories.UserRepository;
-import main.support.Mode;
-import main.support.ModerationStatus;
-import main.support.PostStatus;
-import main.support.dto.CountForPostId;
-import main.support.dto.PostDTO;
-import main.support.dto.UserDataDTO;
+import main.dto.CountForPostId;
+import main.dto.PostDTO;
+import main.dto.UserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -29,11 +29,39 @@ public class SubmethodsForService {
     private UserRepository userRepository;
     @Autowired
     private TagRepository tagRepository;
+    @Autowired
+    private CommentRepository commentRepository;
 
     /**
      * Добавил дополнительный класс для PostService т.к. сам класс сервис стал неимоверно
      * большим.Здесь будут все вспомогательные методы.
      */
+
+    public List<String> checkAndAddComment(CommentRequest commentRequest, Principal principal) {
+        Optional<Post> post = postRepository.findById(commentRequest.getPostId());
+        List<String> errors = new ArrayList<>();
+        if (post.isEmpty()) {
+            errors.add("Такого поста не существует");
+        } else {
+            if (commentRequest.getParentId() != null) {
+                Optional<Comment> parentComment = commentRepository.findById(commentRequest.getParentId());
+                if (parentComment.isEmpty()) {
+                    errors.add("Такого комментария не существует");
+                }
+            }
+        }
+        if (commentRequest.getText().length() <= 5) {
+            errors.add("Комментарий слишком короткий");
+        }
+        if (errors.isEmpty()) {
+            main.model.User currentUser = userRepository.findByEmail
+                            (principal.getName())
+                    .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+            commentRepository.insertComment(commentRequest.getParentId(), commentRequest.getPostId(), currentUser.getId(), commentRequest.getText());
+        }
+
+        return errors;
+    }
 
     public List<PostDTO> fillAndGetArrayWithPosts(List<Post> postsList) {
         List<PostDTO> list = new ArrayList<>();
@@ -46,27 +74,26 @@ public class SubmethodsForService {
             userDataDTO.setName(post.getUser().getName());
             postDTO.setUserData(userDataDTO);
             postDTO.setTitle(post.getTitle());
-            postDTO.setAnnounce(getAnnounce(post.getText()));
-            postDTO.setLikesCount(getLikesCount(post));
-            postDTO.setDislikeCount(getDislikesCount(post));
+            postDTO.setAnnounce(postRepository.extractAnnounceFromTextById(post.getId()) + "...");
+            postDTO.setLikesCount(postRepository.findLikeCountById(post.getId()));
+            postDTO.setDislikeCount(postRepository.findDislikeCountById(post.getId()));
             postDTO.setCommentCount(post.getCommentaries().size());
-            postDTO.setViewCount(post.getViewCount());
+            postDTO.setViewCount(postRepository.findViewCountById(post.getId()));
             list.add(postDTO);
         }
         return list;
     }
 
     public Page<Post> getPostsPageWithRequiredMode(Integer offset,
-                                                    Integer limit, Mode mode) {
-        List<CountForPostId> bufferArrayList;
+                                                   Integer limit, Mode mode) {
+        Page<CountForPostId> bufferArrayList;
         List<Post> postsList;
         Page<Post> postsPage;
         Pageable pageable = PageRequest.of(offset / limit, limit);
         if (mode == Mode.RECENT) {
-            postsList = postRepository.findAllAndOrderByTimeDesc(pageable);
-            postsPage = checkAndGetPostsPage(postsList);
+            postsPage = postRepository.findAllAndOrderByTimeDesc(pageable);
         } else if (mode == Mode.POPULAR) {
-            bufferArrayList = postRepository.findAllAndOrderByCommentariesSize(pageable);
+            bufferArrayList = postRepository.findAllAndOrderByCommentariesSize(pageable);//
             postsList = new ArrayList<>();
             for (CountForPostId array : bufferArrayList) {
                 Integer postId = Integer.valueOf(String.valueOf(array.getId()));
@@ -76,9 +103,9 @@ public class SubmethodsForService {
                 Optional<Post> post = postRepository.findById(postId);
                 postsList.add(post.get());
             }
-            postsPage = checkAndGetPostsPage(postsList);
+            postsPage = new PageImpl<>(postsList);
         } else if (mode == Mode.BEST) {
-            bufferArrayList = postRepository.findAllAndOrderByVotesCount(pageable);
+            bufferArrayList = postRepository.findAllAndOrderByVotesCount(pageable);//
             postsList = new ArrayList<>();
             for (CountForPostId array : bufferArrayList) {
                 Integer postId = Integer.valueOf(String.valueOf(array.getId()));
@@ -88,10 +115,9 @@ public class SubmethodsForService {
                 Optional<Post> post = postRepository.findById(postId);
                 postsList.add(post.get());
             }
-            postsPage = checkAndGetPostsPage(postsList);
-        } else { // EARLY
-            postsList = postRepository.findAllAndOrderByTimeAsc(pageable);
-            postsPage = checkAndGetPostsPage(postsList);
+            postsPage = new PageImpl<>(postsList);
+        } else { //EARLY
+            postsPage = postRepository.findAllAndOrderByTimeAsc(pageable);
         }
 
         return postsPage;
@@ -106,18 +132,37 @@ public class SubmethodsForService {
         int userId = currentUser.getId();
         if (postStatus == PostStatus.INACTIVE) {
             postsPage = postRepository.findAllInactivePosts(userId, pageable);
-        }
-        else if (postStatus == PostStatus.PENDING) {
+        } else if (postStatus == PostStatus.PENDING) {
             postsPage = postRepository.findAllPendingPosts(userId, pageable);
-        }
-        else if (postStatus == PostStatus.DECLINED) {
+        } else if (postStatus == PostStatus.DECLINED) {
             postsPage = postRepository.findAllDeclinedPosts(userId, pageable);
-        }
-        else if (postStatus == PostStatus.PUBLISHED) {
+        } else if (postStatus == PostStatus.PUBLISHED) {
             postsPage = postRepository.findAllAcceptedPosts(userId, pageable);
         }
 
         return postsPage;
+    }
+
+    public List<MyPostDTO> fillAndGetMyPostsList(List<Post> postsList) {
+        List<MyPostDTO> myPostsList = new ArrayList<>();
+        for (Post post : postsList) {
+            MyPostDTO myPostDTO = new MyPostDTO();
+            myPostDTO.setPostId(post.getId());
+            myPostDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
+            myPostDTO.setTitle(post.getTitle());
+            myPostDTO.setAnnounce(postRepository.extractAnnounceFromTextById(post.getId()) + "...");
+            myPostDTO.setLikeCount(postRepository.findLikeCountById(post.getId()));
+            myPostDTO.setDislikeCount(postRepository.findDislikeCountById(post.getId()));
+            myPostDTO.setCommentCount(post.getCommentaries().size());
+            myPostDTO.setViewCount(postRepository.findViewCountById(post.getId()));
+            UserDataDTO userDataDTO = new UserDataDTO();
+            userDataDTO.setId(post.getUserId());
+            userDataDTO.setName(post.getUser().getName());
+            myPostDTO.setUserData(userDataDTO);
+            myPostsList.add(myPostDTO);
+        }
+
+        return myPostsList;
     }
 
     public PostStatus checkAndGetPostStatus(String stringStatus) {
@@ -131,38 +176,19 @@ public class SubmethodsForService {
         return postStatus;
     }
 
-    public Page<Post> checkAndGetPostsPage(List<Post> bufferPostsList) {
-        List<Post> list = new ArrayList<>();
-        for (Post post : bufferPostsList) {
-            if (post.isActive()
-                    && post.getModerationStatus() == ModerationStatus.ACCEPTED
-                    && LocalDateTime.now().isAfter(post.getTime())) {
-                list.add(post);
-            }
-        }
-        Page<Post> page = new PageImpl<>(list);
-        return page;
-    }
-
     public Page<Post> getPostsListWithRequiredDate(Integer offset,
-                                                    Integer limit,
-                                                    String stringDate) {
-        List<Post> bufferPostsList;
-        Pageable page = PageRequest.of(offset, limit);
-        bufferPostsList = postRepository.findByDate(stringDate, page);
-        return checkAndGetPostsPage(bufferPostsList);
+                                                   Integer limit,
+                                                   String stringDate) {
+        Pageable page = PageRequest.of(offset / limit, limit);
+        return postRepository.findByDate(stringDate, page);
     }
 
     public Page<Post> getPostsListWithRequiredQuery(Integer offset,
-                                                     Integer limit,
-                                                     String query) {
-        List<Post> bufferPostList;
-        Pageable page = PageRequest.of(offset, limit, Sort.by("time").descending());
-        bufferPostList = postRepository.findByTextContaining(query, page);
-        return checkAndGetPostsPage(bufferPostList);
+                                                    Integer limit,
+                                                    String query) {
+        Pageable page = PageRequest.of(offset / limit, limit, Sort.by("time").descending());
+        return postRepository.findByTextContaining(query, page);
     }
-
-
 
     public Mode checkAndGetMode(String stringMode) {
         if (stringMode == null) {
@@ -200,35 +226,52 @@ public class SubmethodsForService {
         return limit;
     }
 
-    public String getAnnounce(String text) {
-        String announce;
-        if (text.length() < 150) {
-            announce = text + "...";
+    public LocalDateTime checkLocalDateTimeForPost(LocalDateTime fromPostRequestTime) {
+        LocalDateTime ldt;
+        if (fromPostRequestTime.isBefore(LocalDateTime.now())) {
+            ldt = LocalDateTime.now();
         } else {
-            announce = text.substring(0, 150) + "...";
+            ldt = fromPostRequestTime;
         }
-        return announce;
+
+        return ldt;
     }
 
-    public int getLikesCount(Post post) {
-        int likesCount = 0;
-        for (Vote vote : post.getVotes()) {
-            if (vote.getValue() == 1) {
-                likesCount++;
+    public String checkTitleForPost(String titleFromPostRequest, List<String> description) {
+        String title;
+        if (titleFromPostRequest.length() <= 3) {
+            description.add("Заголовок не установлен");
+            title = "";
+        } else {
+            title = titleFromPostRequest;
+        }
+
+        return title;
+    }
+
+    public String checkTextForPost(String textFromPostRequest, List<String> description) {
+        String text;
+        if (textFromPostRequest.length() <= 50) {
+            description.add("Текст публикации слишком короткий");
+            text = "";
+        } else {
+            text = textFromPostRequest;
+        }
+
+        return text;
+    }
+
+    public List<Tag> checkTagsListForPost(List<String> tagsFromPostRequest, List<String> description) {
+        List<Tag> tags = new ArrayList<>();
+        for (String tagName : tagsFromPostRequest) {
+            Optional<Tag> tag = tagRepository.findByNameContaining(tagName);
+            if (tag.isEmpty()) {
+                description.add("Такого тэга(-ов) не существует");
+            } else {
+                tags.add(tag.get());
             }
         }
 
-        return likesCount;
-    }
-
-    public int getDislikesCount(Post post) {
-        int dislikesCount = 0;
-        for (Vote vote : post.getVotes()) {
-            if (vote.getValue() == -1) {
-                dislikesCount++;
-            }
-        }
-
-        return dislikesCount;
+        return tags;
     }
 }

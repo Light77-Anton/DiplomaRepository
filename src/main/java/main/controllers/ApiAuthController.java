@@ -1,12 +1,13 @@
 package main.controllers;
 import main.api.request.LoginRequest;
+import main.api.request.PasswordRequest;
 import main.api.request.RegisterRequest;
-import main.api.response.LoginResponse;
-import main.api.response.CaptchaResponse;
-import main.api.response.RegisterResponse;
+import main.api.request.RestoreRequest;
+import main.api.response.*;
 import main.service.AuthService;
 import main.service.CaptchaService;
 import main.service.RegisterService;
+import main.service.SettingsService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,72 +22,77 @@ public class ApiAuthController {
     private final CaptchaService captchaService;
     private final RegisterService registerService;
     private final AuthService authService;
+    private final SettingsService settingsService;
 
     public ApiAuthController(CaptchaService captchaService,
-                             RegisterService registerService, AuthService authService) {
+                             RegisterService registerService, AuthService authService, SettingsService settingsService) {
         this.captchaService = captchaService;
         this.registerService = registerService;
         this.authService = authService;
+        this.settingsService = settingsService;
     }
 
     @GetMapping("/api/auth/check")
     public ResponseEntity<LoginResponse> authCheck(Principal principal) {
 
         if (principal == null) {
-            return new ResponseEntity<>(new LoginResponse(),HttpStatus.OK);
+            return ResponseEntity.ok(new LoginResponse());
         }
 
-        return new ResponseEntity<>(authService.getLoginResponse(principal.getName()),
-                HttpStatus.OK);
+        return ResponseEntity.ok(authService.getLoginResponse(principal.getName()));
     }
 
     @PostMapping("/api/auth/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
-        return new ResponseEntity<>(authService.getLogin(loginRequest.getEmail(),
-                loginRequest.getPassword()), HttpStatus.OK);
+        return ResponseEntity.ok(authService.getLogin(loginRequest.getEmail(), loginRequest.getPassword()));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @GetMapping("/api/auth/logout")
     public ResponseEntity<Boolean> logout() {
 
-        return new ResponseEntity<>(authService.getLogout(),HttpStatus.OK);
+        return ResponseEntity.ok(authService.getLogout());
     }
 
-    @RequestMapping(value = "/api/auth/register", method = { RequestMethod.GET, RequestMethod.POST })
+    @PostMapping("/api/auth/register")
     public ResponseEntity authRegister(
             @RequestBody RegisterRequest registerRequest) throws Exception {
-
-        String response = registerService.checkData(
-                registerRequest.getEmail(),
-                registerRequest.getPassword(),
-                registerRequest.getName(),
-                registerRequest.getCaptcha(),
-                registerRequest.getSecretCode());
-        /**
-         * не уверен,что такую проверку корректно оставить в контроллере
-         */
-        RegisterResponse registerResponse = new RegisterResponse();
-        registerResponse.setDescription(response);
-        if (!response.equals("все верно,пользователь создан")) {
-            registerResponse.setResult(false);
-
-            return new ResponseEntity(registerResponse, HttpStatus.BAD_REQUEST);
+        if (!settingsService.isMultiuserMode()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        registerResponse.setResult(true);
+        RegisterResponse registerResponse = registerService.checkData(registerRequest);
+        if (!registerResponse.getDescription().equals("все верно,пользователь создан")) {
 
-        return new ResponseEntity(registerResponse, HttpStatus.OK);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(registerResponse);
+        }
+
+        return ResponseEntity.ok(registerResponse);
     }
 
-    @RequestMapping(value = "/api/auth/captcha", method = { RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE})
+    @GetMapping("/api/auth/captcha")
     public ResponseEntity<CaptchaResponse> authCaptcha() throws Exception {
         captchaService.deleteOldCaptchasFromRepository();
 
-        return new ResponseEntity<CaptchaResponse>(
-                captchaService.generateAndGetCaptcha(),
-                HttpStatus.OK);
+        return ResponseEntity.ok(captchaService.generateAndGetCaptcha());
     }
 
+    @PostMapping("/api/auth/restore")
+    public ResponseEntity authRestore(@RequestBody RestoreRequest restoreRequest) {
 
+        return ResponseEntity.ok(authService.checkEmailAndGetCode(restoreRequest));
+    }
+
+    @PostMapping("/api/auth/password")
+    public ResponseEntity changePassword(@RequestBody PasswordRequest passwordRequest) {
+        if (authService.checkPasswordChange(passwordRequest).isEmpty()) {
+            ResultResponse resultResponse = new ResultResponse();
+            resultResponse.setResult(true);
+            return ResponseEntity.ok(resultResponse);
+        }
+        FalseResultErrorsResponse falseResultErrorsResponse = new FalseResultErrorsResponse();
+        falseResultErrorsResponse.setErrors(authService.checkPasswordChange(passwordRequest));
+
+        return ResponseEntity.ok(falseResultErrorsResponse);
+    }
 }

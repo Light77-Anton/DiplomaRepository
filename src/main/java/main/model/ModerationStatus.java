@@ -1,4 +1,4 @@
-package main.support;
+package main.model;
 
 public enum ModerationStatus {
 

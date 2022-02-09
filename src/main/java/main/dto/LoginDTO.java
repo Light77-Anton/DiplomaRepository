@@ -1,4 +1,4 @@
-package main.support.dto;
+package main.dto;
 import lombok.Data;
 
 @Data

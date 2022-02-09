@@ -1,6 +1,6 @@
 package main.model;
 import lombok.Data;
-import main.support.ModerationStatus;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,8 +17,9 @@ public class Post {
     @Column(name = "is_active")
     private boolean isActive;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "moderation_status", columnDefinition = "enum")
+    //@Enumerated(EnumType.STRING)
+    //@Convert(converter = ModerationStatusConverter.class)
+    @Column(name = "moderation_status")
     private ModerationStatus moderationStatus;
 
     @Column(name = "moderator_id")

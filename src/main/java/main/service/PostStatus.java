@@ -1,4 +1,4 @@
-package main.support;
+package main.service;
 
 public enum PostStatus {
     INACTIVE,

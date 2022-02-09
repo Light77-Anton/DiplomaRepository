@@ -2,7 +2,7 @@ package main.service;
 import main.api.response.TagResponse;
 import main.model.Tag;
 import main.model.repositories.TagRepository;
-import main.support.dto.TagDTO;
+import main.dto.TagDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.*;

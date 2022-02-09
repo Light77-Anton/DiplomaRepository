@@ -1,12 +1,11 @@
 package main.service;
-import main.api.response.MyPostResponse;
-import main.api.response.PostByIdResponse;
-import main.api.response.PostResponse;
+import main.api.request.PostModerateRequest;
+import main.api.request.PostRequest;
+import main.api.request.VoteForPostRequest;
+import main.api.response.*;
+import main.dto.*;
 import main.model.*;
-import main.model.repositories.PostRepository;
-import main.model.repositories.TagRepository;
-import main.model.repositories.UserRepository;
-import main.support.dto.*;
+import main.model.repositories.*;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,23 +21,198 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
+    private final CommentRepository commentRepository;
     private final SubmethodsForService submethodsForService;
+    private final VoteRepository voteRepository;
+    private final TagToPostRepository tagToPostRepository;
 
     public PostService(PostRepository postRepository,
                        UserRepository userRepository,
                        TagRepository tagRepository,
-                       SubmethodsForService submethodsForService) {
+                       CommentRepository commentRepository, SubmethodsForService submethodsForService, VoteRepository voteRepository, TagToPostRepository tagToPostRepository) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.tagRepository = tagRepository;
+        this.commentRepository = commentRepository;
         this.submethodsForService = submethodsForService;
+        this.voteRepository = voteRepository;
+        this.tagToPostRepository = tagToPostRepository;
+    }
+
+    public ResultResponse setVoteForPost(Principal principal,
+                                         VoteForPostRequest voteForPostRequest,
+                                         int value) {
+        ResultResponse resultResponse = new ResultResponse();
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        int oppositeValue;
+        if (value == 1) {
+            oppositeValue = 0;
+        } else if (value == 0) {
+            oppositeValue = 1;
+        } else {
+            resultResponse.setResult(true);
+            return resultResponse;
+        }
+        Optional<Post> post = postRepository.findById(voteForPostRequest.getPostId());
+        if (post.isPresent()) {
+            Optional<Vote> vote = voteRepository.findByUserAndPostId(currentUser.getId(), post.get().getId());
+            if (vote.isEmpty()) {
+                voteRepository.insertVote(currentUser.getId(),post.get().getId(), value);
+                resultResponse.setResult(true);
+                return resultResponse;
+            } else if (vote.isPresent() && vote.get().getValue() == oppositeValue) {
+                voteRepository.changeVote(currentUser.getId(), post.get().getId(), value);
+                resultResponse.setResult(true);
+                return resultResponse;
+            } else {
+                resultResponse.setResult(false);
+                return resultResponse;
+            }
+        } else {
+            resultResponse.setResult(false);
+            return resultResponse;
+        }
+    }
+
+    public ResultResponse checkModeratorDecision(PostModerateRequest postModerateRequest, Principal principal) {
+        ResultResponse resultResponse = new ResultResponse();
+        Optional<Post> post = postRepository.findById(postModerateRequest.getPostId());
+        if (post.isEmpty()) {
+            resultResponse.setResult(false);
+            return resultResponse;
+        }
+        if (!postModerateRequest.getDecision().equals("accept") ||
+                !postModerateRequest.getDecision().equals("decline")) {
+            resultResponse.setResult(false);
+            return resultResponse;
+        }
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        resultResponse.setResult(true);
+        if (postModerateRequest.getDecision().equals("accept")) {
+            int updatedRow = postRepository.moderatePost(ModerationStatus.ACCEPTED, currentUser.getId(), postModerateRequest.getPostId());
+        } else {
+            int updatedRow = postRepository.moderatePost(ModerationStatus.DECLINED, currentUser.getId(), postModerateRequest.getPostId());
+        }
+
+        return resultResponse;
+    }
+
+    public CommentSuccessResponse getSuccessCommentId(Principal principal) {
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        CommentSuccessResponse commentSuccessResponse = new CommentSuccessResponse();
+        commentSuccessResponse.setId(currentUser.getId());
+
+        return commentSuccessResponse;
+    }
+
+    public FalseResultErrorsResponse getFailedCommentWithErrors(List<String> errors) {
+        FalseResultErrorsResponse commentFailedResponse = new FalseResultErrorsResponse();
+        commentFailedResponse.setErrors(errors);
+
+        return commentFailedResponse;
+    }
+
+    public PostResultResponse updatePost(Integer id, PostRequest postRequest, Principal principal) {
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        Optional<Post> post = postRepository.findByIdAndUserId(id,currentUser.getId());
+        PostResultResponse postResultResponse = new PostResultResponse();
+        List<String> description = new ArrayList<>();
+        if (post.isPresent()) {
+            boolean isActive = postRequest.isActive();
+            LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());
+            String title = submethodsForService.checkTitleForPost(postRequest.getTitle(), description);
+            List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags(), description); //
+            String text = submethodsForService.checkTextForPost(postRequest.getText(), description);
+            if (description.isEmpty()) {
+                description.add("Все верно,изменения поста приняты");
+                postResultResponse.setDescription(description);
+                postResultResponse.setResult(true);
+                postRepository.updatePost(post.get().getId(), isActive, ldt, title, text);
+                for (Tag tag : tags) {
+                    tagToPostRepository.insertTagToPost(post.get().getId(), tag.getId());
+                }
+                return postResultResponse;
+            }
+        }
+        postResultResponse.setResult(false);
+
+        return postResultResponse;
+    }
+
+    public PostResultResponse post(PostRequest postRequest, Principal principal, boolean isPremoderation) {
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        PostResultResponse postResultResponse = new PostResultResponse();
+        List<String> description = new ArrayList<>();
+        boolean isActive = postRequest.isActive();
+        LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());
+        String title = submethodsForService.checkTitleForPost(postRequest.getTitle(), description);
+        List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags(), description); //
+        String text = submethodsForService.checkTextForPost(postRequest.getText(), description);
+        if (description.isEmpty() && isPremoderation) {
+            description.add("Все верно,пост будет опубликован в указанное время");
+            postResultResponse.setDescription(description);
+            postResultResponse.setResult(true);
+            postRepository.insertPost(isActive, ModerationStatus.NEW,currentUser.getId(), ldt, title, text);
+            for (Tag tag : tags) {
+                tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
+            }
+            return postResultResponse;
+        }
+        if (description.isEmpty() && !isPremoderation) {
+            description.add("Все верно,пост будет опубликован в указанное время");
+            postResultResponse.setDescription(description);
+            postResultResponse.setResult(true);
+            postRepository.insertPost(isActive, ModerationStatus.ACCEPTED,currentUser.getId(), ldt, title, text);
+            for (Tag tag : tags) {
+                tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
+            }
+            return postResultResponse;
+        }
+        postResultResponse.setResult(false);
+
+        return postResultResponse;
+    }
+
+    public MyPostResponse getPostsForModeration(Integer offset,
+                                                Integer limit,
+                                                ModerationStatus status,
+                                                Principal principal) {
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        Pageable page = PageRequest.of(offset /limit, limit);
+        MyPostResponse myPostResponse = new MyPostResponse();
+        if (status == ModerationStatus.NEW) {
+            Page<Post> postsPage = postRepository.findAllNewPostsAsPage(page);
+            myPostResponse.setCount(postsPage.getTotalPages());
+            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
+        } else if (status == ModerationStatus.ACCEPTED) {
+            Page<Post> postsPage = postRepository.findAllAcceptedPostsByMe(currentUser.getId(), page);
+            myPostResponse.setCount(postsPage.getTotalPages());
+            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
+        } else if (status == ModerationStatus.DECLINED) {
+            Page<Post> postsPage = postRepository.findAllDeclinedPostsByMe(currentUser.getId(), page);
+            myPostResponse.setCount(postsPage.getTotalPages());
+            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
+        }
+
+        return myPostResponse;
     }
 
     public MyPostResponse getMyPost(Integer offset,
                                     Integer limit,
                                     String status,
                                     Principal principal) {
-
         main.model.User currentUser = userRepository.findByEmail
                 (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -55,24 +229,7 @@ public class PostService {
         }
         myPostResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
-        List<MyPostDTO> myPostsList = new ArrayList<>();
-        for (Post post : postsList) {
-            MyPostDTO myPostDTO = new MyPostDTO();
-            myPostDTO.setPostId(post.getId());
-            myPostDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
-            myPostDTO.setTitle(post.getTitle());
-            myPostDTO.setAnnounce(submethodsForService.getAnnounce(post.getText()));
-            myPostDTO.setLikeCount(submethodsForService.getLikesCount(post));
-            myPostDTO.setDislikeCount(submethodsForService.getDislikesCount(post));
-            myPostDTO.setCommentCount(post.getCommentaries().size());
-            myPostDTO.setViewCount(post.getViewCount());
-            UserDataDTO userDataDTO = new UserDataDTO();
-            userDataDTO.setId(post.getUserId());
-            userDataDTO.setName(post.getUser().getName());
-            myPostDTO.setUserData(userDataDTO);
-            myPostsList.add(myPostDTO);
-        }
-        myPostResponse.setPosts(myPostsList);
+        myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsList));
 
         return myPostResponse;
     }
@@ -94,8 +251,8 @@ public class PostService {
         postByIdDTO.setUserData(userDataDTO);
         postByIdDTO.setTitle(post.get().getTitle());
         postByIdDTO.setText(post.get().getText());
-        postByIdDTO.setLikesCount(submethodsForService.getLikesCount(post.get()));
-        postByIdDTO.setDislikeCount(submethodsForService.getDislikesCount(post.get()));
+        postByIdDTO.setLikesCount(postRepository.findLikeCountById(post.get().getId()));
+        postByIdDTO.setDislikeCount(postRepository.findDislikeCountById(post.get().getId()));
         postByIdDTO.setViewCount(post.get().getViewCount());
         List<CommentsDataDTO> commentsDataDTOList = new ArrayList<>();
         List<Comment> commentList = post.get().getCommentaries();
@@ -120,11 +277,6 @@ public class PostService {
         }
         postByIdDTO.setTagsData(tagsNamesList);
         postByIdResponse.setPostData(postByIdDTO);
-
-        /**
-         * Пока явно неоптимальный способ подсчета просмотров,
-         * потом нужно пересмотреть,как можно использовать Principal
-         */
 
         if (currentUser == null) {
             int postId = post.get().getId();
@@ -154,7 +306,7 @@ public class PostService {
         Pageable page = PageRequest.of(
                 submethodsForService.checkAndGetOffset(offset),
                 submethodsForService.checkAndGetLimit(limit));
-        Page<Post> postsPage = postRepository.findByTagContaining(requiredTag.get(), page);
+        Page<Post> postsPage = postRepository.findByTagContaining(requiredTag.get().getId(), page);
         postResponse.setCount(postsPage.getTotalPages());
         List<Post> postsList = postsPage.getContent();
         postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));

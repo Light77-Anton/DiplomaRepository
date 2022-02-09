@@ -1,18 +1,19 @@
-package main.support.dto;
+package main.dto;
 import lombok.Data;
-
+import java.util.List;
 
 @Data
-public class PostDTO {
+public class PostByIdDTO {
 
     private int postId;
     private long timestamp;
+    private boolean isActive;
     private UserDataDTO userData;
     private String title;
-    private String announce;
+    private String text;
     private int likesCount;
     private int dislikeCount;
-    private int commentCount;
     private int viewCount;
-
+    private List<CommentsDataDTO> commentsData;
+    private List<String> tagsData;
 }

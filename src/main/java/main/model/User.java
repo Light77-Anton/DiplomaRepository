@@ -1,6 +1,6 @@
 package main.model;
 import lombok.Data;
-import main.support.Role;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;

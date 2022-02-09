@@ -1,5 +1,5 @@
 
-package main.support;
+package main.model;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.Set;
 import java.util.stream.Collectors;

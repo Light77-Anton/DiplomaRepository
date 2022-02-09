@@ -1,4 +1,7 @@
 package main.service;
+import main.api.request.RegisterRequest;
+import main.api.response.RegisterResponse;
+import main.config.SecurityConfig;
 import main.model.CaptchaCode;
 import main.model.repositories.CaptchaCodeRepository;
 import main.model.User;
@@ -15,56 +18,71 @@ public class RegisterService {
     private UserRepository userRepository;
     @Autowired
     private CaptchaCodeRepository captchaCodeRepository;
+    @Autowired
+    private SecurityConfig securityConfig;
 
-    public RegisterService() {
+    public RegisterResponse checkData(RegisterRequest registerRequest) {
 
-    }
-
-    public String checkData(String email, String name,
-                            String password, String captcha,
-                            String captchaSecret) {
-
-        if (email == null || name == null
-                || password == null || captcha == null
-        || captchaSecret == null) {
-            return "запрос не принят,нужно обязательно ввести"
-                    + " эмэйл,имя,пароль,секретный код капчи и надпись с картинки для регистрации";
+        RegisterResponse registerResponse = new RegisterResponse();
+        if (registerRequest.getEmail() == null || registerRequest.getName() == null
+                || registerRequest.getPassword() == null || registerRequest.getCaptcha() == null
+        || registerRequest.getSecretCode() == null) {
+            registerResponse.setResult(false);
+            registerResponse.setDescription("запрос не принят,нужно обязательно ввести"
+                    + " эмэйл,имя,пароль,секретный код капчи и надпись с картинки для регистрации");
+            return registerResponse;
         }
-        if (!email.contains("@")) {
-            return "это явно не эмэйл";
+        if (!registerRequest.getEmail().contains("@")) {
+            registerResponse.setResult(false);
+            registerResponse.setDescription("это явно не эмэйл");
+            return registerResponse;
         }
-        if (name.equals("")) {
-            return "Имя указано неверно";
+        if (registerRequest.getName().equals("")) {
+            registerResponse.setResult(false);
+            registerResponse.setDescription("Имя указано неверно");
+            return registerResponse;
         }
-        Optional<User> userName = userRepository.findByName(name);
-        Optional<User> userEmail = userRepository.findByEmail(email);
+        Optional<User> userName = userRepository.findByName(registerRequest.getName());
+        Optional<User> userEmail = userRepository.findByEmail(registerRequest.getEmail());
         if (userName.isPresent()) {
-            return "такое имя уже существует";
+            registerResponse.setResult(false);
+            registerResponse.setDescription("такое имя уже существует");
+            return registerResponse;
         }
         if (userEmail.isPresent()) {
-            return "Этот e-mail уже зарегистрирован";
+            registerResponse.setResult(false);
+            registerResponse.setDescription("Этот e-mail уже зарегистрирован");
+            return registerResponse;
         }
-        if (password.length() < 6) {
-            return "Пароль короче 6-ти символов";
+        if (registerRequest.getPassword().length() < 6) {
+            registerResponse.setResult(false);
+            registerResponse.setDescription("Пароль короче 6-ти символов");
+            return registerResponse;
         }
         Optional<CaptchaCode> captchaCode = captchaCodeRepository
-                .findBySecretCodeEquals(captchaSecret);
+                .findBySecretCodeEquals(registerRequest.getSecretCode());
         if (captchaCode.isPresent()) {
-            if (captchaCode.get().getCode().equals(captcha)) {
+            if (captchaCode.get().getCode().equals(registerRequest.getCaptcha())) {
                 User newUser = new User();
                 newUser.setRegistrationTime(LocalDateTime.now());
-                newUser.setName(name);
-                newUser.setEmail(email);
-                newUser.setPassword(password);
+                newUser.setName(registerRequest.getName());
+                newUser.setEmail(registerRequest.getEmail());
+                newUser.setPassword(securityConfig.passwordEncoder().encode(registerRequest.getPassword()));
                 createNewUser(newUser);
-                return "все верно,пользователь создан";
+                registerResponse.setResult(true);
+                registerResponse.setDescription("все верно,пользователь создан");
+                return registerResponse;
             } else {
-                return "Код с картинки введён неверно";
+                registerResponse.setResult(false);
+                registerResponse.setDescription("Код с картинки введён неверно");
+                return registerResponse;
             }
         }
         else {
-            return "Похоже время время существование капчи истекло" +
-                    ",нужно сгенерировать новую";
+            registerResponse.setResult(false);
+            registerResponse.setDescription("Похоже время время существование капчи истекло" +
+                    ",нужно сгенерировать новую");
+            return registerResponse;
         }
     }
 

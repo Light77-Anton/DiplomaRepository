@@ -1,5 +1,5 @@
 
-package main.support;
+package main.model;
 
 public enum Permission {
 

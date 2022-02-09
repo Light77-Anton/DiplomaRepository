@@ -1,11 +1,10 @@
 package main.api.response;
 import lombok.Data;
-import main.dto.PostByIdDTO;
 import org.springframework.stereotype.Component;
 
 @Component
 @Data
-public class PostByIdResponse {
+public class ResultResponse {
 
-    private PostByIdDTO postData;
+    private boolean result;
 }
