@@ -3,6 +3,7 @@ import main.api.request.PasswordRequest;
 import main.api.request.RestoreRequest;
 import main.api.response.LoginResponse;
 import main.api.response.ResultResponse;
+import main.config.SecurityConfig;
 import main.model.CaptchaCode;
 import main.model.repositories.CaptchaCodeRepository;
 import main.model.repositories.PostRepository;
@@ -47,6 +48,8 @@ public class AuthService {
     private JavaMailSender javaMailSender;
     @Autowired
     private CaptchaCodeRepository captchaCodeRepository;
+    @Autowired
+    private SecurityConfig securityConfig;
 
     public AuthService(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
@@ -109,7 +112,7 @@ public class AuthService {
                 hash.append(availableChars[random.nextInt(availableChars
                         .length)]);
             }
-            simpleMailMessage.setText(hash.toString());
+            simpleMailMessage.setText(CHANGE_PASSWORD + hash.toString());
             javaMailSender.send(simpleMailMessage);
             int updatedRow = userRepository.addRestoreCode(user.get().getId(), CHANGE_PASSWORD + hash.toString());
             resultResponse.setResult(true);
@@ -131,7 +134,7 @@ public class AuthService {
                 Optional<main.model.User> user = userRepository.findByCode(passwordRequest.getCode());
                 if (user.isPresent()) {
                     int updatedRow = userRepository.findByCodeAndUpdatePassword(passwordRequest.getCode(),
-                            passwordRequest.getPassword());
+                            securityConfig.passwordEncoder().encode(passwordRequest.getPassword()));
                 } else {
                     errors.add("Такого кода восстановления не найдено");
                 }

@@ -13,7 +13,7 @@ public class Comment {
     private int id;
 
     @Column(name = "parent_id")
-    private int parentId;
+    private Integer parentId;
 
     @Column(name = "post_id", insertable = false, updatable = false)
     private int postId;

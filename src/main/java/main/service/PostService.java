@@ -59,7 +59,15 @@ public class PostService {
         if (post.isPresent()) {
             Optional<Vote> vote = voteRepository.findByUserAndPostId(currentUser.getId(), post.get().getId());
             if (vote.isEmpty()) {
-                voteRepository.insertVote(currentUser.getId(),post.get().getId(), value);
+                /*
+                Vote newVote = new Vote();
+                newVote.setTime(LocalDateTime.now());
+                newVote.setValue(value);
+                newVote.setPostId(post.get().getId());
+                newVote.setUserId(currentUser.getId());
+                voteRepository.save(newVote);
+                 */
+                voteRepository.insertVote(currentUser.getId(), post.get().getId(), value);
                 resultResponse.setResult(true);
                 return resultResponse;
             } else if (vote.isPresent() && vote.get().getValue() == oppositeValue) {
@@ -83,8 +91,8 @@ public class PostService {
             resultResponse.setResult(false);
             return resultResponse;
         }
-        if (!postModerateRequest.getDecision().equals("accept") ||
-                !postModerateRequest.getDecision().equals("decline")) {
+        if (!postModerateRequest.getDecision().equals("ACCEPTED") &&
+                !postModerateRequest.getDecision().equals("DECLINED")) {
             resultResponse.setResult(false);
             return resultResponse;
         }
@@ -92,10 +100,10 @@ public class PostService {
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         resultResponse.setResult(true);
-        if (postModerateRequest.getDecision().equals("accept")) {
-            int updatedRow = postRepository.moderatePost(ModerationStatus.ACCEPTED, currentUser.getId(), postModerateRequest.getPostId());
+        if (postModerateRequest.getDecision().equals("ACCEPTED")) {
+            int updatedRow = postRepository.moderatePost("ACCEPTED", currentUser.getId(), postModerateRequest.getPostId());
         } else {
-            int updatedRow = postRepository.moderatePost(ModerationStatus.DECLINED, currentUser.getId(), postModerateRequest.getPostId());
+            int updatedRow = postRepository.moderatePost("DECLINED", currentUser.getId(), postModerateRequest.getPostId());
         }
 
         return resultResponse;
@@ -118,7 +126,7 @@ public class PostService {
         return commentFailedResponse;
     }
 
-    public PostResultResponse updatePost(Integer id, PostRequest postRequest, Principal principal) {
+    public PostResultResponse updatePost(Integer id, PostRequest postRequest, Principal principal, boolean isPremoderation) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -128,16 +136,31 @@ public class PostService {
         if (post.isPresent()) {
             boolean isActive = postRequest.isActive();
             LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());
-            String title = submethodsForService.checkTitleForPost(postRequest.getTitle(), description);
-            List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags(), description); //
-            String text = submethodsForService.checkTextForPost(postRequest.getText(), description);
+            String title = submethodsForService.checkTitleForPost(postRequest.getTitle());
+            if (title.equals("")) {
+                description.add("Заголовок не установлен");
+            }
+            List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
+            if (postRequest.getTags().size() != tags.size()) {
+                description.add("Такого тэга(-ов) не существует");
+            }
+            String text = submethodsForService.checkTextForPost(postRequest.getText());
+            if (text.equals("")) {
+                description.add("Текст публикации слишком короткий");
+            }
             if (description.isEmpty()) {
                 description.add("Все верно,изменения поста приняты");
                 postResultResponse.setDescription(description);
                 postResultResponse.setResult(true);
-                postRepository.updatePost(post.get().getId(), isActive, ldt, title, text);
+                if (isPremoderation) {
+                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, "NEW");
+                } else {
+                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, "ACCEPTED");
+                }
                 for (Tag tag : tags) {
-                    tagToPostRepository.insertTagToPost(post.get().getId(), tag.getId());
+                    if (tagToPostRepository.findByPostAndTagId(post.get().getId(), tag.getId()).isEmpty()) {
+                        tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
+                    }
                 }
                 return postResultResponse;
             }
@@ -155,14 +178,23 @@ public class PostService {
         List<String> description = new ArrayList<>();
         boolean isActive = postRequest.isActive();
         LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());
-        String title = submethodsForService.checkTitleForPost(postRequest.getTitle(), description);
-        List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags(), description); //
-        String text = submethodsForService.checkTextForPost(postRequest.getText(), description);
+        String title = submethodsForService.checkTitleForPost(postRequest.getTitle());
+        if (title.equals("")) {
+            description.add("Заголовок не установлен");
+        }
+        List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
+        if (postRequest.getTags().size() != tags.size()) {
+            description.add("Такого тэга(-ов) не существует");
+        }
+        String text = submethodsForService.checkTextForPost(postRequest.getText());
+        if (text.equals("")) {
+            description.add("Текст публикации слишком короткий");
+        }
         if (description.isEmpty() && isPremoderation) {
             description.add("Все верно,пост будет опубликован в указанное время");
             postResultResponse.setDescription(description);
             postResultResponse.setResult(true);
-            postRepository.insertPost(isActive, ModerationStatus.NEW,currentUser.getId(), ldt, title, text);
+            postRepository.insertPost(isActive, currentUser.getId(), ldt, title, text, "NEW");
             for (Tag tag : tags) {
                 tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
             }
@@ -172,7 +204,7 @@ public class PostService {
             description.add("Все верно,пост будет опубликован в указанное время");
             postResultResponse.setDescription(description);
             postResultResponse.setResult(true);
-            postRepository.insertPost(isActive, ModerationStatus.ACCEPTED,currentUser.getId(), ldt, title, text);
+            postRepository.insertPost(isActive, currentUser.getId(), ldt, title, text, "ACCEPTED");
             for (Tag tag : tags) {
                 tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
             }
@@ -193,17 +225,17 @@ public class PostService {
         Pageable page = PageRequest.of(offset /limit, limit);
         MyPostResponse myPostResponse = new MyPostResponse();
         if (status == ModerationStatus.NEW) {
-            Page<Post> postsPage = postRepository.findAllNewPostsAsPage(page);
+            Page<MyPostDTO> postsPage = postRepository.findAllNewPostsAsPageTest(page);
             myPostResponse.setCount(postsPage.getTotalPages());
-            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
+            myPostResponse.setPosts(postsPage.getContent());
         } else if (status == ModerationStatus.ACCEPTED) {
-            Page<Post> postsPage = postRepository.findAllAcceptedPostsByMe(currentUser.getId(), page);
+            Page<MyPostDTO> postsPage = postRepository.findAllAcceptedPostsByMeTest(currentUser.getId() ,page);
             myPostResponse.setCount(postsPage.getTotalPages());
-            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
+            myPostResponse.setPosts(postsPage.getContent());
         } else if (status == ModerationStatus.DECLINED) {
-            Page<Post> postsPage = postRepository.findAllDeclinedPostsByMe(currentUser.getId(), page);
+            Page<MyPostDTO> postsPage = postRepository.findAllDeclinedPostsByMeTest(currentUser.getId() ,page);
             myPostResponse.setCount(postsPage.getTotalPages());
-            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
+            myPostResponse.setPosts(postsPage.getContent());
         }
 
         return myPostResponse;
@@ -217,24 +249,19 @@ public class PostService {
                 (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         MyPostResponse myPostResponse = new MyPostResponse();
-        Page<Post> postsPage = submethodsForService
+        Page<MyPostDTO> postsPage = submethodsForService
                 .getPostsPageWithRequiredStatus(
                 submethodsForService.checkAndGetOffset(offset),
                 submethodsForService.checkAndGetLimit(limit),
                 submethodsForService.checkAndGetPostStatus(status),
                         currentUser);
-        if (postsPage.isEmpty()) {
-            myPostResponse.setCount(0);
-            myPostResponse.setPosts(new ArrayList<>());
-        }
         myPostResponse.setCount(postsPage.getTotalPages());
-        List<Post> postsList = postsPage.getContent();
-        myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsList));
+        myPostResponse.setPosts(postsPage.getContent());
 
         return myPostResponse;
     }
 
-    public PostByIdResponse getPostById(Integer id, User currentUser) {
+    public PostByIdResponse getPostById(Integer id, User currentUser) { //
         PostByIdResponse postByIdResponse = null;
         Optional<Post> post = postRepository.findById(id);
         if (!post.isPresent()) {
@@ -306,10 +333,9 @@ public class PostService {
         Pageable page = PageRequest.of(
                 submethodsForService.checkAndGetOffset(offset),
                 submethodsForService.checkAndGetLimit(limit));
-        Page<Post> postsPage = postRepository.findByTagContaining(requiredTag.get().getId(), page);
+        Page<PostDTO> postsPage = postRepository.findByTagContainingTest(requiredTag.get().getId(), page);
         postResponse.setCount(postsPage.getTotalPages());
-        List<Post> postsList = postsPage.getContent();
-        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
+        postResponse.setPosts(postsPage.getContent());
 
         return postResponse;
     }
@@ -317,14 +343,13 @@ public class PostService {
     public PostResponse getPostsByDate(Integer offset,
                                        Integer limit, String stringDate) {
         PostResponse postResponse = new PostResponse();
-        Page<Post> postsPage =
+        Page<PostDTO> postsPage =
                 submethodsForService.getPostsListWithRequiredDate(
                         submethodsForService.checkAndGetOffset(offset),
                         submethodsForService.checkAndGetLimit(limit),
                         stringDate);
         postResponse.setCount(postsPage.getTotalPages());
-        List<Post> postsList = postsPage.getContent();
-        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
+        postResponse.setPosts(postsPage.getContent());
 
         return postResponse;
     }
@@ -332,14 +357,13 @@ public class PostService {
     public PostResponse getPostsListByQuery(Integer offset,
                                             Integer limit, String query) {
         PostResponse postResponse = new PostResponse();
-        Page<Post> postsPage =
+        Page<PostDTO> postsPage =
                 submethodsForService.getPostsListWithRequiredQuery(
                         submethodsForService.checkAndGetOffset(offset),
                         submethodsForService.checkAndGetLimit(limit),
                         query);
         postResponse.setCount(postsPage.getTotalPages());
-        List<Post> postsList = postsPage.getContent();
-        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
+        postResponse.setPosts(postsPage.getContent());
 
         return postResponse;
     }
@@ -347,14 +371,13 @@ public class PostService {
     public PostResponse getPostsList(Integer offset,
                                      Integer limit, String stringMode) {
         PostResponse postResponse = new PostResponse();
-        Page<Post> postsPage =
+        Page<PostDTO> postsPage =
                 submethodsForService.getPostsPageWithRequiredMode(
                         submethodsForService.checkAndGetOffset(offset),
                         submethodsForService.checkAndGetLimit(limit),
                         submethodsForService.checkAndGetMode(stringMode));
         postResponse.setCount(postsPage.getTotalPages());
-        List<Post> postsList = postsPage.getContent();
-        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
+        postResponse.setPosts(postsPage.getContent());
 
         return postResponse;
     }

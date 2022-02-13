@@ -139,7 +139,7 @@ public class ApiPostController {
                                      @RequestBody PostRequest postRequest,
                                      Principal principal) {
 
-        return ResponseEntity.ok(postService.updatePost(id, postRequest, principal));
+        return ResponseEntity.ok(postService.updatePost(id, postRequest, principal, settingsService.isPremoderation()));
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")

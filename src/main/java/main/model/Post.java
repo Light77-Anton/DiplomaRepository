@@ -17,16 +17,16 @@ public class Post {
     @Column(name = "is_active")
     private boolean isActive;
 
-    //@Enumerated(EnumType.STRING)
     //@Convert(converter = ModerationStatusConverter.class)
     @Column(name = "moderation_status")
+    @Enumerated(EnumType.STRING)
     private ModerationStatus moderationStatus;
 
     @Column(name = "moderator_id")
     private Integer moderatorId;
 
     @Column(name = "user_id", insertable = false, updatable = false)
-    private int userId;
+    private Integer userId;
 
     @Column(name = "time")
     private LocalDateTime time;

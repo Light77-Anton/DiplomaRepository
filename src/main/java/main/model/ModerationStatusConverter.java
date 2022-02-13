@@ -2,7 +2,7 @@ package main.model;
 import javax.persistence.AttributeConverter;
 import javax.persistence.Converter;
 
-@Converter(autoApply = true)
+@Converter
 public class ModerationStatusConverter implements AttributeConverter<ModerationStatus, String> {
 
     @Override

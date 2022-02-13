@@ -5,12 +5,18 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 
 @Repository
 public interface TagToPostRepository extends JpaRepository<TagToPost, Integer> {
 
+
 @Transactional
 @Modifying
-@Query(value = "INSERT INTO tag2post AS ttp (post_id, tag_id) VALUES (?1, ?2)", nativeQuery = true)
+@Query(value = "INSERT INTO tag2post (post_id, tag_id) VALUES (?1, ?2)", nativeQuery = true)
 int insertTagToPost(int postId, int tagId);
+
+
+@Query(value = "SELECT * FROM tag2post AS ttp WHERE ttp.post_id = ?1 AND ttp.tag_id = ?2", nativeQuery = true)
+Optional<TagToPost> findByPostAndTagId(int postId, int TagId);
 }

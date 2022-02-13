@@ -1,11 +1,12 @@
 package main.dto;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 @Data
 public class MyPostDTO {
 
     private int postId;
-    private long timestamp;
+    private LocalDateTime timestamp;
     private String title;
     private String announce;
     private int likeCount;

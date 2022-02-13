@@ -46,4 +46,16 @@ public class TagService {
         return list;
     }
 
+    public boolean checkAndAddTag(String tagName) {
+        if (tagName == null || tagName.equals("")) {
+            return false;
+        }
+        Optional<Tag> tag = tagRepository.findByNameContaining(tagName);
+        if (tag.isPresent()) {
+            return false;
+        }
+        tagRepository.insertTag(tagName);
+
+        return true;
+    }
 }

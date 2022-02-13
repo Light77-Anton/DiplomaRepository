@@ -103,4 +103,16 @@ public class ApiGeneralController {
 
         return ResponseEntity.ok().build();
     }
+
+    @PreAuthorize("hasAuthority('user:moderate')")
+    @PostMapping("/api/tag")
+    public ResponseEntity addNewTag(@RequestBody String name) {
+        ResultResponse resultResponse = new ResultResponse();
+        if (!tagService.checkAndAddTag(name)) {
+            return ResponseEntity.ok(resultResponse);
+        }
+        resultResponse.setResult(true);
+
+        return ResponseEntity.ok(resultResponse);
+    }
 }

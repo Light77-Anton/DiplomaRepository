@@ -1,12 +1,12 @@
 package main.dto;
 import lombok.Data;
-
+import java.time.LocalDateTime;
 
 @Data
 public class PostDTO {
 
     private int postId;
-    private long timestamp;
+    private LocalDateTime timestamp;
     private UserDataDTO userData;
     private String title;
     private String announce;
