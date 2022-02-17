@@ -1,6 +1,7 @@
 package main.service;
 import main.api.request.ProfileRequest;
 import main.api.response.StatisticsResponse;
+import main.config.SecurityConfig;
 import main.model.User;
 import main.model.repositories.PostRepository;
 import main.model.repositories.UserRepository;
@@ -26,6 +27,8 @@ public class ProfileService {
     private UserRepository userRepository;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private SecurityConfig securityConfig;
 
     public StatisticsResponse getMyStatistics(Principal principal) {
         StatisticsResponse myStatisticsResponse = new StatisticsResponse();
@@ -52,84 +55,71 @@ public class ProfileService {
         String password = profileRequest.getPassword();
         String photo = profileRequest.getPhoto();
         boolean removePhoto = profileRequest.isRemovePhoto();
-        Optional<User> userName = userRepository.findByName(name);
-        Optional<User> userEmail = userRepository.findByEmail(email);
-        if (name != null && email != null && password != null && photo != null && !profileRequest.isRemovePhoto()) {
-            checkName(name, errors);
-            checkEmail(email, errors);
-            checkPhoto(photo, errors);
-            checkPassword(password, errors);
-            if (errors.isEmpty()) {
-                int updatedRow = userRepository.fullUpdateMyProfile(currentUser.getId(), name, email, getScaledPhoto(photo), password);
-            }
-            return errors;
+        int userId = currentUser.getId();
+        if (name != null) {
+           String quote = checkName(name, userId);
+           if (quote != null) {
+               errors.add(quote);
+           }
         }
-        else if (password == null && photo == null && name != null && email != null) {
-            checkName(name, errors);
-            checkEmail(email, errors);
-            if (errors.isEmpty()) {
-                int updatedRow = userRepository.nameEmailUpdateMyProfile(currentUser.getId(), name, email);
+        if (email != null) {
+            String quote = checkEmail(email, userId);
+            if (quote != null) {
+                errors.add(quote);
             }
-            return errors;
         }
-        else if (photo == null && name != null && email != null && password != null) {
-            checkName(name, errors);
-            checkEmail(email, errors);
-            checkPassword(password, errors);
-            if (errors.isEmpty()) {
-                int updatedRow = userRepository.passwordUpdateMyProfile(currentUser.getId(), name, email, password);
+        if (password != null) {
+            String quote = checkPassword(password, userId);
+            if (quote != null) {
+                errors.add(quote);
             }
-            return errors;
         }
-        else if (password == null && photo != null && name != null && email != null) {
-            checkName(name, errors);
-            checkEmail(email, errors);
-            checkPhoto(photo, errors);
-            if (errors.isEmpty()) {
-                int updatedRow = userRepository.photoUpdateMyProfile(currentUser.getId(), name, email, getScaledPhoto(photo));
+        if (photo != null && !removePhoto) {
+            String quote = checkPhoto(photo, userId);
+            if (quote != null) {
+                errors.add(quote);
             }
-            return errors;
         }
-        else if (password == null && removePhoto && name != null && email != null) {
-            checkName(name, errors);
-            checkEmail(email, errors);
-            if (errors.isEmpty()) {
-                int updatedRow = userRepository.removePhotoUpdateMyProfile(currentUser.getId(), name, email);
-            }
-            return errors;
-        } else {
-            errors.add("Не хватает данных для изменения профиля");
-            return errors;
+        if (removePhoto) {
+            removePhoto(userId);
         }
+
+        return errors;
     }
 
-    private void checkName(String name, List<String> errors) {
+    private String checkName(String name, int userId) {
         Optional<User> userName = userRepository.findByName(name);
         if (name.equals("") || userName.isPresent()) {
-            errors.add("Имя не введено или уже существует");
+            return "Такое имя уже существует";
         }
+        int updatedRow = userRepository.updateNameProfile(userId, name);
+
+        return null;
     }
 
-    private void checkEmail(String email, List<String> errors) {
+    private String checkEmail(String email, int userId) {
         Optional<User> userEmail = userRepository.findByEmail(email);
         if (!email.contains("@") || userEmail.isPresent()) {
-            errors.add("Такой эмэйл уже существует");
+            return "Такой эмэйл уже существует";
         }
+        int updatedRow = userRepository.updateEmailProfile(userId, email);
+
+        return null;
     }
 
-    private void checkPassword(String password, List<String> errors) {
+    private String checkPassword(String password, int userId) {
         if (password.length() < 6) {
-            errors.add("Пароль короче 6-ти символов");
+            return ("Пароль короче 6-ти символов");
         }
+        int updatedRow = userRepository.updatePasswordProfile(userId, securityConfig.passwordEncoder().encode(password));
+
+        return null;
     }
 
-    private void checkPhoto(String photo, List<String> errors) {
+    private String checkPhoto(String photo, int userId) {
         if (!photo.endsWith("jpg") && !photo.endsWith("png")) {
-            errors.add("Неподходящий формат фото");
+            return "Неподходящий формат фото";
         }
-    }
-
-    private String getScaledPhoto(String photo) {
         String scaledPhoto = "";
         try {
             BufferedImage bufferedImage = ImageIO.read(new File(photo));
@@ -138,7 +128,12 @@ public class ProfileService {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+        int updatedRow = userRepository.updatePhotoProfile(userId, scaledPhoto);
 
-        return scaledPhoto;
+        return null;
+    }
+
+    private void removePhoto(int userId) {
+       int updatedRoe = userRepository.removePhotoProfile(userId);
     }
 }

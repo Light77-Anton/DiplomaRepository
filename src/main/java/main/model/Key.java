@@ -1,9 +1,13 @@
 package main.model;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import javax.persistence.*;
 import java.io.Serializable;
 
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class Key implements Serializable {
 
     public Key(int postId, int tagId) {
@@ -12,9 +16,9 @@ public class Key implements Serializable {
         this.tagId = tagId;
     }
 
-    @Column(name = "post_id", insertable = true, updatable = false)
+    @Column(name = "post_id", insertable = false, updatable = false)
     private int postId;
 
-    @Column(name = "tag_id", insertable = true, updatable = false)
+    @Column(name = "tag_id", insertable = false, updatable = false)
     private int tagId;
 }

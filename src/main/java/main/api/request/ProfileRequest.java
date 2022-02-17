@@ -13,13 +13,13 @@ public class ProfileRequest {
 
     @JsonProperty("name")
     private String name;
-    @JsonProperty("email")
+    @JsonProperty("e_mail")
     private String email;
     @JsonProperty("password")
     private String password;
     @JsonProperty("photo")
     private String photo;
-    @JsonProperty("removePhoto")
+    @JsonProperty("remove_photo")
     private boolean removePhoto;
 
 }

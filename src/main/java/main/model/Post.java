@@ -1,13 +1,16 @@
 package main.model;
-import lombok.Data;
-
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
 @Table(name = "posts")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class Post {
 
     @Id
@@ -17,7 +20,6 @@ public class Post {
     @Column(name = "is_active")
     private boolean isActive;
 
-    //@Convert(converter = ModerationStatusConverter.class)
     @Column(name = "moderation_status")
     @Enumerated(EnumType.STRING)
     private ModerationStatus moderationStatus;
@@ -25,8 +27,9 @@ public class Post {
     @Column(name = "moderator_id")
     private Integer moderatorId;
 
-    @Column(name = "user_id", insertable = false, updatable = false)
-    private Integer userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "time")
     private LocalDateTime time;
@@ -40,10 +43,7 @@ public class Post {
     @Column(name = "view_count")
     private int viewCount;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private User user;
-
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "postId")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Vote> votes;
 
     @ManyToMany(cascade = CascadeType.ALL)
@@ -52,6 +52,6 @@ public class Post {
             inverseJoinColumns = {@JoinColumn(name = "tag_id")})
     private List<Tag> tags;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "postId")
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Comment> commentaries;
 }

@@ -13,10 +13,6 @@ public class TagService {
     @Autowired
     private TagRepository tagRepository;
 
-    public TagService() {
-
-    }
-
     public TagResponse getTagList(String query) {
         TagResponse tagResponse;
         List<Tag> tags;

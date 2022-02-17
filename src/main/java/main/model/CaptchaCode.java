@@ -1,11 +1,13 @@
 package main.model;
-import lombok.Data;
+import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "captcha_codes")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class CaptchaCode {
 
     @Id
@@ -18,4 +20,5 @@ public class CaptchaCode {
 
     @Column(name = "secret_code")
     private String secretCode;
+
 }

@@ -1,7 +1,9 @@
 package main.controllers;
 import main.api.request.CommentRequest;
+import main.api.request.ProfileRequest;
 import main.api.request.SettingsRequest;
 import main.api.response.*;
+import main.dto.PostDTO;
 import main.service.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,6 +43,12 @@ public class ApiGeneralController {
         this.profileService = profileService;
     }
 
+    @GetMapping("/api/test")
+    public ResponseEntity<PostDTO> test() {
+
+        return ResponseEntity.ok(postService.getTestDTO());
+    }
+
     @GetMapping("/api/init")
     public ResponseEntity<InitResponse> init() {
 
@@ -61,7 +69,7 @@ public class ApiGeneralController {
     }
 
     @GetMapping("/api/calendar")
-    public ResponseEntity calendar(@RequestParam(value = "year",
+    public ResponseEntity<CalendarResponse> calendar(@RequestParam(value = "year",
             required = false) String year) {
 
         return ResponseEntity.ok(calendarService.getPostsPerYear(year));
@@ -69,26 +77,26 @@ public class ApiGeneralController {
 
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("/api/comment")
-    public ResponseEntity comment(@RequestBody CommentRequest commentRequest,
+    public ResponseEntity<?> comment(@RequestBody CommentRequest commentRequest,
                                   Principal principal) {
         if (submethodsForService.checkAndAddComment(commentRequest, principal).isEmpty()) {
-            return ResponseEntity.ok(postService.getSuccessCommentId(principal));
+            return ResponseEntity.ok(submethodsForService.getSuccessCommentId(principal));
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(postService.getFailedCommentWithErrors
+                .body(submethodsForService.getFailedCommentWithErrors
                         (submethodsForService.checkAndAddComment(commentRequest, principal)));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @GetMapping("/api/statistics/my")
-    public ResponseEntity myStatistics(Principal principal) {
+    public ResponseEntity<StatisticsResponse> myStatistics(Principal principal) {
 
         return ResponseEntity.ok(profileService.getMyStatistics(principal));
     }
 
     @GetMapping("/api/statistics/all")
-    public ResponseEntity allStatistics(Principal principal) {
+    public ResponseEntity<?> allStatistics(Principal principal) {
         if (settingsService.isAccessToAllStatistics(principal)) {
             return ResponseEntity.ok(settingsService.getAllStatistics());
         }
@@ -98,7 +106,7 @@ public class ApiGeneralController {
 
     @PreAuthorize("hasAuthority('user:moderate')")
     @PutMapping("/api/settings")
-    public ResponseEntity changeSettings(@RequestBody SettingsRequest settingsRequest) {
+    public ResponseEntity<?> changeSettings(@RequestBody SettingsRequest settingsRequest) {
         settingsService.changeGlobalSettings(settingsRequest);
 
         return ResponseEntity.ok().build();
@@ -106,7 +114,7 @@ public class ApiGeneralController {
 
     @PreAuthorize("hasAuthority('user:moderate')")
     @PostMapping("/api/tag")
-    public ResponseEntity addNewTag(@RequestBody String name) {
+    public ResponseEntity<ResultResponse> addNewTag(@RequestBody String name) {
         ResultResponse resultResponse = new ResultResponse();
         if (!tagService.checkAndAddTag(name)) {
             return ResponseEntity.ok(resultResponse);
@@ -114,5 +122,20 @@ public class ApiGeneralController {
         resultResponse.setResult(true);
 
         return ResponseEntity.ok(resultResponse);
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @PostMapping("/api/profile/my")
+    public ResponseEntity<?> profile(Principal principal,
+                                     @RequestBody ProfileRequest profileRequest) {
+        if (profileService.checkProfileChanges(profileRequest, principal).isEmpty()) {
+            ResultResponse resultResponse = new ResultResponse();
+            resultResponse.setResult(true);
+            return ResponseEntity.ok(resultResponse);
+        }
+        FalseResultErrorsResponse profileChangeResponse = new FalseResultErrorsResponse();
+        profileChangeResponse.setErrors(profileService.checkProfileChanges(profileRequest, principal));
+
+        return ResponseEntity.ok(profileChangeResponse);
     }
 }

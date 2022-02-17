@@ -1,10 +1,15 @@
 package main.model;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import javax.persistence.*;
 
 @Entity
 @Table(name = "global_settings")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class GlobalSetting {
 
     @Id

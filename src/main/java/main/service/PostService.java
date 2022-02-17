@@ -25,11 +25,16 @@ public class PostService {
     private final SubmethodsForService submethodsForService;
     private final VoteRepository voteRepository;
     private final TagToPostRepository tagToPostRepository;
+    private final SettingsService settingsService;
 
     public PostService(PostRepository postRepository,
                        UserRepository userRepository,
                        TagRepository tagRepository,
-                       CommentRepository commentRepository, SubmethodsForService submethodsForService, VoteRepository voteRepository, TagToPostRepository tagToPostRepository) {
+                       CommentRepository commentRepository,
+                       SubmethodsForService submethodsForService,
+                       VoteRepository voteRepository,
+                       TagToPostRepository tagToPostRepository,
+                       SettingsService settingsService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.tagRepository = tagRepository;
@@ -37,41 +42,67 @@ public class PostService {
         this.submethodsForService = submethodsForService;
         this.voteRepository = voteRepository;
         this.tagToPostRepository = tagToPostRepository;
+        this.settingsService = settingsService;
     }
 
-    public ResultResponse setVoteForPost(Principal principal,
-                                         VoteForPostRequest voteForPostRequest,
-                                         int value) {
+    public ResultResponse setLikeForPost(Principal principal,
+                                         VoteForPostRequest voteForPostRequest) {
         ResultResponse resultResponse = new ResultResponse();
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        int oppositeValue;
-        if (value == 1) {
-            oppositeValue = 0;
-        } else if (value == 0) {
-            oppositeValue = 1;
-        } else {
-            resultResponse.setResult(true);
-            return resultResponse;
-        }
+        int likeValue = 1;
+        int dislikeValue = 0;
         Optional<Post> post = postRepository.findById(voteForPostRequest.getPostId());
         if (post.isPresent()) {
             Optional<Vote> vote = voteRepository.findByUserAndPostId(currentUser.getId(), post.get().getId());
             if (vote.isEmpty()) {
-                /*
                 Vote newVote = new Vote();
+                newVote.setUser(currentUser);
+                newVote.setPost(post.get());
                 newVote.setTime(LocalDateTime.now());
-                newVote.setValue(value);
-                newVote.setPostId(post.get().getId());
-                newVote.setUserId(currentUser.getId());
+                newVote.setValue(likeValue);
                 voteRepository.save(newVote);
-                 */
-                voteRepository.insertVote(currentUser.getId(), post.get().getId(), value);
+                //voteRepository.insertVote(currentUser.getId(), post.get().getId(), likeValue);
                 resultResponse.setResult(true);
                 return resultResponse;
-            } else if (vote.isPresent() && vote.get().getValue() == oppositeValue) {
-                voteRepository.changeVote(currentUser.getId(), post.get().getId(), value);
+            } else if (vote.isPresent() && vote.get().getValue() == dislikeValue) {
+                voteRepository.changeVote(currentUser.getId(), post.get().getId(), likeValue);
+                resultResponse.setResult(true);
+                return resultResponse;
+            } else {
+                resultResponse.setResult(false);
+                return resultResponse;
+            }
+        } else {
+            resultResponse.setResult(false);
+            return resultResponse;
+        }
+    }
+
+    public ResultResponse setDislikeForPost(Principal principal,
+                                         VoteForPostRequest voteForPostRequest) {
+        ResultResponse resultResponse = new ResultResponse();
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        int dislikeValue = 0;
+        int likeValue = 1;
+        Optional<Post> post = postRepository.findById(voteForPostRequest.getPostId());
+        if (post.isPresent()) {
+            Optional<Vote> vote = voteRepository.findByUserAndPostId(currentUser.getId(), post.get().getId());
+            if (vote.isEmpty()) {
+                Vote newVote = new Vote();
+                newVote.setUser(currentUser);
+                newVote.setPost(post.get());
+                newVote.setTime(LocalDateTime.now());
+                newVote.setValue(dislikeValue);
+                voteRepository.save(newVote);
+                //voteRepository.insertVote(currentUser.getId(), post.get().getId(), dislikeValue);
+                resultResponse.setResult(true);
+                return resultResponse;
+            } else if (vote.isPresent() && vote.get().getValue() == likeValue) {
+                voteRepository.changeVote(currentUser.getId(), post.get().getId(), dislikeValue);
                 resultResponse.setResult(true);
                 return resultResponse;
             } else {
@@ -109,24 +140,7 @@ public class PostService {
         return resultResponse;
     }
 
-    public CommentSuccessResponse getSuccessCommentId(Principal principal) {
-        main.model.User currentUser = userRepository.findByEmail
-                        (principal.getName())
-                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        CommentSuccessResponse commentSuccessResponse = new CommentSuccessResponse();
-        commentSuccessResponse.setId(currentUser.getId());
-
-        return commentSuccessResponse;
-    }
-
-    public FalseResultErrorsResponse getFailedCommentWithErrors(List<String> errors) {
-        FalseResultErrorsResponse commentFailedResponse = new FalseResultErrorsResponse();
-        commentFailedResponse.setErrors(errors);
-
-        return commentFailedResponse;
-    }
-
-    public PostResultResponse updatePost(Integer id, PostRequest postRequest, Principal principal, boolean isPremoderation) {
+    public PostResultResponse updatePost(Integer id, PostRequest postRequest, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -152,13 +166,17 @@ public class PostService {
                 description.add("Все верно,изменения поста приняты");
                 postResultResponse.setDescription(description);
                 postResultResponse.setResult(true);
-                if (isPremoderation) {
-                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, "NEW");
+                if (settingsService.isPremoderation()) {
+                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, ModerationStatus.NEW);
                 } else {
-                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, "ACCEPTED");
+                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, ModerationStatus.ACCEPTED);
                 }
                 for (Tag tag : tags) {
                     if (tagToPostRepository.findByPostAndTagId(post.get().getId(), tag.getId()).isEmpty()) {
+                        TagToPost tagToPost = new TagToPost();
+                        tagToPost.setPostId(postRepository.findLastPostIdByUserId(currentUser.getId()));
+                        tagToPost.setTagId(tag.getId());
+                        //tagToPostRepository.save(tagToPost);
                         tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
                     }
                 }
@@ -170,7 +188,7 @@ public class PostService {
         return postResultResponse;
     }
 
-    public PostResultResponse post(PostRequest postRequest, Principal principal, boolean isPremoderation) {
+    public PostResultResponse post(PostRequest postRequest, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -190,22 +208,46 @@ public class PostService {
         if (text.equals("")) {
             description.add("Текст публикации слишком короткий");
         }
-        if (description.isEmpty() && isPremoderation) {
+        if (description.isEmpty() && settingsService.isPremoderation()) {
             description.add("Все верно,пост будет опубликован в указанное время");
             postResultResponse.setDescription(description);
             postResultResponse.setResult(true);
-            postRepository.insertPost(isActive, currentUser.getId(), ldt, title, text, "NEW");
+            Post newPost = new Post();
+            newPost.setActive(isActive);
+            newPost.setUser(currentUser);
+            newPost.setModerationStatus(ModerationStatus.NEW);
+            newPost.setTime(ldt);
+            newPost.setTitle(title);
+            newPost.setText(text);
+            postRepository.save(newPost);
+            //postRepository.insertPost(isActive, currentUser.getId(), ldt, title, text, "NEW");
             for (Tag tag : tags) {
+                TagToPost tagToPost = new TagToPost();
+                tagToPost.setPostId(postRepository.findLastPostIdByUserId(currentUser.getId()));
+                tagToPost.setTagId(tag.getId());
+                //tagToPostRepository.save(tagToPost);
                 tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
             }
             return postResultResponse;
         }
-        if (description.isEmpty() && !isPremoderation) {
+        if (description.isEmpty() && !settingsService.isPremoderation()) {
             description.add("Все верно,пост будет опубликован в указанное время");
             postResultResponse.setDescription(description);
             postResultResponse.setResult(true);
-            postRepository.insertPost(isActive, currentUser.getId(), ldt, title, text, "ACCEPTED");
+            Post newPost = new Post();
+            newPost.setActive(isActive);
+            newPost.setUser(currentUser);
+            newPost.setModerationStatus(ModerationStatus.ACCEPTED);
+            newPost.setTime(ldt);
+            newPost.setTitle(title);
+            newPost.setText(text);
+            postRepository.save(newPost);
+            //postRepository.insertPost(isActive, currentUser.getId(), ldt, title, text, "ACCEPTED");
             for (Tag tag : tags) {
+                TagToPost tagToPost = new TagToPost();
+                tagToPost.setPostId(postRepository.findLastPostIdByUserId(currentUser.getId()));
+                tagToPost.setTagId(tag.getId());
+                //tagToPostRepository.save(tagToPost);
                 tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
             }
             return postResultResponse;
@@ -273,7 +315,7 @@ public class PostService {
         postByIdDTO.setTimestamp(post.get().getTime().toEpochSecond(ZoneOffset.UTC));
         postByIdDTO.setActive(post.get().isActive());
         UserDataDTO userDataDTO = new UserDataDTO();
-        userDataDTO.setId(post.get().getUserId());
+        userDataDTO.setId(post.get().getUser().getId());
         userDataDTO.setName(post.get().getUser().getName());
         postByIdDTO.setUserData(userDataDTO);
         postByIdDTO.setTitle(post.get().getTitle());
@@ -289,7 +331,7 @@ public class PostService {
             commentsDataDTO.setTimestamp(comment.getTime().toEpochSecond(ZoneOffset.UTC));
             commentsDataDTO.setText(comment.getText());
             ExtendedUserDataDTO extendedUserDataDTO = new ExtendedUserDataDTO();
-            Optional<User> user = userRepository.findById(comment.getUserId());
+            Optional<User> user = userRepository.findById(comment.getUser().getId());
             extendedUserDataDTO.setId(user.get().getId());
             extendedUserDataDTO.setName(user.get().getName());
             extendedUserDataDTO.setPhoto(user.get().getPhoto());
@@ -311,7 +353,7 @@ public class PostService {
             int rowsUpdated = postRepository.setNewViewCount(newViewCount, postId);
         }
         else {
-            if (!currentUser.isModerator() || post.get().getUserId() != currentUser.getId()) {
+            if (!currentUser.isModerator() || post.get().getUser().getId() != currentUser.getId()) {
                 int postId = post.get().getId();
                 int newViewCount = post.get().getViewCount() + 1;
                 int rowsUpdated = postRepository.setNewViewCount(newViewCount, postId);
@@ -382,4 +424,9 @@ public class PostService {
         return postResponse;
     }
 
+    public PostDTO getTestDTO() {
+        Optional<PostDTO> post = postRepository.findPostDTOTest();
+
+        return post.get();
+    }
 }

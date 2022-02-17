@@ -1,11 +1,13 @@
 package main.model;
-import lombok.Data;
+import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "post_comments")
-@Data
+@Getter
+@Setter
+@NoArgsConstructor
 public class Comment {
 
     @Id
@@ -15,11 +17,13 @@ public class Comment {
     @Column(name = "parent_id")
     private Integer parentId;
 
-    @Column(name = "post_id", insertable = false, updatable = false)
-    private int postId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
-    @Column(name = "user_id", insertable = false, updatable = false)
-    private int userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     private LocalDateTime time;
 

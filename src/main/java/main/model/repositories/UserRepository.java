@@ -15,30 +15,30 @@ Optional<User> findByEmail(String email);
 
 Optional<User> findByName(String name);
 
-@Transactional
-@Modifying
-@Query(value = "UPDATE users SET name = ?2,email = ?3, photo = ?4, password = ?5 WHERE id = ?1", nativeQuery = true)
-int fullUpdateMyProfile(int userId, String name, String email, String photo, String password);
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE users SET name = ?2 WHERE id = ?1", nativeQuery = true)
+    int updateNameProfile(int userId ,String name);
 
-@Transactional
-@Modifying
-@Query(value = "UPDATE users SET name = ?2,email = ?3, photo = ?4 WHERE id = ?1", nativeQuery = true)
-int photoUpdateMyProfile(int userId, String name, String email, String photo);
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE users SET email = ?2 WHERE id = ?1", nativeQuery = true)
+    int updateEmailProfile(int userId ,String email);
 
-@Transactional
-@Modifying
-@Query(value = "UPDATE users SET name = ?2,email = ?3 WHERE id = ?1", nativeQuery = true)
-int nameEmailUpdateMyProfile(int userId, String name, String email);
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE users SET password = ?2 WHERE id = ?1", nativeQuery = true)
+    int updatePasswordProfile(int userId ,String password);
 
-@Transactional
-@Modifying
-@Query(value = "UPDATE users SET name = ?2,email = ?3, password = ?4 WHERE id = ?1", nativeQuery = true)
-int passwordUpdateMyProfile(int userId, String name, String email, String password);
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE users SET photo = ?2 WHERE id = ?1", nativeQuery = true)
+    int updatePhotoProfile(int userId ,String photo);
 
-@Transactional
-@Modifying
-@Query(value = "UPDATE users SET name = ?2,email = ?3, photo = NULL WHERE id = ?1", nativeQuery = true)
-int removePhotoUpdateMyProfile(int userId, String name, String email);
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE users SET photo = NULL WHERE id = ?1", nativeQuery = true)
+    int removePhotoProfile(int userId);
 
 @Transactional
 @Modifying

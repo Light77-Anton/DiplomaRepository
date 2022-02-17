@@ -1,14 +1,14 @@
 package main.service;
 import main.api.request.CommentRequest;
+import main.api.response.CommentSuccessResponse;
+import main.api.response.FalseResultErrorsResponse;
 import main.dto.MyPostDTO;
 import main.model.*;
 import main.model.repositories.CommentRepository;
 import main.model.repositories.PostRepository;
 import main.model.repositories.TagRepository;
 import main.model.repositories.UserRepository;
-import main.dto.CountForPostId;
 import main.dto.PostDTO;
-import main.dto.UserDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -30,6 +30,23 @@ public class SubmethodsForService {
     private TagRepository tagRepository;
     @Autowired
     private CommentRepository commentRepository;
+
+    public CommentSuccessResponse getSuccessCommentId(Principal principal) {
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        CommentSuccessResponse commentSuccessResponse = new CommentSuccessResponse();
+        commentSuccessResponse.setId(currentUser.getId());
+
+        return commentSuccessResponse;
+    }
+
+    public FalseResultErrorsResponse getFailedCommentWithErrors(List<String> errors) {
+        FalseResultErrorsResponse commentFailedResponse = new FalseResultErrorsResponse();
+        commentFailedResponse.setErrors(errors);
+
+        return commentFailedResponse;
+    }
 
     public List<String> checkAndAddComment(CommentRequest commentRequest, Principal principal) {
         Optional<Post> post = postRepository.findById(commentRequest.getPostId());
@@ -59,12 +76,20 @@ public class SubmethodsForService {
             comment.setPostId(commentRequest.getPostId());
             comment.setText(commentRequest.getText());
             commentRepository.save(comment);
-             */
             if (commentRequest.getParentId() == null) {
                 commentRepository.insertComment(commentRequest.getPostId(), currentUser.getId(), commentRequest.getText());
             } else {
                 commentRepository.insertQuoteToComment(commentRequest.getParentId(), commentRequest.getPostId(), currentUser.getId(), commentRequest.getText());
             }
+
+             */
+            Comment newComment = new Comment();
+            newComment.setUser(currentUser);
+            newComment.setPost(post.get());
+            newComment.setParentId(commentRequest.getParentId());
+            newComment.setTime(LocalDateTime.now());
+            newComment.setText(commentRequest.getText());
+            commentRepository.save(newComment);
         }
 
         return errors;

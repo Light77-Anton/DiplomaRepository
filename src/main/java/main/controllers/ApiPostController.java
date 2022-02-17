@@ -3,9 +3,7 @@ import main.api.request.PostModerateRequest;
 import main.api.request.PostRequest;
 import main.api.request.ProfileRequest;
 import main.api.request.VoteForPostRequest;
-import main.api.response.FalseResultErrorsResponse;
-import main.api.response.PostResponse;
-import main.api.response.ResultResponse;
+import main.api.response.*;
 import main.model.ModerationStatus;
 import main.model.repositories.UserRepository;
 import main.service.*;
@@ -44,7 +42,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post")
-    public ResponseEntity post(
+    public ResponseEntity<PostResponse> post(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "mode", required = false) String mode) {
@@ -53,7 +51,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/search")
-    public ResponseEntity postSearch(
+    public ResponseEntity<PostResponse> postSearch(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "query", required = false) String query) {
@@ -68,7 +66,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/byDate")
-    public ResponseEntity postByDate(
+    public ResponseEntity<PostResponse> postByDate(
             @RequestParam(value = "date", required = false) String date,
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit) {
@@ -77,7 +75,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/byTag")
-    public ResponseEntity postByTag(
+    public ResponseEntity<PostResponse> postByTag(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "tag", required = false) String tagName) {
@@ -89,7 +87,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/api/post/{id}")
-    public ResponseEntity postById(@PathVariable Integer id, Principal principal) {
+    public ResponseEntity<?> postById(@PathVariable Integer id, Principal principal) {
         if (principal == null) {
             return ResponseEntity.ok(postService.getPostById(id,null));
         }
@@ -104,7 +102,7 @@ public class ApiPostController {
 
     @PreAuthorize("hasAuthority('user:write')")
     @GetMapping("/api/post/my")
-    public ResponseEntity myPost(@RequestParam(value = "offset", required = false) Integer offset,
+    public ResponseEntity<?> myPost(@RequestParam(value = "offset", required = false) Integer offset,
                                  @RequestParam(value = "limit", required = false) Integer limit,
                                  @RequestParam(value = "status", required = true) String status,
                                  Principal principal) {
@@ -118,66 +116,54 @@ public class ApiPostController {
 
     @PreAuthorize("hasAuthority('user:moderate')")
     @GetMapping("/api/post/moderation")
-    public ResponseEntity findPostsForModeration(@RequestParam(value = "offset", required = false) Integer offset,
-                                         @RequestParam(value = "limit", required = false) Integer limit,
-                                         @RequestParam(value = "status", required = true) ModerationStatus status,
-                                         Principal principal) {
+    public ResponseEntity<MyPostResponse> findPostsForModeration(@RequestParam(value = "offset", required = false) Integer offset,
+                                                                 @RequestParam(value = "limit", required = false) Integer limit,
+                                                                 @RequestParam(value = "status", required = true) ModerationStatus status,
+                                                                 Principal principal) {
 
         return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("/api/post")
-    public ResponseEntity post(@RequestBody PostRequest postRequest, Principal principal) {
+    public ResponseEntity<PostResultResponse> post(@RequestBody PostRequest postRequest, Principal principal) {
 
-        return ResponseEntity.ok(postService.post(postRequest, principal, settingsService.isPremoderation()));
+        return ResponseEntity.ok(postService.post(postRequest, principal));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @PutMapping("/api/post/{id}")
-    public ResponseEntity updatePost(@PathVariable Integer id,
+    public ResponseEntity<?> updatePost(@PathVariable Integer id,
                                      @RequestBody PostRequest postRequest,
                                      Principal principal) {
+        if (!postService.updatePost(id, postRequest, principal).isResult()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("документ не найден");
+        }
 
-        return ResponseEntity.ok(postService.updatePost(id, postRequest, principal, settingsService.isPremoderation()));
+        return ResponseEntity.ok(postService.updatePost(id, postRequest, principal));
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")
     @PostMapping("/api/moderation")
-    public ResponseEntity moderatePost(Principal principal,
+    public ResponseEntity<?> moderatePost(Principal principal,
                                        @RequestBody PostModerateRequest postModerateRequest) {
 
         return ResponseEntity.ok(postService.checkModeratorDecision(postModerateRequest, principal));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping("/api/profile/my")
-    public ResponseEntity profile(Principal principal,
-                                  @RequestBody ProfileRequest profileRequest) {
-        if (profileService.checkProfileChanges(profileRequest, principal).isEmpty()) {
-            ResultResponse resultResponse = new ResultResponse();
-            resultResponse.setResult(true);
-            return ResponseEntity.ok(resultResponse);
-        }
-        FalseResultErrorsResponse profileChangeResponse = new FalseResultErrorsResponse();
-        profileChangeResponse.setErrors(profileService.checkProfileChanges(profileRequest, principal));
-
-        return ResponseEntity.ok(profileChangeResponse);
-    }
-
-    @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("/api/post/like")
-    public ResponseEntity likePost(Principal principal,
+    public ResponseEntity<ResultResponse> likePost(Principal principal,
                                @RequestBody VoteForPostRequest voteForPostRequest) {
 
-        return ResponseEntity.ok(postService.setVoteForPost(principal, voteForPostRequest, 1));
+        return ResponseEntity.ok(postService.setLikeForPost(principal, voteForPostRequest));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("/api/post/dislike")
-    public ResponseEntity dislikePost(Principal principal,
+    public ResponseEntity<ResultResponse> dislikePost(Principal principal,
                                    @RequestBody VoteForPostRequest voteForPostRequest) {
 
-        return ResponseEntity.ok(postService.setVoteForPost(principal, voteForPostRequest, 0));
+        return ResponseEntity.ok(postService.setDislikeForPost(principal, voteForPostRequest));
     }
 }

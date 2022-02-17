@@ -56,7 +56,7 @@ public class ApiAuthController {
     }
 
     @PostMapping("/api/auth/register")
-    public ResponseEntity authRegister(
+    public ResponseEntity<?> authRegister(
             @RequestBody RegisterRequest registerRequest) throws Exception {
         if (!settingsService.isMultiuserMode()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -78,13 +78,13 @@ public class ApiAuthController {
     }
 
     @PostMapping("/api/auth/restore")
-    public ResponseEntity authRestore(@RequestBody RestoreRequest restoreRequest) {
+    public ResponseEntity<ResultResponse> authRestore(@RequestBody RestoreRequest restoreRequest) {
 
         return ResponseEntity.ok(authService.checkEmailAndGetCode(restoreRequest));
     }
 
     @PostMapping("/api/auth/password")
-    public ResponseEntity changePassword(@RequestBody PasswordRequest passwordRequest) {
+    public ResponseEntity<?> changePassword(@RequestBody PasswordRequest passwordRequest) {
         if (authService.checkPasswordChange(passwordRequest).isEmpty()) {
             ResultResponse resultResponse = new ResultResponse();
             resultResponse.setResult(true);
