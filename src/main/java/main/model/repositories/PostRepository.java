@@ -31,28 +31,28 @@ int findViewCountById(int postId);
 @Query(value = "SELECT SUBSTRING(p.text, 0, 150) FROM posts AS p WHERE p.id = ?1", nativeQuery = true)
 String extractAnnounceFromTextById(int postId);
 
-    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.text LIKE '%' || ?1 || '%' AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now()",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.text LIKE '%' || ?1 || '%' AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now()", nativeQuery = true)
     Page<PostDTO> findByTextContainingTest(String query, Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE DATE(p.time) = TO_DATE(?1, 'YYYY-MM-DD') AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now()",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE DATE(p.time) = TO_DATE(?1, 'YYYY-MM-DD') AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now()", nativeQuery = true)
     Page<PostDTO> findByDateTest(String date, Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE ttp.tag_id = ?1 AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now()",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE ttp.tag_id = ?1 AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now()", nativeQuery = true)
     Page<PostDTO> findByTagContainingTest(int tagId, Pageable pageable);
 
 @Query(value = "SELECT * FROM posts AS p WHERE EXTRACT(YEAR FROM DATE(p.time)) = EXTRACT(YEAR FROM TO_DATE(?1, 'YYYY')) WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now()", nativeQuery = true)
@@ -61,96 +61,96 @@ List<Post> findByYear(String year);
 @Query(value = "SELECT EXTRACT(YEAR FROM DATE(p.time)) FROM posts AS p WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now()", nativeQuery = true)
 TreeSet<Integer> findAllYears();
 
-    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now() ORDER BY COUNT(pc.id) DESC",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now() ORDER BY COUNT(pc.id) DESC", nativeQuery = true)
     Page<PostDTO> findAllAndOrderByCommentariesSizeTest(Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now() ORDER BY COUNT(pv.id) DESC",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now() ORDER BY COUNT(pv.id) DESC", nativeQuery = true)
     Page<PostDTO> findAllAndOrderByVotesCountTest(Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now() ORDER BY p.time DESC",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now() ORDER BY p.time DESC", nativeQuery = true)
     Page<PostDTO> findAllAndOrderByTimeDescTest(Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now() ORDER BY p.time ASC",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time > now() ORDER BY p.time ASC", nativeQuery = true)
     Page<PostDTO> findAllAndOrderByTimeAscTest(Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count), new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count, new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = false AND p.user_id = ?1",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = false AND p.user_id = ?1", nativeQuery = true)
     Page<MyPostDTO> findAllInactivePostsTest(int userId, Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count), new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count, new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.user_id = ?1",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.user_id = ?1", nativeQuery = true)
     Page<MyPostDTO> findAllPendingPostsTest(int userId, Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count), new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count, new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'DECLINED' p.user_id = ?1",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'DECLINED' p.user_id = ?1", nativeQuery = true)
     Page<MyPostDTO> findAllDeclinedPostsTest(int userId, Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count), new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count, new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' p.user_id = ?1",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' p.user_id = ?1", nativeQuery = true)
     Page<MyPostDTO> findAllAcceptedPostsTest(int userId, Pageable pageable);
 
 @Query(value = "SELECT * FROM posts AS p WHERE p.moderation_status = 'NEW'", nativeQuery = true)
 List<Post> findAllNewPostsAsList();
 
-    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count), new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count, new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'NEW'",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'NEW'", nativeQuery = true)
     Page<MyPostDTO> findAllNewPostsAsPageTest(Pageable pageable);
 
 
-    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count), new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count, new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.moderator_id = ?1",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.moderator_id = ?1", nativeQuery = true)
     Page<MyPostDTO> findAllAcceptedPostsByMeTest(int myId, Pageable pageable);
 
-    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count), new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
+    @Query(value = "SELECT new main.dto.MyPostDTO(p.id, p.time, p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.view_count, new main.dto.UserDataDTO(u.id, u.name)) FROM posts AS p "
             + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
+            + "INNER JOIN post_votes AS likes ON likes.post_id = p.id WHERE likes.value = 1 "
+            + "INNER JOIN post_votes AS dislikes ON dislikes.post_id = p.id WHERE dislikes.value = 0 "
             + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE p.is_active = true AND p.moderation_status = 'DECLINED' AND p.moderator_id = ?1",
-            countQuery = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+            + "WHERE p.is_active = true AND p.moderation_status = 'DECLINED' AND p.moderator_id = ?1", nativeQuery = true)
     Page<MyPostDTO> findAllDeclinedPostsByMeTest(int myId, Pageable pageable);
 
 @Transactional
@@ -205,10 +205,11 @@ LocalDateTime findTheOldestPublicationTime();
 @Query(value = "SELECT p.id FROM posts AS p WHERE p.user_id = ?1 WHERE MAX(p.id)", nativeQuery = true)
 int findLastPostIdByUserId(int userId);
 
-    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time, new main.dto.UserDataDTO(u.id, u.name), p.title, SUBSTRING(p.text, 0, 150), COUNT(pv.value = 1), COUNT(pv.value = 0), COUNT(pc), COUNT(p.view_count)) FROM posts AS p "
-            + "INNER JOIN users AS u ON u.id = p.user_id "
-            + "INNER JOIN post_votes AS pv ON pv.post_id = p.id "
-            + "INNER JOIN post_comments AS pc ON pc.post_id = p.id "
-            + "WHERE MAX(p.id)", nativeQuery = true)
+    @Query(value = "SELECT new main.dto.PostDTO(p.id, p.time,(SELECT new main.dto.UserDataDTO(u.id, u.name)), p.title, SUBSTRING(p.text, 0, 150), COUNT(likes), COUNT(dislikes), COUNT(pc), p.viewCount) FROM Post AS p "
+            + "INNER JOIN User AS u ON u.id = p.user.getId() "
+            + "INNER JOIN Vote AS likes ON likes.post.getId() = p.id "
+            + "INNER JOIN Vote AS dislikes ON dislikes.post.getId() = p.id "
+            + "INNER JOIN Comment AS pc ON pc.postId() = p.id "
+            + "WHERE MAX(p.id) AND likes.value = 1 AND dislikes.value = 0", nativeQuery = true)
     Optional<PostDTO> findPostDTOTest();
 }

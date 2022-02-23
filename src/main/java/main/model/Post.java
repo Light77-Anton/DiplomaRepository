@@ -2,6 +2,8 @@ package main.model;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+@TypeDef(name="myEnumConverter", typeClass=MyEnumConverter.class)
 public class Post {
 
     @Id
@@ -20,8 +23,9 @@ public class Post {
     @Column(name = "is_active")
     private boolean isActive;
 
-    @Column(name = "moderation_status")
+    @Column(name = "moderation_status", columnDefinition = "enum", nullable = false)
     @Enumerated(EnumType.STRING)
+    @Type(type="myEnumConverter")
     private ModerationStatus moderationStatus;
 
     @Column(name = "moderator_id")
