@@ -43,12 +43,6 @@ public class ApiGeneralController {
         this.profileService = profileService;
     }
 
-    @GetMapping("/api/test")
-    public ResponseEntity<PostDTO> test() {
-
-        return ResponseEntity.ok(postService.getTestDTO());
-    }
-
     @GetMapping("/api/init")
     public ResponseEntity<InitResponse> init() {
 

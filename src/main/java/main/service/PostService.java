@@ -267,17 +267,17 @@ public class PostService {
         Pageable page = PageRequest.of(offset /limit, limit);
         MyPostResponse myPostResponse = new MyPostResponse();
         if (status == ModerationStatus.NEW) {
-            Page<MyPostDTO> postsPage = postRepository.findAllNewPostsAsPageTest(page);
+            Page<Post> postsPage = postRepository.findAllNewPostsAsPage(page);
             myPostResponse.setCount(postsPage.getTotalPages());
-            myPostResponse.setPosts(postsPage.getContent());
+            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
         } else if (status == ModerationStatus.ACCEPTED) {
-            Page<MyPostDTO> postsPage = postRepository.findAllAcceptedPostsByMeTest(currentUser.getId() ,page);
+            Page<Post> postsPage = postRepository.findAllAcceptedPostsByMe(currentUser.getId(), page);
             myPostResponse.setCount(postsPage.getTotalPages());
-            myPostResponse.setPosts(postsPage.getContent());
+            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
         } else if (status == ModerationStatus.DECLINED) {
-            Page<MyPostDTO> postsPage = postRepository.findAllDeclinedPostsByMeTest(currentUser.getId() ,page);
+            Page<Post> postsPage = postRepository.findAllDeclinedPostsByMe(currentUser.getId(), page);
             myPostResponse.setCount(postsPage.getTotalPages());
-            myPostResponse.setPosts(postsPage.getContent());
+            myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
         }
 
         return myPostResponse;
@@ -288,17 +288,22 @@ public class PostService {
                                     String status,
                                     Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
-                (principal.getName())
+                        (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         MyPostResponse myPostResponse = new MyPostResponse();
-        Page<MyPostDTO> postsPage = submethodsForService
+        Page<Post> postsPage = submethodsForService
                 .getPostsPageWithRequiredStatus(
-                submethodsForService.checkAndGetOffset(offset),
-                submethodsForService.checkAndGetLimit(limit),
-                submethodsForService.checkAndGetPostStatus(status),
+                        submethodsForService.checkAndGetOffset(offset),
+                        submethodsForService.checkAndGetLimit(limit),
+                        submethodsForService.checkAndGetPostStatus(status),
                         currentUser);
+        if (postsPage.isEmpty()) {
+            myPostResponse.setCount(0);
+            myPostResponse.setPosts(new ArrayList<>());
+        }
         myPostResponse.setCount(postsPage.getTotalPages());
-        myPostResponse.setPosts(postsPage.getContent());
+        List<Post> postsList = postsPage.getContent();
+        myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsList));
 
         return myPostResponse;
     }
@@ -375,9 +380,10 @@ public class PostService {
         Pageable page = PageRequest.of(
                 submethodsForService.checkAndGetOffset(offset),
                 submethodsForService.checkAndGetLimit(limit));
-        Page<PostDTO> postsPage = postRepository.findByTagContainingTest(requiredTag.get().getId(), page);
+        Page<Post> postsPage = postRepository.findByTagContaining(requiredTag.get().getId(), page);
         postResponse.setCount(postsPage.getTotalPages());
-        postResponse.setPosts(postsPage.getContent());
+        List<Post> postsList = postsPage.getContent();
+        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
@@ -385,13 +391,14 @@ public class PostService {
     public PostResponse getPostsByDate(Integer offset,
                                        Integer limit, String stringDate) {
         PostResponse postResponse = new PostResponse();
-        Page<PostDTO> postsPage =
+        Page<Post> postsPage =
                 submethodsForService.getPostsListWithRequiredDate(
                         submethodsForService.checkAndGetOffset(offset),
                         submethodsForService.checkAndGetLimit(limit),
                         stringDate);
         postResponse.setCount(postsPage.getTotalPages());
-        postResponse.setPosts(postsPage.getContent());
+        List<Post> postsList = postsPage.getContent();
+        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
@@ -399,13 +406,14 @@ public class PostService {
     public PostResponse getPostsListByQuery(Integer offset,
                                             Integer limit, String query) {
         PostResponse postResponse = new PostResponse();
-        Page<PostDTO> postsPage =
+        Page<Post> postsPage =
                 submethodsForService.getPostsListWithRequiredQuery(
                         submethodsForService.checkAndGetOffset(offset),
                         submethodsForService.checkAndGetLimit(limit),
                         query);
         postResponse.setCount(postsPage.getTotalPages());
-        postResponse.setPosts(postsPage.getContent());
+        List<Post> postsList = postsPage.getContent();
+        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
     }
@@ -413,20 +421,15 @@ public class PostService {
     public PostResponse getPostsList(Integer offset,
                                      Integer limit, String stringMode) {
         PostResponse postResponse = new PostResponse();
-        Page<PostDTO> postsPage =
+        Page<Post> postsPage =
                 submethodsForService.getPostsPageWithRequiredMode(
                         submethodsForService.checkAndGetOffset(offset),
                         submethodsForService.checkAndGetLimit(limit),
                         submethodsForService.checkAndGetMode(stringMode));
         postResponse.setCount(postsPage.getTotalPages());
-        postResponse.setPosts(postsPage.getContent());
+        List<Post> postsList = postsPage.getContent();
+        postResponse.setPosts(submethodsForService.fillAndGetArrayWithPosts(postsList));
 
         return postResponse;
-    }
-
-    public PostDTO getTestDTO() {
-        Optional<PostDTO> post = postRepository.findPostDTOTest();
-
-        return post.get();
     }
 }

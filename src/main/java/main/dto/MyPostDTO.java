@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 public class MyPostDTO {
 
     private int postId;
-    private LocalDateTime timestamp;
+    private long timestamp;
     private String title;
     private String announce;
     private int likeCount;

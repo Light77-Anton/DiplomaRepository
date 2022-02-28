@@ -2,7 +2,9 @@ package main.service;
 import main.api.request.CommentRequest;
 import main.api.response.CommentSuccessResponse;
 import main.api.response.FalseResultErrorsResponse;
+import main.dto.CountForPostId;
 import main.dto.MyPostDTO;
+import main.dto.UserDataDTO;
 import main.model.*;
 import main.model.repositories.CommentRepository;
 import main.model.repositories.PostRepository;
@@ -15,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +33,27 @@ public class SubmethodsForService {
     private TagRepository tagRepository;
     @Autowired
     private CommentRepository commentRepository;
+
+    public List<PostDTO> fillAndGetArrayWithPosts(List<Post> postsList) {
+        List<PostDTO> list = new ArrayList<>();
+        for (Post post : postsList) {
+            PostDTO postDTO = new PostDTO();
+            postDTO.setPostId(post.getId());
+            postDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
+            UserDataDTO userDataDTO = new UserDataDTO();
+            userDataDTO.setId(post.getUser().getId());
+            userDataDTO.setName(post.getUser().getName());
+            postDTO.setUserData(userDataDTO);
+            postDTO.setTitle(post.getTitle());
+            postDTO.setAnnounce(postRepository.extractAnnounceFromTextById(post.getId()) + "...");
+            postDTO.setLikesCount(postRepository.findLikeCountById(post.getId()));
+            postDTO.setDislikeCount(postRepository.findDislikeCountById(post.getId()));
+            postDTO.setCommentCount(post.getCommentaries().size());
+            postDTO.setViewCount(postRepository.findViewCountById(post.getId()));
+            list.add(postDTO);
+        }
+        return list;
+    }
 
     public CommentSuccessResponse getSuccessCommentId(Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
@@ -95,35 +119,85 @@ public class SubmethodsForService {
         return errors;
     }
 
-    public Page<PostDTO> getPostsPageWithRequiredMode(Integer offset,
+    public Page<Post> getPostsPageWithRequiredMode(Integer offset,
                                                    Integer limit, Mode mode) {
+        Page<CountForPostId> bufferArrayList;
+        List<Post> postsList;
+        Page<Post> postsPage;
         Pageable pageable = PageRequest.of(offset / limit, limit);
         if (mode == Mode.RECENT) {
-            return postRepository.findAllAndOrderByTimeDescTest(pageable);
+            postsPage = postRepository.findAllAndOrderByTimeDesc(pageable);//
         } else if (mode == Mode.POPULAR) {
-            return postRepository.findAllAndOrderByCommentariesSizeTest(pageable);
+            bufferArrayList = postRepository.findAllAndOrderByCommentariesSize(pageable);//
+            postsList = new ArrayList<>();
+            for (CountForPostId array : bufferArrayList) {
+                Integer postId = Integer.valueOf(String.valueOf(array.getId()));
+                if (postId == null) {
+                    break;
+                }
+                Optional<Post> post = postRepository.findById(postId);
+                postsList.add(post.get());
+            }
+            postsPage = new PageImpl<>(postsList);
         } else if (mode == Mode.BEST) {
-            return postRepository.findAllAndOrderByVotesCountTest(pageable);
+            bufferArrayList = postRepository.findAllAndOrderByVotesCount(pageable);//
+            postsList = new ArrayList<>();
+            for (CountForPostId array : bufferArrayList) {
+                Integer postId = Integer.valueOf(String.valueOf(array.getId()));
+                if (postId == null) {
+                    break;
+                }
+                Optional<Post> post = postRepository.findById(postId);
+                postsList.add(post.get());
+            }
+            postsPage = new PageImpl<>(postsList);
         } else { //EARLY
-            return postRepository.findAllAndOrderByTimeAscTest(pageable);
+            postsPage = postRepository.findAllAndOrderByTimeAsc(pageable);
         }
+
+        return postsPage;
     }
 
-    public Page<MyPostDTO> getPostsPageWithRequiredStatus(Integer offset,
+    public List<MyPostDTO> fillAndGetMyPostsList(List<Post> postsList) {
+        List<MyPostDTO> myPostsList = new ArrayList<>();
+        for (Post post : postsList) {
+            MyPostDTO myPostDTO = new MyPostDTO();
+            myPostDTO.setPostId(post.getId());
+            myPostDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
+            myPostDTO.setTitle(post.getTitle());
+            myPostDTO.setAnnounce(postRepository.extractAnnounceFromTextById(post.getId()) + "...");
+            myPostDTO.setLikeCount(postRepository.findLikeCountById(post.getId()));
+            myPostDTO.setDislikeCount(postRepository.findDislikeCountById(post.getId()));
+            myPostDTO.setCommentCount(post.getCommentaries().size());
+            myPostDTO.setViewCount(postRepository.findViewCountById(post.getId()));
+            UserDataDTO userDataDTO = new UserDataDTO();
+            userDataDTO.setId(post.getUser().getId());
+            userDataDTO.setName(post.getUser().getName());
+            myPostDTO.setUserData(userDataDTO);
+            myPostsList.add(myPostDTO);
+        }
+
+        return myPostsList;
+    }
+
+    public Page<Post> getPostsPageWithRequiredStatus(Integer offset,
                                                      Integer limit,
                                                      PostStatus postStatus,
-                                                     User currentUser) { // получить все id постов
+                                                     User currentUser) {
+        Page<Post> postsPage = null;
         Pageable pageable = PageRequest.of(offset / limit, limit);
         int userId = currentUser.getId();
         if (postStatus == PostStatus.INACTIVE) {
-            return postRepository.findAllInactivePostsTest(userId, pageable);
+            postsPage = postRepository.findAllInactivePosts(userId, pageable);
         } else if (postStatus == PostStatus.PENDING) {
-            return postRepository.findAllPendingPostsTest(userId, pageable);
+            postsPage = postRepository.findAllPendingPosts(userId, pageable);
         } else if (postStatus == PostStatus.DECLINED) {
-            return postRepository.findAllDeclinedPostsTest(userId, pageable);
-        } else  { // PUBLISHED
-            return postRepository.findAllAcceptedPostsTest(userId, pageable);
+            postsPage = postRepository.findAllDeclinedPosts(userId, pageable);
+        } else if (postStatus == PostStatus.PUBLISHED) {
+            postsPage = postRepository.findAllAcceptedPosts(userId, pageable);
         }
+
+        return postsPage;
     }
 
     public PostStatus checkAndGetPostStatus(String stringStatus) {
@@ -137,18 +211,18 @@ public class SubmethodsForService {
         return postStatus;
     }
 
-    public Page<PostDTO> getPostsListWithRequiredDate(Integer offset,
+    public Page<Post> getPostsListWithRequiredDate(Integer offset,
                                                    Integer limit,
                                                    String stringDate) { // получить все id постов
         Pageable page = PageRequest.of(offset / limit, limit);
-        return postRepository.findByDateTest(stringDate, page);
+        return postRepository.findByDate(stringDate, page);
     }
 
-    public Page<PostDTO> getPostsListWithRequiredQuery(Integer offset,
+    public Page<Post> getPostsListWithRequiredQuery(Integer offset,
                                                     Integer limit,
                                                     String query) { // получить все id постов
         Pageable page = PageRequest.of(offset / limit, limit, Sort.by("time").descending());
-        return postRepository.findByTextContainingTest(query, page);
+        return postRepository.findByTextContaining(query, page);
     }
 
     public Mode checkAndGetMode(String stringMode) {
