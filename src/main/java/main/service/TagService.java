@@ -20,6 +20,7 @@ public class TagService {
             tags = tagRepository.findAll();
             tagResponse = new TagResponse();
             tagResponse.setTags(fillAndGetTagsList(tags));
+            return tagResponse;
         }
         tagResponse = new TagResponse();
         tags = tagRepository.findAllByNameContaining(query);

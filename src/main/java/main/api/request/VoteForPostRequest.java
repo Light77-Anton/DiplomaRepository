@@ -12,5 +12,5 @@ import org.springframework.stereotype.Component;
 public class VoteForPostRequest {
 
     @JsonProperty("post_id")
-    private int postId;
+    private Integer postId;
 }

@@ -1,10 +1,8 @@
 package main.controllers;
 import main.api.request.PostModerateRequest;
 import main.api.request.PostRequest;
-import main.api.request.ProfileRequest;
 import main.api.request.VoteForPostRequest;
 import main.api.response.*;
-import main.model.ModerationStatus;
 import main.model.repositories.UserRepository;
 import main.service.*;
 import org.springframework.http.HttpStatus;
@@ -47,7 +45,7 @@ public class ApiPostController {
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "mode", required = false) String mode) {
 
-        return ResponseEntity.ok(postService.getPostsList(offset,limit,mode));
+        return ResponseEntity.ok(postService.getPostsList(offset,limit,mode)); // есть проблема,POPULAR и BEST неправильно работают
     }
 
     @GetMapping("/api/post/search")
@@ -67,7 +65,7 @@ public class ApiPostController {
 
     @GetMapping("/api/post/byDate")
     public ResponseEntity<PostResponse> postByDate(
-            @RequestParam(value = "date", required = false) String date,
+            @RequestParam(value = "date", required = true) String date,
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit) {
 
@@ -89,6 +87,9 @@ public class ApiPostController {
     @GetMapping("/api/post/{id}")
     public ResponseEntity<?> postById(@PathVariable Integer id, Principal principal) {
         if (principal == null) {
+            if (postService.getPostById(id,null) == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("документ не найден");
+            }
             return ResponseEntity.ok(postService.getPostById(id,null));
         }
         main.model.User currentUser = userRepository.findByEmail
@@ -118,7 +119,7 @@ public class ApiPostController {
     @GetMapping("/api/post/moderation")
     public ResponseEntity<MyPostResponse> findPostsForModeration(@RequestParam(value = "offset", required = false) Integer offset,
                                                                  @RequestParam(value = "limit", required = false) Integer limit,
-                                                                 @RequestParam(value = "status", required = true) ModerationStatus status,
+                                                                 @RequestParam(value = "status", required = true) String status,
                                                                  Principal principal) {
 
         return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
@@ -137,7 +138,9 @@ public class ApiPostController {
                                      @RequestBody PostRequest postRequest,
                                      Principal principal) {
         if (!postService.updatePost(id, postRequest, principal).isResult()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("документ не найден");
+            if (postService.updatePost(id, postRequest, principal).getDescription().size() == 0) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("документ не найден");
+            }
         }
 
         return ResponseEntity.ok(postService.updatePost(id, postRequest, principal));

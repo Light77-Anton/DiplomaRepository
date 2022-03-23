@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class PostModerateRequest {
 
     @JsonProperty("post_id")
-    private int postId;
+    private Integer postId;
     @JsonProperty("decision")
     private String decision;
 }

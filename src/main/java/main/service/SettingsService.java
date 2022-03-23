@@ -5,6 +5,7 @@ import main.api.response.StatisticsResponse;
 import main.model.repositories.GlobalSettingsRepository;
 import main.model.repositories.PostRepository;
 import main.model.repositories.UserRepository;
+import main.model.repositories.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,8 @@ public class SettingsService {
     private UserRepository userRepository;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private VoteRepository voteRepository;
 
     public boolean isMultiuserMode() {
         if (globalSettingsRepository.findMultiuserModeValue().equals("YES")) {
@@ -53,11 +56,17 @@ public class SettingsService {
     public boolean isAccessToAllStatistics(Principal principal) {
         boolean isPublic = globalSettingsRepository
                 .findById(3).get().getValue().contentEquals("YES");
-        main.model.User currentUser = userRepository.findByEmail
-                        (principal.getName())
-                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        if (!isPublic && !currentUser.isModerator()) {
-            return false;
+        if (!isPublic) {
+            if (principal == null) {
+                return false;
+            } else {
+                main.model.User currentUser = userRepository.findByEmail
+                                (principal.getName())
+                        .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+                if (!currentUser.isModerator()) {
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -66,8 +75,8 @@ public class SettingsService {
     public StatisticsResponse getAllStatistics() {
         StatisticsResponse statisticsResponse = new StatisticsResponse();
         statisticsResponse.setPostsCount(postRepository.findAll().size());
-        statisticsResponse.setLikesCount(postRepository.findLikesCount());
-        statisticsResponse.setDislikesCount(postRepository.findDislikeCount());
+        statisticsResponse.setLikesCount(voteRepository.findLikesCount());
+        statisticsResponse.setDislikesCount(voteRepository.findDislikeCount());
         statisticsResponse.setViewsCount(postRepository.findViewCount());
         statisticsResponse.setFirstPublication(postRepository.findTheOldestPublicationTime()
                 .toEpochSecond(ZoneOffset.UTC));
@@ -76,23 +85,26 @@ public class SettingsService {
     }
 
     public void changeGlobalSettings(SettingsRequest settingsRequest) {
-        boolean isMultiuserMode = settingsRequest.isMultiuserMode();
-        boolean isPostPremoderation = settingsRequest.isPostPremoderation();
-        boolean isStatisticsPublic = settingsRequest.isStatisticsIsPublic();
-        if (isMultiuserMode) {
-            globalSettingsRepository.setMultiuserMode("YES");
-        } else {
-            globalSettingsRepository.setMultiuserMode("NO");
+        if (settingsRequest.getMultiuserMode() != null) {
+            if (settingsRequest.getMultiuserMode()) {
+                globalSettingsRepository.setMultiuserMode("YES");
+            } else {
+                globalSettingsRepository.setMultiuserMode("NO");
+            }
         }
-        if (isPostPremoderation) {
-            globalSettingsRepository.setPostPremoderation("YES");
-        } else {
-            globalSettingsRepository.setPostPremoderation("NO");
+        if (settingsRequest.getPostPremoderation() != null) {
+            if (settingsRequest.getPostPremoderation()) {
+                globalSettingsRepository.setPostPremoderation("YES");
+            } else {
+                globalSettingsRepository.setPostPremoderation("NO");
+            }
         }
-        if (isStatisticsPublic) {
-            globalSettingsRepository.setStatistics("YES");
-        } else {
-            globalSettingsRepository.setStatistics("NO");
+        if (settingsRequest.getStatisticsIsPublic() != null) {
+            if (settingsRequest.getStatisticsIsPublic()) {
+                globalSettingsRepository.setStatistics("YES");
+            } else {
+                globalSettingsRepository.setStatistics("NO");
+            }
         }
     }
 }

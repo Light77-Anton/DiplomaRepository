@@ -14,7 +14,7 @@ public class CommentRequest {
     @JsonProperty("parent_id")
     private Integer parentId;
     @JsonProperty("post_id")
-    private int postId;
+    private Integer postId;
     @JsonProperty("text")
     private String text;
 }

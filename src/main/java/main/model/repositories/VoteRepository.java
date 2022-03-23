@@ -15,11 +15,18 @@ Optional<Vote> findByUserAndPostId(int userId, int postId);
 
 @Transactional
 @Modifying
-@Query(value = "INSERT INTO post_votes (user_id, post_id, \"time\", value) VALUES (?1, ?2, now(), ?3)", nativeQuery = true)
-void insertVote(int userId, int postId, int value);
-
-@Transactional
-@Modifying
 @Query(value = "UPDATE post_votes SET value = ?3 WHERE user_id = ?1 AND post_id = ?2", nativeQuery = true)
 int changeVote(int userId, int postId, int value);
+
+    @Query(value = "SELECT COUNT(pv.id) FROM post_votes AS pv WHERE pv.user_id = ?1 AND pv.value = 1", nativeQuery = true)
+    int findLikesCountByUserId(int userId);
+
+    @Query(value = "SELECT COUNT(pv.id) FROM post_votes AS pv WHERE pv.user_id = ?1 AND pv.value = 0", nativeQuery = true)
+    int findDislikesCountByUserId(int userId);
+
+    @Query(value = "SELECT COUNT(pv.id) FROM post_votes AS pv WHERE pv.value = 1", nativeQuery = true)
+    int findLikesCount();
+
+    @Query(value = "SELECT COUNT(pv.id) FROM post_votes AS pv WHERE pv.value = 0", nativeQuery = true)
+    int findDislikeCount();
 }

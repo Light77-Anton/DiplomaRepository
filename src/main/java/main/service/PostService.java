@@ -48,6 +48,9 @@ public class PostService {
     public ResultResponse setLikeForPost(Principal principal,
                                          VoteForPostRequest voteForPostRequest) {
         ResultResponse resultResponse = new ResultResponse();
+        if (voteForPostRequest.getPostId() == null) {
+            return resultResponse;
+        }
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -63,7 +66,6 @@ public class PostService {
                 newVote.setTime(LocalDateTime.now());
                 newVote.setValue(likeValue);
                 voteRepository.save(newVote);
-                //voteRepository.insertVote(currentUser.getId(), post.get().getId(), likeValue);
                 resultResponse.setResult(true);
                 return resultResponse;
             } else if (vote.isPresent() && vote.get().getValue() == dislikeValue) {
@@ -83,6 +85,9 @@ public class PostService {
     public ResultResponse setDislikeForPost(Principal principal,
                                          VoteForPostRequest voteForPostRequest) {
         ResultResponse resultResponse = new ResultResponse();
+        if (voteForPostRequest.getPostId() == null) {
+            return resultResponse;
+        }
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -98,7 +103,6 @@ public class PostService {
                 newVote.setTime(LocalDateTime.now());
                 newVote.setValue(dislikeValue);
                 voteRepository.save(newVote);
-                //voteRepository.insertVote(currentUser.getId(), post.get().getId(), dislikeValue);
                 resultResponse.setResult(true);
                 return resultResponse;
             } else if (vote.isPresent() && vote.get().getValue() == likeValue) {
@@ -117,6 +121,9 @@ public class PostService {
 
     public ResultResponse checkModeratorDecision(PostModerateRequest postModerateRequest, Principal principal) {
         ResultResponse resultResponse = new ResultResponse();
+        if (postModerateRequest.getPostId() == null || postModerateRequest.getDecision() == null) {
+            return resultResponse;
+        }
         Optional<Post> post = postRepository.findById(postModerateRequest.getPostId());
         if (post.isEmpty()) {
             resultResponse.setResult(false);
@@ -149,16 +156,18 @@ public class PostService {
         List<String> description = new ArrayList<>();
         if (post.isPresent()) {
             boolean isActive = postRequest.isActive();
-            LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());
+            LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());// в формате "YYYY-MM-DDT12:00:00.000000000"
             String title = submethodsForService.checkTitleForPost(postRequest.getTitle());
+            String text = submethodsForService.checkTextForPost(postRequest.getText());
+            List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
             if (title.equals("")) {
                 description.add("Заголовок не установлен");
             }
-            List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
-            if (postRequest.getTags().size() != tags.size()) {
-                description.add("Такого тэга(-ов) не существует");
+            if (postRequest.getTags() != null) {
+                if (postRequest.getTags().size() != tags.size()) {
+                    description.add("Такого тэга(-ов) не существует");
+                }
             }
-            String text = submethodsForService.checkTextForPost(postRequest.getText());
             if (text.equals("")) {
                 description.add("Текст публикации слишком короткий");
             }
@@ -167,16 +176,15 @@ public class PostService {
                 postResultResponse.setDescription(description);
                 postResultResponse.setResult(true);
                 if (settingsService.isPremoderation()) {
-                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, ModerationStatus.NEW);
+                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, "NEW");
                 } else {
-                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, ModerationStatus.ACCEPTED);
+                    postRepository.updatePost(post.get().getId(), isActive, ldt, title, text, "ACCEPTED");
                 }
                 for (Tag tag : tags) {
                     if (tagToPostRepository.findByPostAndTagId(post.get().getId(), tag.getId()).isEmpty()) {
                         TagToPost tagToPost = new TagToPost();
                         tagToPost.setPostId(postRepository.findLastPostIdByUserId(currentUser.getId()));
                         tagToPost.setTagId(tag.getId());
-                        //tagToPostRepository.save(tagToPost);
                         tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
                     }
                 }
@@ -184,6 +192,7 @@ public class PostService {
             }
         }
         postResultResponse.setResult(false);
+        postResultResponse.setDescription(description);
 
         return postResultResponse;
     }
@@ -195,86 +204,71 @@ public class PostService {
         PostResultResponse postResultResponse = new PostResultResponse();
         List<String> description = new ArrayList<>();
         boolean isActive = postRequest.isActive();
-        LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());
+        LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp()); // в формате "YYYY-MM-DDT12:00:00.000000000"
         String title = submethodsForService.checkTitleForPost(postRequest.getTitle());
+        String text = submethodsForService.checkTextForPost(postRequest.getText());
+        List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
         if (title.equals("")) {
             description.add("Заголовок не установлен");
         }
-        List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
-        if (postRequest.getTags().size() != tags.size()) {
-            description.add("Такого тэга(-ов) не существует");
+        if (postRequest.getTags() != null) {
+            if (postRequest.getTags().size() != tags.size()) {
+                description.add("Такого тэга(-ов) не существует");
+            }
         }
-        String text = submethodsForService.checkTextForPost(postRequest.getText());
         if (text.equals("")) {
             description.add("Текст публикации слишком короткий");
         }
-        if (description.isEmpty() && settingsService.isPremoderation()) {
+        if (description.isEmpty()) {
             description.add("Все верно,пост будет опубликован в указанное время");
             postResultResponse.setDescription(description);
             postResultResponse.setResult(true);
             Post newPost = new Post();
             newPost.setActive(isActive);
             newPost.setUser(currentUser);
-            newPost.setModerationStatus(ModerationStatus.NEW);
             newPost.setTime(ldt);
             newPost.setTitle(title);
             newPost.setText(text);
-            postRepository.save(newPost);
-            //postRepository.insertPost(isActive, currentUser.getId(), ldt, title, text, "NEW");
-            for (Tag tag : tags) {
-                TagToPost tagToPost = new TagToPost();
-                tagToPost.setPostId(postRepository.findLastPostIdByUserId(currentUser.getId()));
-                tagToPost.setTagId(tag.getId());
-                //tagToPostRepository.save(tagToPost);
-                tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
+            if (settingsService.isPremoderation()) {
+                newPost.setModerationStatus("NEW");
+            } else {
+                newPost.setModerationStatus("ACCEPTED");
             }
-            return postResultResponse;
-        }
-        if (description.isEmpty() && !settingsService.isPremoderation()) {
-            description.add("Все верно,пост будет опубликован в указанное время");
-            postResultResponse.setDescription(description);
-            postResultResponse.setResult(true);
-            Post newPost = new Post();
-            newPost.setActive(isActive);
-            newPost.setUser(currentUser);
-            newPost.setModerationStatus(ModerationStatus.ACCEPTED);
-            newPost.setTime(ldt);
-            newPost.setTitle(title);
-            newPost.setText(text);
             postRepository.save(newPost);
-            //postRepository.insertPost(isActive, currentUser.getId(), ldt, title, text, "ACCEPTED");
             for (Tag tag : tags) {
                 TagToPost tagToPost = new TagToPost();
                 tagToPost.setPostId(postRepository.findLastPostIdByUserId(currentUser.getId()));
                 tagToPost.setTagId(tag.getId());
-                //tagToPostRepository.save(tagToPost);
                 tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
             }
             return postResultResponse;
         }
         postResultResponse.setResult(false);
+        postResultResponse.setDescription(description);
 
         return postResultResponse;
     }
 
     public MyPostResponse getPostsForModeration(Integer offset,
                                                 Integer limit,
-                                                ModerationStatus status,
+                                                String status,
                                                 Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        Pageable page = PageRequest.of(offset /limit, limit);
+        Pageable page = PageRequest
+                .of(submethodsForService.checkAndGetOffset(offset) / submethodsForService.checkAndGetLimit(limit),
+                        submethodsForService.checkAndGetLimit(limit));
         MyPostResponse myPostResponse = new MyPostResponse();
-        if (status == ModerationStatus.NEW) {
+        if (status.equals("NEW")) {
             Page<Post> postsPage = postRepository.findAllNewPostsAsPage(page);
             myPostResponse.setCount(postsPage.getTotalPages());
             myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
-        } else if (status == ModerationStatus.ACCEPTED) {
+        } else if (status.equals("ACCEPTED")) {
             Page<Post> postsPage = postRepository.findAllAcceptedPostsByMe(currentUser.getId(), page);
             myPostResponse.setCount(postsPage.getTotalPages());
             myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
-        } else if (status == ModerationStatus.DECLINED) {
+        } else if (status.equals("DECLINED")) {
             Page<Post> postsPage = postRepository.findAllDeclinedPostsByMe(currentUser.getId(), page);
             myPostResponse.setCount(postsPage.getTotalPages());
             myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
@@ -312,6 +306,9 @@ public class PostService {
         PostByIdResponse postByIdResponse = null;
         Optional<Post> post = postRepository.findById(id);
         if (!post.isPresent()) {
+            return postByIdResponse;
+        }
+        if (!post.get().isActive() || !post.get().getModerationStatus().equals("ACCEPTED") || !post.get().getTime().isBefore(LocalDateTime.now())) {
             return postByIdResponse;
         }
         postByIdResponse = new PostByIdResponse();
@@ -358,7 +355,7 @@ public class PostService {
             int rowsUpdated = postRepository.setNewViewCount(newViewCount, postId);
         }
         else {
-            if (!currentUser.isModerator() || post.get().getUser().getId() != currentUser.getId()) {
+            if (!currentUser.isModerator() && post.get().getUser().getId() != currentUser.getId()) {
                 int postId = post.get().getId();
                 int newViewCount = post.get().getViewCount() + 1;
                 int rowsUpdated = postRepository.setNewViewCount(newViewCount, postId);

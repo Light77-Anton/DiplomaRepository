@@ -5,6 +5,7 @@ import main.config.SecurityConfig;
 import main.model.User;
 import main.model.repositories.PostRepository;
 import main.model.repositories.UserRepository;
+import main.model.repositories.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,6 +14,8 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.security.Principal;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -29,6 +32,8 @@ public class ProfileService {
     private PostRepository postRepository;
     @Autowired
     private SecurityConfig securityConfig;
+    @Autowired
+    private VoteRepository voteRepository;
 
     public StatisticsResponse getMyStatistics(Principal principal) {
         StatisticsResponse myStatisticsResponse = new StatisticsResponse();
@@ -36,8 +41,8 @@ public class ProfileService {
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         myStatisticsResponse.setPostsCount(currentUser.getPosts().size());
-        myStatisticsResponse.setLikesCount(postRepository.findLikesCountByUserId(currentUser.getId()));
-        myStatisticsResponse.setDislikesCount(postRepository.findDislikesCountByUserId(currentUser.getId()));
+        myStatisticsResponse.setLikesCount(voteRepository.findLikesCountByUserId(currentUser.getId()));
+        myStatisticsResponse.setDislikesCount(voteRepository.findDislikesCountByUserId(currentUser.getId()));
         myStatisticsResponse.setViewsCount(postRepository.findViewCountByUserId(currentUser.getId()));
         myStatisticsResponse.setFirstPublication(postRepository.findTheOldestPublicationTimeByUserId
                 (currentUser.getId()).toEpochSecond(ZoneOffset.UTC));
@@ -122,7 +127,8 @@ public class ProfileService {
         }
         String scaledPhoto = "";
         try {
-            BufferedImage bufferedImage = ImageIO.read(new File(photo));
+            InputStream isInput = new FileInputStream(photo);
+            BufferedImage bufferedImage = ImageIO.read(isInput); // под вопросом,непонятно почему не работает,не может найти передаваемый путь до файла.При этом в браузере все нормально.
             Image image = bufferedImage.getScaledInstance(36, 36, Image.SCALE_DEFAULT);
             scaledPhoto = image.toString();
         } catch (Exception ex) {
@@ -134,6 +140,6 @@ public class ProfileService {
     }
 
     private void removePhoto(int userId) {
-       int updatedRoe = userRepository.removePhotoProfile(userId);
+       int updatedRow = userRepository.removePhotoProfile(userId);
     }
 }

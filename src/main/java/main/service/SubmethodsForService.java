@@ -6,21 +6,17 @@ import main.dto.CountForPostId;
 import main.dto.MyPostDTO;
 import main.dto.UserDataDTO;
 import main.model.*;
-import main.model.repositories.CommentRepository;
-import main.model.repositories.PostRepository;
-import main.model.repositories.TagRepository;
-import main.model.repositories.UserRepository;
+import main.model.repositories.*;
 import main.dto.PostDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Component
 public class SubmethodsForService {
@@ -33,6 +29,8 @@ public class SubmethodsForService {
     private TagRepository tagRepository;
     @Autowired
     private CommentRepository commentRepository;
+    @Autowired
+    private VoteRepository voteRepository;
 
     public List<PostDTO> fillAndGetArrayWithPosts(List<Post> postsList) {
         List<PostDTO> list = new ArrayList<>();
@@ -73,8 +71,16 @@ public class SubmethodsForService {
     }
 
     public List<String> checkAndAddComment(CommentRequest commentRequest, Principal principal) {
-        Optional<Post> post = postRepository.findById(commentRequest.getPostId());
         List<String> errors = new ArrayList<>();
+        if (commentRequest.getPostId() == null) {
+            errors.add("Не указан пост");
+            return errors;
+        }
+        if (commentRequest.getText() == null) {
+            errors.add("Комментарий пуст");
+            return errors;
+        }
+        Optional<Post> post = postRepository.findById(commentRequest.getPostId());
         if (post.isEmpty()) {
             errors.add("Такого поста не существует");
         } else {
@@ -92,21 +98,6 @@ public class SubmethodsForService {
             main.model.User currentUser = userRepository.findByEmail
                             (principal.getName())
                     .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-            /*
-            Comment comment = new Comment();
-            comment.setTime(LocalDateTime.now());
-            comment.setParentId(commentRequest.getParentId());
-            comment.setUserId(currentUser.getId());
-            comment.setPostId(commentRequest.getPostId());
-            comment.setText(commentRequest.getText());
-            commentRepository.save(comment);
-            if (commentRequest.getParentId() == null) {
-                commentRepository.insertComment(commentRequest.getPostId(), currentUser.getId(), commentRequest.getText());
-            } else {
-                commentRepository.insertQuoteToComment(commentRequest.getParentId(), commentRequest.getPostId(), currentUser.getId(), commentRequest.getText());
-            }
-
-             */
             Comment newComment = new Comment();
             newComment.setUser(currentUser);
             newComment.setPost(post.get());
@@ -128,13 +119,10 @@ public class SubmethodsForService {
         if (mode == Mode.RECENT) {
             postsPage = postRepository.findAllAndOrderByTimeDesc(pageable);//
         } else if (mode == Mode.POPULAR) {
-            bufferArrayList = postRepository.findAllAndOrderByCommentariesSize(pageable);//
+            bufferArrayList = postRepository.findAllAndOrderByCommentariesSize(pageable);
             postsList = new ArrayList<>();
             for (CountForPostId array : bufferArrayList) {
                 Integer postId = Integer.valueOf(String.valueOf(array.getId()));
-                if (postId == null) {
-                    break;
-                }
                 Optional<Post> post = postRepository.findById(postId);
                 postsList.add(post.get());
             }
@@ -144,9 +132,6 @@ public class SubmethodsForService {
             postsList = new ArrayList<>();
             for (CountForPostId array : bufferArrayList) {
                 Integer postId = Integer.valueOf(String.valueOf(array.getId()));
-                if (postId == null) {
-                    break;
-                }
                 Optional<Post> post = postRepository.findById(postId);
                 postsList.add(post.get());
             }
@@ -215,6 +200,11 @@ public class SubmethodsForService {
                                                    Integer limit,
                                                    String stringDate) { // получить все id постов
         Pageable page = PageRequest.of(offset / limit, limit);
+        if (!stringDate.matches("[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])")) {
+            LocalDate localDate = LocalDate.now();
+            return postRepository.findByDate(localDate.toString(), page);
+        }
+
         return postRepository.findByDate(stringDate, page);
     }
 
@@ -254,7 +244,7 @@ public class SubmethodsForService {
     }
 
     public Integer checkAndGetLimit(Integer limit) {
-        if (limit == null || limit < 0) {
+        if (limit == null || limit <= 0) {
             limit = 10;
         }
 
@@ -263,7 +253,9 @@ public class SubmethodsForService {
 
     public LocalDateTime checkLocalDateTimeForPost(LocalDateTime fromPostRequestTime) {
         LocalDateTime ldt;
-        if (fromPostRequestTime.isBefore(LocalDateTime.now())) {
+        if (fromPostRequestTime == null) {
+            ldt = LocalDateTime.now();
+        } else if (fromPostRequestTime.isBefore(LocalDateTime.now())) {
             ldt = LocalDateTime.now();
         } else {
             ldt = fromPostRequestTime;
@@ -274,7 +266,9 @@ public class SubmethodsForService {
 
     public String checkTitleForPost(String titleFromPostRequest) {
         String title;
-        if (titleFromPostRequest.length() <= 3) {
+        if (titleFromPostRequest == null) {
+            title = "";
+        } else if (titleFromPostRequest.length() <= 3) {
             title = "";
         } else {
             title = titleFromPostRequest;
@@ -285,7 +279,9 @@ public class SubmethodsForService {
 
     public String checkTextForPost(String textFromPostRequest) {
         String text;
-        if (textFromPostRequest.length() <= 50) {
+        if (textFromPostRequest == null) {
+            text = "";
+        } else if (textFromPostRequest.length() <= 50) {
             text = "";
         } else {
             text = textFromPostRequest;
@@ -296,6 +292,9 @@ public class SubmethodsForService {
 
     public List<Tag> checkTagsListForPost(List<String> tagsFromPostRequest) {
         List<Tag> tags = new ArrayList<>();
+        if (tagsFromPostRequest == null) {
+            return tags;
+        }
         for (String tagName : tagsFromPostRequest) {
             Optional<Tag> tag = tagRepository.findByNameContaining(tagName);
             if (tag.isEmpty()) {

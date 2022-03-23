@@ -121,7 +121,7 @@ public class ApiGeneralController {
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("/api/profile/my")
     public ResponseEntity<?> profile(Principal principal,
-                                     @RequestBody ProfileRequest profileRequest) {
+                                     @RequestBody ProfileRequest profileRequest) { // есть проблема с фотографией
         if (profileService.checkProfileChanges(profileRequest, principal).isEmpty()) {
             ResultResponse resultResponse = new ResultResponse();
             resultResponse.setResult(true);

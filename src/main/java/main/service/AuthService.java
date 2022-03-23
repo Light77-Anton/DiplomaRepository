@@ -98,6 +98,9 @@ public class AuthService {
 
     public ResultResponse checkEmailAndGetCode(RestoreRequest restoreRequest) {
         ResultResponse resultResponse = new ResultResponse();
+        if (restoreRequest.getEmail() == null) {
+            return resultResponse;
+        }
         Optional<main.model.User> user = userRepository.findByEmail(restoreRequest.getEmail());
         if (user.isPresent()) {
             SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
@@ -124,6 +127,11 @@ public class AuthService {
 
     public List<String> checkPasswordChange(PasswordRequest passwordRequest) {
         List<String> errors = new ArrayList<>();
+        if (passwordRequest.getPassword() == null || passwordRequest.getCode() == null ||
+                passwordRequest.getCaptcha() == null || passwordRequest.getCaptchaSecret() == null) {
+            errors.add("Нужно ввести новый пароль,восстановительный код,секретный код капчи и код с картинки");
+            return errors;
+        }
         if (passwordRequest.getPassword().length() < 6) {
             errors.add("Пароль короче 6-ти символов");
         }
@@ -139,8 +147,10 @@ public class AuthService {
                     errors.add("Такого кода восстановления не найдено");
                 }
             } else {
-                errors.add("Секретный код капчи не существует");
+                errors.add("Код с картинки введен неверно");
             }
+        } else {
+            errors.add("Неверно введен секретный код капчи");
         }
 
         return errors;

@@ -2,7 +2,6 @@ package main.service;
 import main.api.response.CalendarResponse;
 import main.model.Post;
 import main.model.repositories.PostRepository;
-import main.model.ModerationStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
@@ -29,7 +28,7 @@ public class CalendarService {
     public CalendarResponse getPostsPerYear(String stringYear) {
         String year = checkAndGetYear(stringYear);
         CalendarResponse calendarResponse = new CalendarResponse();
-        List<Post> postsList = postRepository.findByYear(year);//
+        List<Post> postsList = postRepository.findByYear(year);
         List<String> listWithDates = new ArrayList<>();
         for (Post post : postsList) {
             String date = post.getTime().toString().substring(0, 4);
@@ -37,7 +36,7 @@ public class CalendarService {
                 listWithDates.add(date);
             }
         }
-        TreeSet<Integer> setWithYears = postRepository.findAllYears();//
+        TreeSet<Integer> setWithYears = postRepository.findAllYears();
         calendarResponse.setYears(setWithYears);
         TreeMap<String, Integer> map = new TreeMap<>();
         for (String dateWithRequiredYear : listWithDates) {

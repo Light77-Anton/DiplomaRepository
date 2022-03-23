@@ -1,9 +1,11 @@
 package main.dto;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class CountForPostId {
 
-    Integer id;
-    Integer count;
+    int id;
+    long count;
 }
