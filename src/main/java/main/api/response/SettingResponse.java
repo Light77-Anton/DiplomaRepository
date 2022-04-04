@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Data
-public class SettingResponse {
+public class SettingResponse extends Response {
 
     @JsonProperty("MULTIUSER_MODE")
     private boolean multiuserMode;

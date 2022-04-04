@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Data
-public class PostByIdResponse {
+public class PostByIdResponse extends Response {
 
     private PostByIdDTO postData;
 }

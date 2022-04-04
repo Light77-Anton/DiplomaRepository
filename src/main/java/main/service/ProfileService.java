@@ -1,22 +1,24 @@
 package main.service;
-import main.api.request.ProfileRequest;
 import main.api.response.StatisticsResponse;
 import main.config.SecurityConfig;
+import main.model.Post;
 import main.model.User;
+import main.model.Vote;
 import main.model.repositories.PostRepository;
 import main.model.repositories.UserRepository;
 import main.model.repositories.VoteRepository;
+import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,26 +42,43 @@ public class ProfileService {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        myStatisticsResponse.setPostsCount(currentUser.getPosts().size());
-        myStatisticsResponse.setLikesCount(voteRepository.findLikesCountByUserId(currentUser.getId()));
-        myStatisticsResponse.setDislikesCount(voteRepository.findDislikesCountByUserId(currentUser.getId()));
-        myStatisticsResponse.setViewsCount(postRepository.findViewCountByUserId(currentUser.getId()));
-        myStatisticsResponse.setFirstPublication(postRepository.findTheOldestPublicationTimeByUserId
-                (currentUser.getId()).toEpochSecond(ZoneOffset.UTC));
+        List<Post> postsList = postRepository.findAllMyPosts(currentUser.getId());
+        int likesCount = 0;
+        int dislikesCount = 0;
+        int viewCount = 0;
+        LocalDateTime ldt = null;
+        for (Post post : postsList) {
+            for (Vote vote : post.getVotes()) {
+                if (vote.getValue() == 1) {
+                    likesCount++;
+                } else {
+                    dislikesCount++;
+                }
+            }
+            int currentPostViewCount = post.getViewCount();
+            viewCount += currentPostViewCount;
+            if (ldt == null || post.getTime().isBefore(ldt)) {
+                ldt = post.getTime();
+            }
+        }
+        myStatisticsResponse.setPostsCount(postsList.size());
+        myStatisticsResponse.setLikesCount(likesCount);
+        myStatisticsResponse.setDislikesCount(dislikesCount);
+        myStatisticsResponse.setViewsCount(viewCount);
+        if (ldt == null) {
+            myStatisticsResponse.setFirstPublication(0);
+            return myStatisticsResponse;
+        }
+        myStatisticsResponse.setFirstPublication(ldt.toEpochSecond(ZoneOffset.UTC));
 
         return myStatisticsResponse;
     }
 
-    public List<String> checkProfileChanges(ProfileRequest profileRequest, Principal principal) {
+    public List<String> checkProfileChanges(MultipartFile photo, String name, String email, String password, boolean removePhoto, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         List<String> errors = new ArrayList<>();
-        String name = profileRequest.getName();
-        String email = profileRequest.getEmail();
-        String password = profileRequest.getPassword();
-        String photo = profileRequest.getPhoto();
-        boolean removePhoto = profileRequest.isRemovePhoto();
         int userId = currentUser.getId();
         if (name != null) {
            String quote = checkName(name, userId);
@@ -97,7 +116,7 @@ public class ProfileService {
         if (name.equals("") || userName.isPresent()) {
             return "Такое имя уже существует";
         }
-        int updatedRow = userRepository.updateNameProfile(userId, name);
+        userRepository.updateNameProfile(userId, name);
 
         return null;
     }
@@ -107,7 +126,7 @@ public class ProfileService {
         if (!email.contains("@") || userEmail.isPresent()) {
             return "Такой эмэйл уже существует";
         }
-        int updatedRow = userRepository.updateEmailProfile(userId, email);
+        userRepository.updateEmailProfile(userId, email);
 
         return null;
     }
@@ -116,30 +135,29 @@ public class ProfileService {
         if (password.length() < 6) {
             return ("Пароль короче 6-ти символов");
         }
-        int updatedRow = userRepository.updatePasswordProfile(userId, securityConfig.passwordEncoder().encode(password));
+        userRepository.updatePasswordProfile(userId, securityConfig.passwordEncoder().encode(password));
 
         return null;
     }
 
-    private String checkPhoto(String photo, int userId) {
-        if (!photo.endsWith("jpg") && !photo.endsWith("png")) {
+    private String checkPhoto(MultipartFile photo, int userId) {
+        if (!photo.getOriginalFilename().endsWith("jpg") && !photo.getOriginalFilename().endsWith("png")) {
             return "Неподходящий формат фото";
         }
         String scaledPhoto = "";
         try {
-            InputStream isInput = new FileInputStream(photo);
-            BufferedImage bufferedImage = ImageIO.read(isInput); // под вопросом,непонятно почему не работает,не может найти передаваемый путь до файла.При этом в браузере все нормально.
-            Image image = bufferedImage.getScaledInstance(36, 36, Image.SCALE_DEFAULT);
-            scaledPhoto = image.toString();
+            BufferedImage bufferedImage = ImageIO.read(photo.getInputStream());
+            Image img = Scalr.resize(bufferedImage,36,36);
+            scaledPhoto = img.toString();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        int updatedRow = userRepository.updatePhotoProfile(userId, scaledPhoto);
+        userRepository.updatePhotoProfile(userId, scaledPhoto);
 
         return null;
     }
 
     private void removePhoto(int userId) {
-       int updatedRow = userRepository.removePhotoProfile(userId);
+       userRepository.removePhotoProfile(userId);
     }
 }

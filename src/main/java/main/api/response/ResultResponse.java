@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Data
-public class ResultResponse {
+public class ResultResponse extends Response {
 
     private boolean result;
 }

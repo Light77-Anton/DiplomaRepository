@@ -5,7 +5,7 @@ import java.util.List;
 
 @Component
 @Data
-public class FalseResultErrorsResponse {
+public class FalseResultErrorsResponse extends Response {
 
     private boolean result;
     private List<String> errors;

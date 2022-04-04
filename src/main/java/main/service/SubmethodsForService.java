@@ -1,8 +1,8 @@
 package main.service;
 import main.api.request.CommentRequest;
+import main.api.request.PostRequest;
 import main.api.response.CommentSuccessResponse;
 import main.api.response.FalseResultErrorsResponse;
-import main.dto.CountForPostId;
 import main.dto.MyPostDTO;
 import main.dto.UserDataDTO;
 import main.model.*;
@@ -31,6 +31,31 @@ public class SubmethodsForService {
     private CommentRepository commentRepository;
     @Autowired
     private VoteRepository voteRepository;
+
+    public List<String> checkDataForPost(String title, String text, List<Tag> tags, PostRequest postRequest) {
+        List<String> description = new ArrayList<>();
+        if (title.equals("")) {
+            description.add("Заголовок не установлен");
+        }
+        if (postRequest.getTags() != null) {
+            if (postRequest.getTags().size() != tags.size()) {
+                description.add("Такого тэга(-ов) не существует");
+            }
+        }
+        if (text.equals("")) {
+            description.add("Текст публикации слишком короткий");
+        }
+
+        return description;
+    }
+
+    public Optional<Post> getOptionalPostByIdAndUserId(Integer postId, Principal principal) {
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+
+        return postRepository.findByIdAndUserId(postId,currentUser.getId());
+    }
 
     public List<PostDTO> fillAndGetArrayWithPosts(List<Post> postsList) {
         List<PostDTO> list = new ArrayList<>();
@@ -110,39 +135,6 @@ public class SubmethodsForService {
         return errors;
     }
 
-    public Page<Post> getPostsPageWithRequiredMode(Integer offset,
-                                                   Integer limit, Mode mode) {
-        Page<CountForPostId> bufferArrayList;
-        List<Post> postsList;
-        Page<Post> postsPage;
-        Pageable pageable = PageRequest.of(offset / limit, limit);
-        if (mode == Mode.RECENT) {
-            postsPage = postRepository.findAllAndOrderByTimeDesc(pageable);//
-        } else if (mode == Mode.POPULAR) {
-            bufferArrayList = postRepository.findAllAndOrderByCommentariesSize(pageable);
-            postsList = new ArrayList<>();
-            for (CountForPostId array : bufferArrayList) {
-                Integer postId = Integer.valueOf(String.valueOf(array.getId()));
-                Optional<Post> post = postRepository.findById(postId);
-                postsList.add(post.get());
-            }
-            postsPage = new PageImpl<>(postsList);
-        } else if (mode == Mode.BEST) {
-            bufferArrayList = postRepository.findAllAndOrderByVotesCount(pageable);//
-            postsList = new ArrayList<>();
-            for (CountForPostId array : bufferArrayList) {
-                Integer postId = Integer.valueOf(String.valueOf(array.getId()));
-                Optional<Post> post = postRepository.findById(postId);
-                postsList.add(post.get());
-            }
-            postsPage = new PageImpl<>(postsList);
-        } else { //EARLY
-            postsPage = postRepository.findAllAndOrderByTimeAsc(pageable);
-        }
-
-        return postsPage;
-    }
-
     public List<MyPostDTO> fillAndGetMyPostsList(List<Post> postsList) {
         List<MyPostDTO> myPostsList = new ArrayList<>();
         for (Post post : postsList) {
@@ -165,90 +157,17 @@ public class SubmethodsForService {
         return myPostsList;
     }
 
-    public Page<Post> getPostsPageWithRequiredStatus(Integer offset,
-                                                     Integer limit,
-                                                     PostStatus postStatus,
-                                                     User currentUser) {
-        Page<Post> postsPage = null;
-        Pageable pageable = PageRequest.of(offset / limit, limit);
-        int userId = currentUser.getId();
-        if (postStatus == PostStatus.INACTIVE) {
-            postsPage = postRepository.findAllInactivePosts(userId, pageable);
-        } else if (postStatus == PostStatus.PENDING) {
-            postsPage = postRepository.findAllPendingPosts(userId, pageable);
-        } else if (postStatus == PostStatus.DECLINED) {
-            postsPage = postRepository.findAllDeclinedPosts(userId, pageable);
-        } else if (postStatus == PostStatus.PUBLISHED) {
-            postsPage = postRepository.findAllAcceptedPosts(userId, pageable);
-        }
-
-        return postsPage;
-    }
-
-    public PostStatus checkAndGetPostStatus(String stringStatus) {
-        PostStatus postStatus = null;
-        for (PostStatus statusValue : PostStatus.values()) {
-            if (statusValue.name().equals(stringStatus)) {
-                postStatus = statusValue;
-            }
-        }
-
-        return postStatus;
-    }
-
-    public Page<Post> getPostsListWithRequiredDate(Integer offset,
-                                                   Integer limit,
-                                                   String stringDate) { // получить все id постов
-        Pageable page = PageRequest.of(offset / limit, limit);
-        if (!stringDate.matches("[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])")) {
-            LocalDate localDate = LocalDate.now();
-            return postRepository.findByDate(localDate.toString(), page);
-        }
-
-        return postRepository.findByDate(stringDate, page);
-    }
-
-    public Page<Post> getPostsListWithRequiredQuery(Integer offset,
-                                                    Integer limit,
-                                                    String query) { // получить все id постов
-        Pageable page = PageRequest.of(offset / limit, limit, Sort.by("time").descending());
-        return postRepository.findByTextContaining(query, page);
-    }
-
-    public Mode checkAndGetMode(String stringMode) {
-        if (stringMode == null) {
-            return Mode.RECENT;
-        }
-        Mode mode = null;
-        boolean isValidMode = false;
-        for (Mode modeValue : Mode.values()) {
-            if (modeValue.name().equals(stringMode)) {
-                mode = modeValue;
-                isValidMode = true;
-                break;
-            }
-        }
-        if (!isValidMode) {
-            mode = Mode.RECENT;
-        }
-
-        return mode;
-    }
-
-    public Integer checkAndGetOffset(Integer offset) {
+    public Pageable getCheckedPageable(Integer offset, Integer limit) {
+        Pageable pageable;
         if (offset == null || offset < 0) {
             offset = 0;
         }
-
-        return offset;
-    }
-
-    public Integer checkAndGetLimit(Integer limit) {
         if (limit == null || limit <= 0) {
             limit = 10;
         }
+        pageable = PageRequest.of(offset / limit, limit);
 
-        return limit;
+        return pageable;
     }
 
     public LocalDateTime checkLocalDateTimeForPost(LocalDateTime fromPostRequestTime) {
@@ -297,8 +216,7 @@ public class SubmethodsForService {
         }
         for (String tagName : tagsFromPostRequest) {
             Optional<Tag> tag = tagRepository.findByNameContaining(tagName);
-            if (tag.isEmpty()) {
-            } else {
+            if (tag.isPresent()) {
                 tags.add(tag.get());
             }
         }

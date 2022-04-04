@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Data
-public class CaptchaResponse {
+public class CaptchaResponse extends Response {
 
     private String secret;
     private String image;

@@ -6,7 +6,7 @@ import java.util.TreeSet;
 
 @Component
 @Data
-public class CalendarResponse {
+public class CalendarResponse extends Response {
 
     private TreeSet<Integer> years;
     private TreeMap<String, Integer> posts;

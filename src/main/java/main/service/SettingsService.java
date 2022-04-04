@@ -2,6 +2,8 @@ package main.service;
 import main.api.request.SettingsRequest;
 import main.api.response.SettingResponse;
 import main.api.response.StatisticsResponse;
+import main.model.Post;
+import main.model.Vote;
 import main.model.repositories.GlobalSettingsRepository;
 import main.model.repositories.PostRepository;
 import main.model.repositories.UserRepository;
@@ -11,7 +13,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 
 @Service
 public class SettingsService {
@@ -74,12 +78,34 @@ public class SettingsService {
 
     public StatisticsResponse getAllStatistics() {
         StatisticsResponse statisticsResponse = new StatisticsResponse();
-        statisticsResponse.setPostsCount(postRepository.findAll().size());
-        statisticsResponse.setLikesCount(voteRepository.findLikesCount());
-        statisticsResponse.setDislikesCount(voteRepository.findDislikeCount());
-        statisticsResponse.setViewsCount(postRepository.findViewCount());
-        statisticsResponse.setFirstPublication(postRepository.findTheOldestPublicationTime()
-                .toEpochSecond(ZoneOffset.UTC));
+        List<Post> postsList = postRepository.findAllActivePosts();
+        int likesCount = 0;
+        int dislikesCount = 0;
+        int viewCount = 0;
+        LocalDateTime ldt = null;
+        for (Post post : postsList) {
+            for (Vote vote : post.getVotes()) {
+                if (vote.getValue() == 1) {
+                    likesCount++;
+                } else {
+                    dislikesCount++;
+                }
+            }
+            int currentPostViewCount = post.getViewCount();
+            viewCount += currentPostViewCount;
+            if (ldt == null || post.getTime().isBefore(ldt)) {
+                ldt = post.getTime();
+            }
+        }
+        statisticsResponse.setPostsCount(postsList.size());
+        statisticsResponse.setLikesCount(likesCount);
+        statisticsResponse.setDislikesCount(dislikesCount);
+        statisticsResponse.setViewsCount(viewCount);
+        if (ldt == null) {
+            statisticsResponse.setFirstPublication(0);
+            return statisticsResponse;
+        }
+        statisticsResponse.setFirstPublication(ldt.toEpochSecond(ZoneOffset.UTC));
 
         return statisticsResponse;
     }

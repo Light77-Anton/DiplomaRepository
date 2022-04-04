@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Data
-public class LoginResponse {
+public class LoginResponse extends Response {
 
     private boolean result;
     private LoginDTO userData;

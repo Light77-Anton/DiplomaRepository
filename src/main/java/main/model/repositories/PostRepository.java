@@ -1,5 +1,4 @@
 package main.model.repositories;
-import main.dto.CountForPostId;
 import main.model.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
+    @Query(value = "SELECT * FROM posts AS p WHERE p.user_id = ?1", nativeQuery = true)
+    List<Post> findAllMyPosts(int userId);
+
+    @Query(value = "SELECT * FROM posts AS p WHERE p.is_active = true", nativeQuery = true)
+    List<Post> findAllActivePosts();
+
     @Query(value = "SELECT COUNT(pv) FROM posts AS p INNER JOIN post_votes AS pv ON pv.post_id = p.id WHERE pv.value = 1 AND p.id = ?1", nativeQuery = true)
     int findLikeCountById(int postId);
 
@@ -28,7 +33,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query(value = "SELECT SUBSTRING(p.text, 0, 150) FROM posts AS p WHERE p.id = ?1", nativeQuery = true)
     String extractAnnounceFromTextById(int postId);
 
-    @Query(value = "SELECT * FROM posts AS p WHERE p.text LIKE '%' || ?1 || '%' AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time < now()", nativeQuery = true)
+    @Query(value = "SELECT * FROM posts AS p WHERE p.text LIKE '%' || ?1 || '%' AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time < now() ORDER BY p.time DESC", nativeQuery = true)
     Page<Post> findByTextContaining(String query, Pageable pageable);
 
     @Query(value = "SELECT * FROM posts AS p WHERE DATE(p.time) = TO_DATE(?1, 'YYYY-MM-DD') AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time < now()", nativeQuery = true)
@@ -46,17 +51,13 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query(value = "SELECT EXTRACT(YEAR FROM DATE(p.time)) FROM posts AS p WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time < now()", nativeQuery = true)
     TreeSet<Integer> findAllYears();
 
-    @Query("SELECT new main.dto.CountForPostId(p.id, COUNT(c.id)) FROM Post AS p "
-            + "INNER JOIN Comment AS c ON c.post = p "
-            + "WHERE p.isActive = true AND p.moderationStatus = 'ACCEPTED' AND p.time < now() "
-            + "GROUP BY p.id ORDER BY COUNT(c.id) DESC")
-    Page<CountForPostId> findAllAndOrderByCommentariesSize(Pageable pageable); // под вопросом,выбирает только 1-й пост
+    @Query(value = "SELECT * FROM posts AS p WHERE p.moderation_status = 'ACCEPTED' AND p.is_active = true AND p.time < now() " +
+            "ORDER BY (SELECT COUNT(*) FROM post_comments AS c WHERE c.post_id = p.id) DESC", nativeQuery = true)
+    Page<Post> findAllAndOrderByCommentariesSize(Pageable pageable);
 
-    @Query("SELECT new main.dto.CountForPostId(p.id, COUNT(v.id)) FROM Post AS p "
-            + "INNER JOIN Vote AS v ON v.post = p AND v.value = 1 "
-            + "WHERE p.isActive = true AND p.moderationStatus = 'ACCEPTED' AND p.time < now() "
-            + "GROUP BY p.id ORDER BY COUNT(v.id) DESC")
-    Page<CountForPostId> findAllAndOrderByVotesCount(Pageable pageable); // под вопросом,выбирает только 1-й пост
+    @Query(value = "SELECT * FROM posts AS p WHERE p.moderation_status = 'ACCEPTED' AND p.is_active = true AND p.time < now() " +
+            "ORDER BY (SELECT COUNT(*) FROM post_votes AS v WHERE v.post_id = p.id AND v.value = 1) DESC", nativeQuery = true)
+    Page<Post> findAllAndOrderByVotesCount(Pageable pageable);
 
     @Query(value = "SELECT * FROM posts AS p WHERE p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time < now() ORDER BY p.time DESC", nativeQuery = true)
     Page<Post> findAllAndOrderByTimeDesc(Pageable pageable);
@@ -115,14 +116,8 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query(value = "SELECT COUNT(pv) FROM posts AS p INNER JOIN post_votes AS pv WHERE pv.value = 1", nativeQuery = true)
     int findLikesCount();
 
-    @Query(value = "SELECT COUNT(pv) FROM posts AS p INNER JOIN post_votes AS pv WHERE pv.value = 0", nativeQuery = true)
-    int findDislikeCount();
-
     @Query(value = "SELECT COUNT(p.view_count) FROM posts AS p", nativeQuery = true)
     int findViewCount();
-
-    @Query(value = "SELECT MIN(p.time) FROM posts AS p", nativeQuery = true)
-    LocalDateTime findTheOldestPublicationTime();
 
     @Query(value = "SELECT MAX(p.id) FROM posts AS p WHERE p.user_id = ?1", nativeQuery = true)
     int findLastPostIdByUserId(int userId);
