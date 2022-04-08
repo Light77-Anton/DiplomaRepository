@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 @Component
-public class MyPostResponse extends Response {
+public class MyPostResponse {
 
     private long count;
     private List<MyPostDTO> posts;

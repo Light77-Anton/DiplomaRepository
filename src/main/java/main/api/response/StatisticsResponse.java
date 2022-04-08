@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-public class StatisticsResponse extends Response{
+public class StatisticsResponse {
 
     private int postsCount;
     private int likesCount;

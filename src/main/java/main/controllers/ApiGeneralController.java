@@ -1,21 +1,20 @@
 package main.controllers;
 import main.api.request.CommentRequest;
-import main.api.request.ProfileRequest;
 import main.api.request.SettingsRequest;
 import main.api.response.*;
-import main.dto.PostDTO;
 import main.service.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.security.Principal;
 import java.util.List;
 
-@RestController
+@RequestMapping("/api/")
+@Controller
 public class ApiGeneralController {
 
     private final InitResponse initResponse;
@@ -46,26 +45,26 @@ public class ApiGeneralController {
         this.profileService = profileService;
     }
 
-    @GetMapping("/api/init")
+    @GetMapping("init")
     public ResponseEntity<InitResponse> init() {
 
         return ResponseEntity.ok(initResponse);
     }
 
-    @GetMapping("/api/settings")
+    @GetMapping("settings")
     public ResponseEntity<SettingResponse> settings() {
 
         return ResponseEntity.ok(settingsService.getGlobalSettings());
     }
 
-    @GetMapping("/api/tag")
+    @GetMapping("tag")
     public ResponseEntity<TagResponse> tag(
             @RequestParam(value = "query", required = false) String query) {
 
         return ResponseEntity.ok(tagService.getTagList(query));
     }
 
-    @GetMapping("/api/calendar")
+    @GetMapping("calendar")
     public ResponseEntity<CalendarResponse> calendar(@RequestParam(value = "year",
             required = false) String year) {
 
@@ -73,27 +72,28 @@ public class ApiGeneralController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping("/api/comment")
-    public ResponseEntity<Response> comment(@RequestBody CommentRequest commentRequest,
+    @PostMapping("comment")
+    public ResponseEntity<ResultDescriptionResponse> comment(@RequestBody CommentRequest commentRequest,
                                   Principal principal) {
-        if (submethodsForService.checkAndAddComment(commentRequest, principal).isEmpty()) {
-            return ResponseEntity.ok(submethodsForService.getSuccessCommentId(principal));
+        ResultDescriptionResponse response = submethodsForService.checkAndAddComment(commentRequest, principal);
+        for (String string : response.getDescription()) {
+            if (!string.equals("Ваш комментарий добавлен")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            }
         }
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(submethodsForService.getFailedCommentWithErrors
-                        (submethodsForService.checkAndAddComment(commentRequest, principal)));
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @GetMapping("/api/statistics/my")
+    @GetMapping("statistics/my")
     public ResponseEntity<StatisticsResponse> myStatistics(Principal principal) {
 
         return ResponseEntity.ok(profileService.getMyStatistics(principal));
     }
 
-    @GetMapping("/api/statistics/all")
-    public ResponseEntity<Response> allStatistics(Principal principal) {
+    @GetMapping("statistics/all")
+    public ResponseEntity<StatisticsResponse> allStatistics(Principal principal) {
         if (settingsService.isAccessToAllStatistics(principal)) {
             return ResponseEntity.ok(settingsService.getAllStatistics());
         }
@@ -102,15 +102,15 @@ public class ApiGeneralController {
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")
-    @PutMapping("/api/settings")
-    public ResponseEntity<Response> changeSettings(@RequestBody SettingsRequest settingsRequest) {
+    @PutMapping("settings")
+    public ResponseEntity<HttpStatus> changeSettings(@RequestBody SettingsRequest settingsRequest) {
         settingsService.changeGlobalSettings(settingsRequest);
 
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")
-    @PostMapping("/api/tag")
+    @PostMapping("tag")
     public ResponseEntity<ResultResponse> addNewTag(@RequestBody String name) {
         ResultResponse resultResponse = new ResultResponse();
         if (!tagService.checkAndAddTag(name)) {
@@ -122,37 +122,38 @@ public class ApiGeneralController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping(value = "/api/profile/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Response> profile(@RequestParam(value = "photo", required = false) MultipartFile photo,
+    @PostMapping(value = "profile/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResultDescriptionResponse> profile
+            (@RequestParam(value = "avatar", required = false) MultipartFile avatar,
                                      @RequestParam(value = "name", required = false) String name,
                                      @RequestParam(value = "email", required = false) String email,
                                      @RequestParam(value = "password", required = false) String password,
-                                     @RequestParam(value = "removePhoto", required = false) boolean removePhoto,
+                                     @RequestParam(value = "remove_photo", required = false) boolean removePhoto,
                                      Principal principal) {
-        if (profileService.checkProfileChanges(photo, name, email, password, removePhoto, principal).isEmpty()) {
-            ResultResponse resultResponse = new ResultResponse();
-            resultResponse.setResult(true);
-            return ResponseEntity.ok().build();
+        ResultDescriptionResponse response = new ResultDescriptionResponse();
+        if (profileService.checkProfileChanges(avatar, name, email, password, removePhoto, principal).isEmpty()) {
+            response.setResult(true);
+            return ResponseEntity.ok(response);
         }
-        FalseResultErrorsResponse profileChangeResponse = new FalseResultErrorsResponse();
-        profileChangeResponse.setErrors(profileService.checkProfileChanges(photo, name, email, password, removePhoto, principal));
+        response.setDescription(profileService.checkProfileChanges(avatar, name, email, password, removePhoto, principal));
 
-        return ResponseEntity.ok(profileChangeResponse);
+        return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping(value = "/api/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Response> uploadImage(@RequestParam(value = "image", required = true) MultipartFile image) {
-        List<String> response = postService.uploadImageAndGetLink(image);
-        for (String string : response) {
-            if (!string.endsWith("jpg") || !string.endsWith("png")) {
-                FalseResultErrorsResponse falseResultErrorsResponse = new FalseResultErrorsResponse();
-                falseResultErrorsResponse.setErrors(response);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(falseResultErrorsResponse);
+    @PostMapping(value = "image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResultDescriptionResponse> uploadImage
+            (@RequestParam(value = "image", required = true) MultipartFile image) {
+        List<String> result = postService.uploadImageAndGetLink(image);
+        ResultDescriptionResponse response = new ResultDescriptionResponse();
+        for (String string : result) {
+            if (!string.endsWith("jpg") && !string.endsWith("png")) {
+                response.setDescription(result);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
             } else {
-                ImageLinkResponse imageLinkResponse = new ImageLinkResponse();
-                imageLinkResponse.setLink(string);
-                return ResponseEntity.ok(imageLinkResponse);
+                response.setResult(true);
+                response.setDescription(result);
+                return ResponseEntity.ok(response);
             }
         }
 

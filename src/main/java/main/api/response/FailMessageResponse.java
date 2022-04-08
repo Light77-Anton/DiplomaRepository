@@ -4,7 +4,7 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-public class FailMessageResponse extends Response{
+public class FailMessageResponse {
 
     private String failMessage;
 }

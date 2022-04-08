@@ -5,7 +5,7 @@ import java.util.List;
 
 @Component
 @Data
-public class PostResultResponse extends Response {
+public class ResultDescriptionResponse {
 
     private boolean result;
     private List<String> description;

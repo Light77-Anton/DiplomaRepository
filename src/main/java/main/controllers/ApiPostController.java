@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.Optional;
 
-//@RequestMapping(/api/post/)  предположительно, здесь будет все,что связано с post
+@RequestMapping("/api/post/")
 @Controller
 public class ApiPostController {
 
@@ -41,7 +41,7 @@ public class ApiPostController {
         this.settingsService = settingsService;
     }
 
-    @GetMapping("/api/post")
+    @GetMapping("/")
     public ResponseEntity<PostResponse> post(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -50,7 +50,7 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getPostsList(offset,limit,mode));
     }
 
-    @GetMapping("/api/post/search")
+    @GetMapping("search")
     public ResponseEntity<PostResponse> postSearch(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -65,7 +65,7 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getPostsListByQuery(offset, limit, query));
     }
 
-    @GetMapping("/api/post/byDate")
+    @GetMapping("byDate")
     public ResponseEntity<PostResponse> postByDate(
             @RequestParam(value = "date", required = true) String date,
             @RequestParam(value = "offset", required = false) Integer offset,
@@ -74,7 +74,7 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getPostsByDate(offset, limit, date));
     }
 
-    @GetMapping("/api/post/byTag")
+    @GetMapping("byTag")
     public ResponseEntity<PostResponse> postByTag(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -86,30 +86,26 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getPostsByTag(offset, limit, tagName));
     }
 
-    @GetMapping("/api/post/{id}")
-    public ResponseEntity<Response> postById(@PathVariable Integer id, Principal principal) {
+    @GetMapping("{id}")
+    public ResponseEntity<PostByIdResponse> postById(@PathVariable Integer id, Principal principal) {
         if (principal == null) {
             if (postService.getPostById(id,null) == null) {
-                FailMessageResponse message = new FailMessageResponse();
-                message.setFailMessage("документ не найден");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
             }
             return ResponseEntity.ok(postService.getPostById(id,null));
         }
         main.model.User currentUser = userRepository.findByEmail
                 (principal.getName()).orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         if (postService.getPostById(id, currentUser) == null) {
-            FailMessageResponse message = new FailMessageResponse();
-            message.setFailMessage("документ не найден");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         return ResponseEntity.ok(postService.getPostById(id, currentUser));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @GetMapping("/api/post/my")
-    public ResponseEntity<Response> myPost(@RequestParam(value = "offset", required = false) Integer offset,
+    @GetMapping("my")
+    public ResponseEntity<MyPostResponse> myPost(@RequestParam(value = "offset", required = false) Integer offset,
                                  @RequestParam(value = "limit", required = false) Integer limit,
                                  @RequestParam(value = "status", required = true) String status,
                                  Principal principal) {
@@ -117,51 +113,49 @@ public class ApiPostController {
                 !status.equals("ACCEPTED") && !status.equals("DECLINED")) {
             FailMessageResponse message = new FailMessageResponse();
             message.setFailMessage("Такого статуса не существует");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         return ResponseEntity.ok(postService.getMyPost(offset, limit, status, principal));
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")
-    @GetMapping("/api/post/moderation")
-    public ResponseEntity<Response> findPostsForModeration(@RequestParam(value = "offset", required = false) Integer offset,
+    @GetMapping("moderation")
+    public ResponseEntity<MyPostResponse> findPostsForModeration(@RequestParam(value = "offset", required = false) Integer offset,
                                                                  @RequestParam(value = "limit", required = false) Integer limit,
                                                                  @RequestParam(value = "status", required = true) String status,
                                                                  Principal principal) {
         if (!status.equals("NEW") && !status.equals("ACCEPTED") && !status.equals("DECLINED")) {
-            FailMessageResponse message = new FailMessageResponse();
-            message.setFailMessage("Такого статуса не существует");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping("/api/post")
-    public ResponseEntity<PostResultResponse> post(@RequestBody PostRequest postRequest, Principal principal) {
+    @PostMapping("/")
+    public ResponseEntity<ResultDescriptionResponse> post(@RequestBody PostRequest postRequest, Principal principal) {
 
         return ResponseEntity.ok(postService.post(postRequest, principal));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PutMapping("/api/post/{id}")
-    public ResponseEntity<Response> updatePost(@PathVariable Integer id,
+    @PutMapping("{id}")
+    public ResponseEntity<ResultDescriptionResponse> updatePost(@PathVariable Integer id,
                                      @RequestBody PostRequest postRequest,
                                      Principal principal) {
         Optional<Post> post = submethodsForService.getOptionalPostByIdAndUserId(id, principal);
         if (post.isEmpty()) {
             FailMessageResponse message = new FailMessageResponse();
             message.setFailMessage("документ не найден");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         return ResponseEntity.ok(postService.updatePost(id, postRequest, principal));
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")
-    @PostMapping("/api/moderation")
+    @PostMapping("moderation")
     public ResponseEntity<ResultResponse> moderatePost(Principal principal,
                                        @RequestBody PostModerateRequest postModerateRequest) {
 
@@ -169,7 +163,7 @@ public class ApiPostController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping("/api/post/like")
+    @PostMapping("like")
     public ResponseEntity<ResultResponse> likePost(Principal principal,
                                @RequestBody VoteForPostRequest voteForPostRequest) {
 
@@ -177,7 +171,7 @@ public class ApiPostController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping("/api/post/dislike")
+    @PostMapping("dislike")
     public ResponseEntity<ResultResponse> dislikePost(Principal principal,
                                    @RequestBody VoteForPostRequest voteForPostRequest) {
 

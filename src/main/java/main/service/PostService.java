@@ -6,20 +6,16 @@ import main.api.response.*;
 import main.dto.*;
 import main.model.*;
 import main.model.repositories.*;
-import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.domain.*;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.*;
 import java.util.*;
@@ -59,14 +55,13 @@ public class PostService {
     public List<String> uploadImageAndGetLink(MultipartFile image) {
         List<String> list = new ArrayList<>();
         String format;
-        if (!image.getOriginalFilename().endsWith("jpg") && !image.getOriginalFilename().endsWith("png")) {
-            list.add("Неподходящий формат изображения");
-            return list;
-        }
         if (image.getOriginalFilename().endsWith("jpg")) {
             format = "jpg";
-        } else {
+        } else if (image.getOriginalFilename().endsWith("png")) {
             format = "png";
+        } else {
+            list.add("Неподходящий формат изображения");
+            return list;
         }
         try {
             BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
@@ -91,11 +86,10 @@ public class PostService {
             }
             String pathToImage = "upload/"
                     + firstSubfolder + "/" + secondSubfolder + "/" + thirdSubfolder + "/" + newImageName + "." + format;
-            File dir = new File(pathToImage);
-            //dir.mkdir();
-            FileOutputStream fileOutputStream = new FileOutputStream(dir); // пишет,что не может определить путь
-            ImageIO.write(bufferedImage, format, fileOutputStream);
-            fileOutputStream.close();
+            Path path = Paths.get(pathToImage);
+            File pathFile = path.toFile();
+            pathFile.mkdirs();
+            ImageIO.write(bufferedImage, format, pathFile);
             list.add(pathToImage);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -175,12 +169,12 @@ public class PostService {
         return resultResponse;
     }
 
-    public PostResultResponse updatePost(Integer id, PostRequest postRequest, Principal principal) {
+    public ResultDescriptionResponse updatePost(Integer id, PostRequest postRequest, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         Post post = postRepository.findByIdAndUserId(id,currentUser.getId()).get();
-        PostResultResponse postResultResponse = new PostResultResponse();
+        ResultDescriptionResponse result = new ResultDescriptionResponse();
         List<String> description;
             boolean isActive = postRequest.isActive();
             LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());// в формате "YYYY-MM-DDT12:00:00.000000000"
@@ -190,41 +184,51 @@ public class PostService {
             description = submethodsForService.checkDataForPost(title, text, tags, postRequest);
             if (description.isEmpty()) {
                 description.add("Все верно,изменения поста приняты");
-                postResultResponse.setDescription(description);
-                postResultResponse.setResult(true);
+                result.setDescription(description);
+                result.setResult(true);
                 if (settingsService.isPremoderation()) {
-                    postRepository.updatePost(post.getId(), isActive, ldt, title, text, "NEW");
+                    post.setActive(isActive);
+                    post.setTime(ldt);
+                    post.setTitle(title);
+                    post.setText(text);
+                    post.setModerationStatus("NEW");
+                    postRepository.save(post);
                 } else {
-                    postRepository.updatePost(post.getId(), isActive, ldt, title, text, "ACCEPTED");
+                    post.setActive(isActive);
+                    post.setTime(ldt);
+                    post.setTitle(title);
+                    post.setText(text);
+                    post.setModerationStatus("ACCEPTED");
+                    postRepository.save(post);
                 }
                 tagToPostRepository.deleteAll(tagToPostRepository.findAllByPostId(post.getId()));
                 for (Tag tag : tags) {
                     tagToPostRepository.insertTagToPost(post.getId(), tag.getId());
                 }
-                return postResultResponse;
+                return result;
             }
 
-        postResultResponse.setResult(false);
-        postResultResponse.setDescription(description);
+        result.setDescription(description);
 
-        return postResultResponse;
+        return result;
     }
 
-    public PostResultResponse post(PostRequest postRequest, Principal principal) {
+    public ResultDescriptionResponse post(PostRequest postRequest, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        PostResultResponse postResultResponse = new PostResultResponse();
-        List<String> description = new ArrayList<>();
+        ResultDescriptionResponse response = new ResultDescriptionResponse();
+        List<String> description;
         boolean isActive = postRequest.isActive();
         LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp()); // в формате "YYYY-MM-DDT12:00:00.000000000"
         String title = submethodsForService.checkTitleForPost(postRequest.getTitle());
         String text = submethodsForService.checkTextForPost(postRequest.getText());
         List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
-        if (submethodsForService.checkDataForPost(title, text, tags, postRequest).isEmpty()) {
+        description = submethodsForService.checkDataForPost(title, text, tags, postRequest);
+        if (description.isEmpty()) {
             description.add("Все верно,пост будет опубликован в указанное время");
-            postResultResponse.setDescription(description);
-            postResultResponse.setResult(true);
+            response.setDescription(description);
+            response.setResult(true);
             Post newPost = new Post();
             newPost.setActive(isActive);
             newPost.setUser(currentUser);
@@ -243,12 +247,11 @@ public class PostService {
             for (Tag tag : tags) {
                 tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
             }
-            return postResultResponse;
+            return response;
         }
-        postResultResponse.setResult(false);
-        postResultResponse.setDescription(description);
+        response.setDescription(description);
 
-        return postResultResponse;
+        return response;
     }
 
     public MyPostResponse getPostsForModeration(Integer offset,

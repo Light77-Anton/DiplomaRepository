@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Data
-public class InitResponse extends Response {
+public class InitResponse {
 
     @Value("${blog.title}")
     private String title;

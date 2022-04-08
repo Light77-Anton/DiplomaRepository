@@ -15,7 +15,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
-//@RequestMapping(/api/auth/)  предположительно, здесь будет все,что связано с auth
+@RequestMapping("/api/auth/")
 @Controller
 public class ApiAuthController {
 
@@ -32,7 +32,7 @@ public class ApiAuthController {
         this.settingsService = settingsService;
     }
 
-    @GetMapping("/api/auth/check")
+    @GetMapping("check")
     public ResponseEntity<LoginResponse> authCheck(Principal principal) {
 
         if (principal == null) {
@@ -42,21 +42,21 @@ public class ApiAuthController {
         return ResponseEntity.ok(authService.getLoginResponse(principal.getName()));
     }
 
-    @PostMapping("/api/auth/login")
+    @PostMapping("login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
         return ResponseEntity.ok(authService.getLogin(loginRequest.getEmail(), loginRequest.getPassword()));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @GetMapping("/api/auth/logout")
+    @GetMapping("logout")
     public ResponseEntity<Boolean> logout() {
 
         return ResponseEntity.ok(authService.getLogout());
     }
 
-    @PostMapping("/api/auth/register")
-    public ResponseEntity<Response> authRegister(
+    @PostMapping("register")
+    public ResponseEntity<RegisterResponse> authRegister(
             @RequestBody RegisterRequest registerRequest) throws Exception {
         if (!settingsService.isMultiuserMode()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -70,29 +70,28 @@ public class ApiAuthController {
         return ResponseEntity.ok(registerResponse);
     }
 
-    @GetMapping("/api/auth/captcha")
+    @GetMapping("captcha")
     public ResponseEntity<CaptchaResponse> authCaptcha() throws Exception {
         captchaService.deleteOldCaptchasFromRepository();
 
         return ResponseEntity.ok(captchaService.generateAndGetCaptcha());
     }
 
-    @PostMapping("/api/auth/restore")
+    @PostMapping("restore")
     public ResponseEntity<ResultResponse> authRestore(@RequestBody RestoreRequest restoreRequest) {
 
         return ResponseEntity.ok(authService.checkEmailAndGetCode(restoreRequest));
     }
 
-    @PostMapping("/api/auth/password")
-    public ResponseEntity<Response> changePassword(@RequestBody PasswordRequest passwordRequest) {
+    @PostMapping("password")
+    public ResponseEntity<ResultDescriptionResponse> changePassword(@RequestBody PasswordRequest passwordRequest) {
+        ResultDescriptionResponse response = new ResultDescriptionResponse();
         if (authService.checkPasswordChange(passwordRequest).isEmpty()) {
-            ResultResponse resultResponse = new ResultResponse();
-            resultResponse.setResult(true);
-            return ResponseEntity.ok(resultResponse);
+            response.setResult(true);
+            return ResponseEntity.ok(response);
         }
-        FalseResultErrorsResponse falseResultErrorsResponse = new FalseResultErrorsResponse();
-        falseResultErrorsResponse.setErrors(authService.checkPasswordChange(passwordRequest));
+        response.setDescription(authService.checkPasswordChange(passwordRequest));
 
-        return ResponseEntity.ok(falseResultErrorsResponse);
+        return ResponseEntity.ok(response);
     }
 }

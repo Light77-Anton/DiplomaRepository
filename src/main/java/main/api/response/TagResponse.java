@@ -6,7 +6,7 @@ import java.util.List;
 
 @Component
 @Data
-public class TagResponse extends Response {
+public class TagResponse {
 
     private List<TagDTO> tags;
 }

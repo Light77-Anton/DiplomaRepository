@@ -26,7 +26,4 @@ int changeVote(int userId, int postId, int value);
 
     @Query(value = "SELECT COUNT(pv.id) FROM post_votes AS pv WHERE pv.value = 1", nativeQuery = true)
     int findLikesCount();
-
-    @Query(value = "SELECT COUNT(pv.id) FROM post_votes AS pv WHERE pv.value = 0", nativeQuery = true)
-    int findDislikeCount();
 }

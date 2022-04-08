@@ -17,6 +17,8 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -74,7 +76,7 @@ public class ProfileService {
         return myStatisticsResponse;
     }
 
-    public List<String> checkProfileChanges(MultipartFile photo, String name, String email, String password, boolean removePhoto, Principal principal) {
+    public List<String> checkProfileChanges(MultipartFile avatar, String name, String email, String password, boolean removePhoto, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -98,8 +100,8 @@ public class ProfileService {
                 errors.add(quote);
             }
         }
-        if (photo != null && !removePhoto) {
-            String quote = checkPhoto(photo, userId);
+        if (avatar != null && !removePhoto) {
+            String quote = checkAvatar(avatar, userId);
             if (quote != null) {
                 errors.add(quote);
             }
@@ -140,19 +142,25 @@ public class ProfileService {
         return null;
     }
 
-    private String checkPhoto(MultipartFile photo, int userId) {
-        if (!photo.getOriginalFilename().endsWith("jpg") && !photo.getOriginalFilename().endsWith("png")) {
+    private String checkAvatar(MultipartFile avatar, int userId) {
+        String format;
+        if (avatar.getOriginalFilename().endsWith("jpg")) {
+            format = "jpg";
+        } else if (avatar.getOriginalFilename().endsWith("png")) {
+            format = "png";
+        } else {
             return "Неподходящий формат фото";
         }
-        String scaledPhoto = "";
         try {
-            BufferedImage bufferedImage = ImageIO.read(photo.getInputStream());
-            Image img = Scalr.resize(bufferedImage,36,36);
-            scaledPhoto = img.toString();
+            BufferedImage bufferedImage = ImageIO.read(avatar.getInputStream());
+            BufferedImage editedImage = Scalr.resize(bufferedImage,36,36);
+            String pathToImage = "avatars/id" + userId + "avatar";
+            Path path = Paths.get(pathToImage);
+            ImageIO.write(editedImage, format, path.toFile());
+            userRepository.updatePhotoProfile(userId, path.toString());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        userRepository.updatePhotoProfile(userId, scaledPhoto);
 
         return null;
     }

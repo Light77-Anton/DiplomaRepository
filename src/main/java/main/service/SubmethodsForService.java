@@ -1,8 +1,7 @@
 package main.service;
 import main.api.request.CommentRequest;
 import main.api.request.PostRequest;
-import main.api.response.CommentSuccessResponse;
-import main.api.response.FalseResultErrorsResponse;
+import main.api.response.ResultDescriptionResponse;
 import main.dto.MyPostDTO;
 import main.dto.UserDataDTO;
 import main.model.*;
@@ -13,7 +12,6 @@ import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import java.security.Principal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -78,48 +76,34 @@ public class SubmethodsForService {
         return list;
     }
 
-    public CommentSuccessResponse getSuccessCommentId(Principal principal) {
-        main.model.User currentUser = userRepository.findByEmail
-                        (principal.getName())
-                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        CommentSuccessResponse commentSuccessResponse = new CommentSuccessResponse();
-        commentSuccessResponse.setId(currentUser.getId());
-
-        return commentSuccessResponse;
-    }
-
-    public FalseResultErrorsResponse getFailedCommentWithErrors(List<String> errors) {
-        FalseResultErrorsResponse commentFailedResponse = new FalseResultErrorsResponse();
-        commentFailedResponse.setErrors(errors);
-
-        return commentFailedResponse;
-    }
-
-    public List<String> checkAndAddComment(CommentRequest commentRequest, Principal principal) {
-        List<String> errors = new ArrayList<>();
+    public ResultDescriptionResponse checkAndAddComment(CommentRequest commentRequest, Principal principal) {
+        ResultDescriptionResponse resultDescriptionResponse = new ResultDescriptionResponse();
+        List<String> description = new ArrayList<>();
         if (commentRequest.getPostId() == null) {
-            errors.add("Не указан пост");
-            return errors;
+            description.add("Не указан пост");
+            resultDescriptionResponse.setDescription(description);
+            return resultDescriptionResponse;
         }
         if (commentRequest.getText() == null) {
-            errors.add("Комментарий пуст");
-            return errors;
+            description.add("Комментарий пуст");
+            resultDescriptionResponse.setDescription(description);
+            return resultDescriptionResponse;
         }
         Optional<Post> post = postRepository.findById(commentRequest.getPostId());
         if (post.isEmpty()) {
-            errors.add("Такого поста не существует");
+            description.add("Такого поста не существует");
         } else {
             if (commentRequest.getParentId() != null) {
                 Optional<Comment> parentComment = commentRepository.findById(commentRequest.getParentId());
                 if (parentComment.isEmpty()) {
-                    errors.add("Такого комментария не существует");
+                    description.add("Такого комментария не существует");
                 }
             }
         }
         if (commentRequest.getText().length() <= 5) {
-            errors.add("Комментарий слишком короткий");
+            description.add("Комментарий слишком короткий");
         }
-        if (errors.isEmpty()) {
+        if (description.isEmpty()) {
             main.model.User currentUser = userRepository.findByEmail
                             (principal.getName())
                     .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -130,9 +114,12 @@ public class SubmethodsForService {
             newComment.setTime(LocalDateTime.now());
             newComment.setText(commentRequest.getText());
             commentRepository.save(newComment);
+            resultDescriptionResponse.setResult(true);
+            description.add("Ваш комментарий добавлен");
+            resultDescriptionResponse.setDescription(description);
         }
 
-        return errors;
+        return resultDescriptionResponse;
     }
 
     public List<MyPostDTO> fillAndGetMyPostsList(List<Post> postsList) {
