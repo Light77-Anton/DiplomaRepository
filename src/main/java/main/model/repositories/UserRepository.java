@@ -52,4 +52,7 @@ Optional<User> findByCode(String code);
 @Query(value = "UPDATE users SET password = ?2 WHERE code = ?1", nativeQuery = true)
 int findByCodeAndUpdatePassword(String code, String newPassword);
 
+@Query(value = "SELECT u.photo FROM users AS u WHERE u.id = ?1", nativeQuery = true)
+String findPhotoById(int userId);
+
 }

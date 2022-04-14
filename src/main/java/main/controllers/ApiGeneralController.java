@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 
 @RequestMapping("/api/")
@@ -144,19 +145,16 @@ public class ApiGeneralController {
     @PostMapping(value = "image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResultDescriptionResponse> uploadImage
             (@RequestParam(value = "image", required = true) MultipartFile image) {
-        List<String> result = postService.uploadImageAndGetLink(image);
+        List<String> result = new ArrayList<>();
         ResultDescriptionResponse response = new ResultDescriptionResponse();
-        for (String string : result) {
-            if (!string.endsWith("jpg") && !string.endsWith("png")) {
-                response.setDescription(result);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            } else {
-                response.setResult(true);
-                response.setDescription(result);
-                return ResponseEntity.ok(response);
-            }
+        if (postService.uploadImageAndGetLink(image).equals("Размер изображения должен быть не более 5 МБ")
+                || postService.uploadImageAndGetLink(image).equals("Неподходящий формат изображения")) {
+            response.setDescription(result);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         }
+        response.setResult(true);
+        response.setDescription(result);
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.ok(response);
     }
 }

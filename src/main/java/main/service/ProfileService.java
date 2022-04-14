@@ -7,6 +7,7 @@ import main.model.Vote;
 import main.model.repositories.PostRepository;
 import main.model.repositories.UserRepository;
 import main.model.repositories.VoteRepository;
+import org.apache.commons.io.FilenameUtils;
 import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Configurable;
@@ -143,20 +144,24 @@ public class ProfileService {
     }
 
     private String checkAvatar(MultipartFile avatar, int userId) {
-        String format;
-        if (avatar.getOriginalFilename().endsWith("jpg")) {
-            format = "jpg";
-        } else if (avatar.getOriginalFilename().endsWith("png")) {
-            format = "png";
-        } else {
+        if (avatar.getSize() > 5242880) {
+            return "Размер изображения должен быть не более 5 МБ";
+        }
+        if (!avatar.getOriginalFilename().endsWith("jpg") && !avatar.getOriginalFilename().endsWith("png")) {
             return "Неподходящий формат фото";
         }
+        String link = userRepository.findPhotoById(userId);
+        if (link != null) {
+            File currentAvatar = new File(link);
+            currentAvatar.delete();
+        }
+        String extension = FilenameUtils.getExtension(avatar.getOriginalFilename());
         try {
             BufferedImage bufferedImage = ImageIO.read(avatar.getInputStream());
             BufferedImage editedImage = Scalr.resize(bufferedImage,36,36);
-            String pathToImage = "avatars/id" + userId + "avatar";
+            String pathToImage = "avatars/id" + userId + "avatar." + extension;
             Path path = Paths.get(pathToImage);
-            ImageIO.write(editedImage, format, path.toFile());
+            ImageIO.write(editedImage, extension, path.toFile());
             userRepository.updatePhotoProfile(userId, path.toString());
         } catch (Exception ex) {
             ex.printStackTrace();

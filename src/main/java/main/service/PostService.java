@@ -6,6 +6,7 @@ import main.api.response.*;
 import main.dto.*;
 import main.model.*;
 import main.model.repositories.*;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -52,16 +53,12 @@ public class PostService {
         this.settingsService = settingsService;
     }
 
-    public List<String> uploadImageAndGetLink(MultipartFile image) {
-        List<String> list = new ArrayList<>();
-        String format;
-        if (image.getOriginalFilename().endsWith("jpg")) {
-            format = "jpg";
-        } else if (image.getOriginalFilename().endsWith("png")) {
-            format = "png";
-        } else {
-            list.add("Неподходящий формат изображения");
-            return list;
+    public String uploadImageAndGetLink(MultipartFile image) {
+        if (image.getSize() > 5242880) {
+            return "Размер изображения должен быть не более 5 МБ";
+        }
+        if (!image.getOriginalFilename().endsWith("jpg") && !image.getOriginalFilename().endsWith("png")) {
+            return "Неподходящий формат изображения";
         }
         try {
             BufferedImage bufferedImage = ImageIO.read(image.getInputStream());
@@ -84,18 +81,19 @@ public class PostService {
                 newImageName.append(availableChars[random.nextInt(availableChars
                         .length)]);
             }
+            String extension = FilenameUtils.getExtension(image.getOriginalFilename());
             String pathToImage = "upload/"
-                    + firstSubfolder + "/" + secondSubfolder + "/" + thirdSubfolder + "/" + newImageName + "." + format;
+                    + firstSubfolder + "/" + secondSubfolder + "/" + thirdSubfolder + "/" + newImageName + "." + extension;
             Path path = Paths.get(pathToImage);
             File pathFile = path.toFile();
             pathFile.mkdirs();
-            ImageIO.write(bufferedImage, format, pathFile);
-            list.add(pathToImage);
+            ImageIO.write(bufferedImage, extension, pathFile);
+            return pathToImage;
         } catch (Exception ex) {
             ex.printStackTrace();
         }
 
-        return list;
+        return null;
     }
 
     public ResultResponse setVoteForPost(Principal principal,
