@@ -33,6 +33,9 @@ blog:
   email: mail@mail.ru
   copyright: Дмитрий Сергеев
   copyrightFrom: 2005
+java:
+  runtime:
+    version: 11
 
 
 
