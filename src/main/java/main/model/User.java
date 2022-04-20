@@ -17,20 +17,25 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
-    @Column(name = "is_moderator")
+    @Column(name = "is_moderator", nullable = false)
     private boolean isModerator;
 
-    @Column(name = "reg_time")
+    @Column(name = "reg_time", nullable = false)
     private LocalDateTime registrationTime;
 
+    @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "email", nullable = false)
     private String email;
 
+    @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "code")
     private String code;
 
+    @Column(name = "photo", columnDefinition = "TEXT")
     private String photo;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

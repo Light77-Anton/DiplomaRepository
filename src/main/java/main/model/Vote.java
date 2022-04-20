@@ -24,7 +24,9 @@ public class Vote {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    @Column(name = "time", nullable = false)
     private LocalDateTime time;
 
+    @Column(name = "value", nullable = false)
     private int value;
 }

@@ -25,8 +25,10 @@ public class Comment {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "time", nullable = false)
     private LocalDateTime time;
 
+    @Column(name = "text", columnDefinition = "TEXT", nullable = false)
     private String text;
 
 }

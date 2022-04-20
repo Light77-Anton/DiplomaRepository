@@ -16,9 +16,12 @@ public class GlobalSetting {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
+    @Column(name = "code", nullable = false)
     private String code;
 
+    @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "value", nullable = false)
     private String value;
 }

@@ -17,10 +17,10 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
-    @Column(name = "moderation_status")
+    @Column(name = "moderation_status", columnDefinition = "varchar(255) default 'NEW'", nullable = false)
     private String moderationStatus;
 
     @Column(name = "moderator_id")
@@ -30,16 +30,16 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "time")
+    @Column(name = "time", nullable = false)
     private LocalDateTime time;
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     private String title;
 
-    @Column(name = "text")
+    @Column(name = "text", columnDefinition = "TEXT", nullable = false)
     private String text;
 
-    @Column(name = "view_count")
+    @Column(name = "view_count", nullable = false)
     private int viewCount;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

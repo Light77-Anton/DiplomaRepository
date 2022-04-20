@@ -12,13 +12,11 @@ CREATE TABLE users (
     PRIMARY KEY (id)
 );
 
-CREATE TYPE status AS ENUM ('NEW','ACCEPTED','DECLINED');
-
 CREATE TABLE posts (
 
     id SERIAL NOT NULL,
     is_active INT NOT NULL,
-    moderation_status status default 'NEW',
+    moderation_status VARCHAR(255) DEFAULT 'NEW',
     moderation_id INT,
     user_id INT NOT NULL,
     time TIMESTAMP NOT NULL,
@@ -26,7 +24,7 @@ CREATE TABLE posts (
     text TEXT NOT NULL,
     view_count INT NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id)
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 CREATE TABLE post_votes (
@@ -37,8 +35,8 @@ CREATE TABLE post_votes (
     time TIMESTAMP NOT NULL,
     value INT NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id),
-    CONSTRAINT fk_post FOREIGN KEY(post_id) REFERENCES posts(id)
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_post FOREIGN KEY (post_id) REFERENCES posts (id)
 );
 
 CREATE TABLE tags (
@@ -54,8 +52,8 @@ CREATE TABLE tag2post (
      post_id INT NOT NULL,
      tag_id INT NOT NULL,
      PRIMARY KEY (id),
-     CONSTRAINT fk_post FOREIGN KEY(post_id) REFERENCES posts(id),
-     CONSTRAINT fk_tag FOREIGN KEY(tag_id) REFERENCES tags(id)
+     CONSTRAINT fk_post FOREIGN KEY (post_id) REFERENCES posts (id),
+     CONSTRAINT fk_tag FOREIGN KEY (tag_id) REFERENCES tags (id)
 );
 
 CREATE TABLE post_comments (
@@ -67,8 +65,8 @@ CREATE TABLE post_comments (
     time TIMESTAMP NOT NULL,
     text TEXT NOT NULL,
     PRIMARY KEY (id),
-    CONSTRAINT fk_post FOREIGN KEY(post_id) REFERENCES posts(id),
-    CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id)
+    CONSTRAINT fk_post FOREIGN KEY (post_id) REFERENCES posts (id),
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
 CREATE TABLE captcha_codes (
