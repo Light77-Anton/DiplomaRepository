@@ -7,6 +7,7 @@ import main.dto.*;
 import main.model.*;
 import main.model.repositories.*;
 import org.apache.commons.io.FilenameUtils;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -34,6 +35,7 @@ public class PostService {
     private final VoteRepository voteRepository;
     private final TagToPostRepository tagToPostRepository;
     private final SettingsService settingsService;
+    private static final long UPLOAD_LIMIT = 5242880;
 
     public PostService(PostRepository postRepository,
                        UserRepository userRepository,
@@ -54,7 +56,7 @@ public class PostService {
     }
 
     public String uploadImageAndGetLink(MultipartFile image) {
-        if (image.getSize() > 5242880) {
+        if (image.getSize() > UPLOAD_LIMIT) {
             return "Размер изображения должен быть не более 5 МБ";
         }
         if (!image.getOriginalFilename().endsWith("jpg") && !image.getOriginalFilename().endsWith("png")) {

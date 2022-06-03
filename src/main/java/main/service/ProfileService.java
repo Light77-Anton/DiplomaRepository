@@ -15,7 +15,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.nio.file.Path;
@@ -39,6 +38,7 @@ public class ProfileService {
     private SecurityConfig securityConfig;
     @Autowired
     private VoteRepository voteRepository;
+    private static final long UPLOAD_LIMIT = 5242880;
 
     public StatisticsResponse getMyStatistics(Principal principal) {
         StatisticsResponse myStatisticsResponse = new StatisticsResponse();
@@ -77,7 +77,8 @@ public class ProfileService {
         return myStatisticsResponse;
     }
 
-    public List<String> checkProfileChanges(MultipartFile avatar, String name, String email, String password, boolean removePhoto, Principal principal) {
+    public List<String> checkProfileChanges(MultipartFile avatar, String name, String email, String password,
+                                            boolean removePhoto, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
@@ -144,7 +145,7 @@ public class ProfileService {
     }
 
     private String checkAvatar(MultipartFile avatar, int userId) {
-        if (avatar.getSize() > 5242880) {
+        if (avatar.getSize() > UPLOAD_LIMIT) {
             return "Размер изображения должен быть не более 5 МБ";
         }
         if (!avatar.getOriginalFilename().endsWith("jpg") && !avatar.getOriginalFilename().endsWith("png")) {

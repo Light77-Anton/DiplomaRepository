@@ -23,8 +23,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -107,8 +105,7 @@ public class AuthService {
             simpleMailMessage.setFrom("testEmailForApp77@gmail.com");
             simpleMailMessage.setTo(restoreRequest.getEmail());
             simpleMailMessage.setSubject("Код для восстановления пароля");
-            char[] availableChars = "abcdefghijklmnopqrstuvwxyz0123456789"
-                    .toCharArray();
+            char[] availableChars = "abcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
             StringBuilder hash = new StringBuilder();
             Random random = new Random();
             for (int i = 0; i < 45; i++) {
@@ -117,7 +114,7 @@ public class AuthService {
             }
             simpleMailMessage.setText(CHANGE_PASSWORD + hash.toString());
             javaMailSender.send(simpleMailMessage);
-            int updatedRow = userRepository.addRestoreCode(user.get().getId(), CHANGE_PASSWORD + hash.toString());
+            userRepository.addRestoreCode(user.get().getId(), CHANGE_PASSWORD + hash.toString());
             resultResponse.setResult(true);
             return resultResponse;
         }
@@ -141,7 +138,7 @@ public class AuthService {
             if (captchaCode.get().getCode().equals(passwordRequest.getCaptcha())) {
                 Optional<main.model.User> user = userRepository.findByCode(passwordRequest.getCode());
                 if (user.isPresent()) {
-                    int updatedRow = userRepository.findByCodeAndUpdatePassword(passwordRequest.getCode(),
+                    userRepository.findByCodeAndUpdatePassword(passwordRequest.getCode(),
                             securityConfig.passwordEncoder().encode(passwordRequest.getPassword()));
                 } else {
                     errors.add("Такого кода восстановления не найдено");

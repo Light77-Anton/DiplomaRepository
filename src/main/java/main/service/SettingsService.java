@@ -11,7 +11,6 @@ import main.model.repositories.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -30,19 +29,13 @@ public class SettingsService {
     private VoteRepository voteRepository;
 
     public boolean isMultiuserMode() {
-        if (globalSettingsRepository.findMultiuserModeValue().equals("YES")) {
-            return true;
-        }
 
-        return false;
+        return globalSettingsRepository.findMultiuserModeValue().equals("YES");
     }
 
     public boolean isPremoderation() {
-        if (globalSettingsRepository.findPremoderationValue().equals("YES")) {
-            return true;
-        }
 
-        return false;
+        return globalSettingsRepository.findPremoderationValue().equals("YES");
     }
 
     public SettingResponse getGlobalSettings() {

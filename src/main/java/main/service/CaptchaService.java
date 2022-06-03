@@ -24,8 +24,7 @@ public class CaptchaService {
 
     public CaptchaResponse generateAndGetCaptcha() throws Exception {
         CaptchaResponse captchaResponse = new CaptchaResponse();
-        char[] availableChars = "abcdefghijklmnopqrstuvwxyz0123456789"
-                .toCharArray();
+        char[] availableChars = "abcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
         StringBuilder randomSecretCode = new StringBuilder();
         StringBuilder randomCode = new StringBuilder();
         Random random = new Random();
@@ -38,8 +37,7 @@ public class CaptchaService {
         captchaResponse.setSecret(randomSecretCode.toString());
         Cage cage = new YCage();
         BufferedImage bf = cage.drawImage(randomCode.toString());
-        BufferedImage scaledImage = Scalr.
-                resize(bf, 100, 35, Scalr.OP_GRAYSCALE);
+        BufferedImage scaledImage = Scalr.resize(bf, 100, 35, Scalr.OP_GRAYSCALE);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(scaledImage, "png", baos);
         byte[] fileContent = baos.toByteArray();

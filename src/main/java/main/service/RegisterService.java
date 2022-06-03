@@ -80,8 +80,7 @@ public class RegisterService {
         }
         else {
             registerResponse.setResult(false);
-            registerResponse.setDescription("Похоже время время существование капчи истекло" +
-                    ",нужно сгенерировать новую");
+            registerResponse.setDescription("Похоже время существование капчи истекло,нужно сгенерировать новую");
             return registerResponse;
         }
     }
