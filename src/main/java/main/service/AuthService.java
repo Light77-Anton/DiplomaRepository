@@ -31,8 +31,8 @@ import java.util.Random;
 @Service
 public class AuthService {
 
-    Logger logger = LogManager.getLogger(AuthService.class);
-    Marker marker = MarkerManager.getMarker("CORRECT");
+    //Logger logger = LogManager.getLogger(AuthService.class);
+    //Marker marker = MarkerManager.getMarker("CORRECT");
 
     private static final String CHANGE_PASSWORD = "/login/change-password/";
 
@@ -77,7 +77,7 @@ public class AuthService {
     }
 
     public LoginResponse getLogin(String loginEmail, String loginPassword) {
-        logger.info(marker, "Переданные данные : " + loginEmail + " " + loginPassword);
+        //logger.info(marker, "Переданные данные : " + loginEmail + " " + loginPassword);
         Authentication auth = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken
                         (loginEmail, loginPassword));

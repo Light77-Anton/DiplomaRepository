@@ -27,3 +27,6 @@ hs_err_pid*
 
 # ignore target
 target
+
+# ignore logs folder
+logs
