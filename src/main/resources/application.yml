@@ -35,7 +35,7 @@ blog:
   copyrightFrom: 2005
 java:
   runtime:
-    version: 17
+    version: 11
 maven:
     version: 3.6.3
 
