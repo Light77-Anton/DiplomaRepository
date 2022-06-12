@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 @RequestMapping("/api/")
 @Controller
@@ -44,6 +45,13 @@ public class ApiGeneralController {
         this.captchaService = captchaService;
         this.submethodsForService = submethodsForService;
         this.profileService = profileService;
+    }
+
+    @GetMapping("test")
+    public String test() {
+        String prop = System.getProperty("java.runtime.version");
+
+        return prop;
     }
 
     @GetMapping("init")
