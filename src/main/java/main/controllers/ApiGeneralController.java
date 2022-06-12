@@ -49,9 +49,10 @@ public class ApiGeneralController {
 
     @GetMapping("test")
     public String test() {
-        String prop = System.getProperty("java.runtime.version");
 
-        return prop;
+        Properties properties = System.getProperties();
+
+        return "tt";
     }
 
     @GetMapping("init")
