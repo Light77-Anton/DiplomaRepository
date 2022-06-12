@@ -1,8 +1,10 @@
 java:
   runtime:
     version: 17
+---
 maven:
   version: 3.6.3
+---
 spring:
   mail:
     host: smtp.gmail.com
@@ -31,6 +33,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         connection pool_size: 10
+---
 blog:
   title: DevPub
   subtitle: Рассказы разработчиков
