@@ -15,6 +15,10 @@ spring:
     enabled: false
     locations: classpath:db/migration
     baselineOnMigrate: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=dfschema&sslmode=require
+    username: postgres
+    password: postgretest
   jpa:
     show-sql: true
     format_sql: true
