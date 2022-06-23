@@ -1,6 +1,4 @@
-server:
-  port: $PORT
----
+
 spring:
   mail:
     host: smtp.gmail.com
