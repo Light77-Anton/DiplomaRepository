@@ -81,7 +81,7 @@ CREATE TABLE captcha_codes (
 CREATE TABLE global_settings (
 
     id SERIAL NOT NULL,
-    code VARCHAR(255) NOt NULL,
-    name VARCHAR(255) NOt NULL,
-    value VARCHAR(255) NOt NULL
+    code VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    value VARCHAR(255) NOT NULL
 );

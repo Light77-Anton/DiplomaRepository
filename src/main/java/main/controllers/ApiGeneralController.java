@@ -47,14 +47,6 @@ public class ApiGeneralController {
         this.profileService = profileService;
     }
 
-    @GetMapping("test")
-    public String test() {
-
-        Properties properties = System.getProperties();
-
-        return "tt";
-    }
-
     @GetMapping("init")
     public ResponseEntity<InitResponse> init() {
 
