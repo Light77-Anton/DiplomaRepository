@@ -13,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 @RequestMapping("/api/")
 @Controller
