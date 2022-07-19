@@ -41,11 +41,11 @@ public class SettingsService {
     public SettingResponse getGlobalSettings() {
         SettingResponse settingResponse = new SettingResponse();
         settingResponse.setMultiuserMode(globalSettingsRepository
-                .findById(1).get().getValue().contentEquals("YES"));
+                .findMultiuserModeValue().contentEquals("YES"));
         settingResponse.setPostPremoderation(globalSettingsRepository
-                .findById(2).get().getValue().contentEquals("YES"));
+                .findPremoderationValue().contentEquals("YES"));
         settingResponse.setStatisticsIsPublic(globalSettingsRepository
-                .findById(3).get().getValue().contentEquals("YES"));
+                .findStatisticsIsPublicValue().contentEquals("YES"));
 
         return settingResponse;
     }

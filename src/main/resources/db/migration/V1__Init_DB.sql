@@ -2,7 +2,7 @@
 CREATE TABLE users (
 
     id SERIAL NOT NULL,
-    is_moderator INT NOT NULL,
+    is_moderator SMALLINT NOT NULL,
     reg_time TIMESTAMP NOT NULL,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE users (
 CREATE TABLE posts (
 
     id SERIAL NOT NULL,
-    is_active INT NOT NULL,
+    is_active SMALLINT NOT NULL,
     moderation_status VARCHAR(255) DEFAULT 'NEW',
     moderation_id INT,
     user_id INT NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE post_votes (
     user_id INT NOT NULL,
     post_id INT NOT NULL,
     time TIMESTAMP NOT NULL,
-    value INT NOT NULL,
+    value SMALLINT NOT NULL,
     PRIMARY KEY (id),
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id),
     CONSTRAINT fk_post FOREIGN KEY (post_id) REFERENCES posts (id)
@@ -85,3 +85,8 @@ CREATE TABLE global_settings (
     name VARCHAR(255) NOT NULL,
     value VARCHAR(255) NOT NULL
 );
+
+INSERT INTO global_settings(code, name, value) VALUES ('MULTIUSER_MODE', 'Многопользовательский режим', 'YES');
+INSERT INTO global_settings(code, name, value) VALUES ('POST_PREMODERATION', 'Премодерация постов', 'YES');
+INSERT INTO global_settings(code, name, value) VALUES ('STATISTICS_IS_PUBLIC', 'Показывать всем статистику блога', 'YES');
+INSERT INTO captcha_codes(code, secret_code, "time") VALUES ('t7sod', 'x3o10', now());

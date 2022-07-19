@@ -30,5 +30,8 @@ String findMultiuserModeValue();
 @Query(value = "SELECT gs.value FROM global_settings AS gs WHERE gs.code = 'POST_PREMODERATION'", nativeQuery = true)
 String findPremoderationValue();
 
+@Query(value = "SELECT gs.value FROM global_settings AS gs WHERE gs.code = 'STATISTICS_IS_PUBLIC'", nativeQuery = true)
+String findStatisticsIsPublicValue();
+
 }
 
