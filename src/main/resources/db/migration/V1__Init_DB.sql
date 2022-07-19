@@ -85,8 +85,3 @@ CREATE TABLE global_settings (
     name VARCHAR(255) NOT NULL,
     value VARCHAR(255) NOT NULL
 );
-
-INSERT INTO global_settings(code, name, value) VALUES ('MULTIUSER_MODE', 'Многопользовательский режим', 'YES');
-INSERT INTO global_settings(code, name, value) VALUES ('POST_PREMODERATION', 'Премодерация постов', 'YES');
-INSERT INTO global_settings(code, name, value) VALUES ('STATISTICS_IS_PUBLIC', 'Показывать всем статистику блога', 'YES');
-INSERT INTO captcha_codes(code, secret_code, "time") VALUES ('t7sod', 'x3o10', now());
