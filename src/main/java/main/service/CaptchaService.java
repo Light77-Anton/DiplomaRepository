@@ -37,7 +37,7 @@ public class CaptchaService {
         captchaResponse.setSecret(randomSecretCode.toString());
         Cage cage = new YCage();
         BufferedImage bf = cage.drawImage(randomCode.toString());
-        BufferedImage scaledImage = Scalr.resize(bf, 100, 35, Scalr.OP_GRAYSCALE);
+        BufferedImage scaledImage = Scalr.resize(bf, Scalr.Mode.FIT_EXACT,100, 35, Scalr.OP_GRAYSCALE);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(scaledImage, "png", baos);
         byte[] fileContent = baos.toByteArray();
