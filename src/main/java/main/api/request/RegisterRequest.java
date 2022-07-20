@@ -19,6 +19,6 @@ public class RegisterRequest {
     private String name;
     @JsonProperty("captcha")
     private String captcha;
-    @JsonProperty("secret_code")
+    @JsonProperty("captcha_secret")
     private String secretCode;
 }

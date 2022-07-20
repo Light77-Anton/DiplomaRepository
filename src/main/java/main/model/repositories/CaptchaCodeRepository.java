@@ -16,7 +16,7 @@ public interface CaptchaCodeRepository extends JpaRepository<CaptchaCode, Intege
 @Query(value = "DELETE FROM captcha_codes AS c WHERE c.time < ?1", nativeQuery = true)
 void deleteByTimeIsAfter(LocalDateTime localDateTime);
 
-@Query(value = "SELECT * FROM captcha_codes as c WHERE c.secret_code = ?1", nativeQuery = true)
+@Query(value = "SELECT * FROM captcha_codes AS c WHERE c.secret_code = ?1", nativeQuery = true)
 Optional<CaptchaCode> findBySecretCodeEquals(String secret);
 
 }
