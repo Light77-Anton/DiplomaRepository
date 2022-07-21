@@ -125,11 +125,11 @@ public class ApiGeneralController {
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping(value = "profile/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResultDescriptionResponse> profile
-            (@RequestParam(value = "avatar", required = false) MultipartFile avatar,
-                                     @RequestParam(value = "name", required = false) String name,
-                                     @RequestParam(value = "email", required = false) String email,
+            (@RequestParam(value = "photo", required = false) MultipartFile avatar,
+                                     @RequestParam(value = "name") String name,
+                                     @RequestParam(value = "email") String email,
                                      @RequestParam(value = "password", required = false) String password,
-                                     @RequestParam(value = "remove_photo", required = false) boolean removePhoto,
+                                     @RequestParam(value = "removePhoto", required = false) byte removePhoto,
                                      Principal principal) {
         ResultDescriptionResponse response = new ResultDescriptionResponse();
         if (profileService.checkProfileChanges(avatar, name, email, password, removePhoto, principal).isEmpty()) {

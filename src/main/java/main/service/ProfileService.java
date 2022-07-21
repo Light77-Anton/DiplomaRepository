@@ -78,38 +78,88 @@ public class ProfileService {
     }
 
     public List<String> checkProfileChanges(MultipartFile avatar, String name, String email, String password,
-                                            boolean removePhoto, Principal principal) {
+                                            byte removePhoto, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         List<String> errors = new ArrayList<>();
         int userId = currentUser.getId();
-        if (name != null) {
-           String quote = checkName(name, userId);
-           if (quote != null) {
-               errors.add(quote);
-           }
-        }
-        if (email != null) {
-            String quote = checkEmail(email, userId);
-            if (quote != null) {
-                errors.add(quote);
+        if (avatar != null && removePhoto == 0 && name != null && email != null && password != null) { //Запрос c изменением пароля и фотографии
+            String nameQuote = checkName(name, userId);
+            if (nameQuote != null) {
+                errors.add(nameQuote);
             }
-        }
-        if (password != null) {
-            String quote = checkPassword(password, userId);
-            if (quote != null) {
-                errors.add(quote);
+            String emailQuote = checkEmail(email, userId);
+            if (emailQuote != null) {
+                errors.add(emailQuote);
             }
-        }
-        if (avatar != null && !removePhoto) {
+            String passwordQuote = checkPassword(password, userId);
+            if (passwordQuote != null) {
+                errors.add(passwordQuote);
+            }
             String quote = checkAvatar(avatar, userId);
             if (quote != null) {
                 errors.add(quote);
             }
+
+            return errors;
         }
-        if (removePhoto) {
+        if (avatar != null && removePhoto == 0 && name != null && email != null) { //Запрос изменение фотографии и изменение данных, без смены пароля
+            String nameQuote = checkName(name, userId);
+            if (nameQuote != null) {
+                errors.add(nameQuote);
+            }
+            String emailQuote = checkEmail(email, userId);
+            if (emailQuote != null) {
+                errors.add(emailQuote);
+            }
+            String quote = checkAvatar(avatar, userId);
+            if (quote != null) {
+                errors.add(quote);
+            }
+
+            return errors;
+        }
+        if (avatar.getOriginalFilename().equals("") && removePhoto == 1 && name != null && email != null) { // Запрос на удаление фотографии без изменения пароля
+            String nameQuote = checkName(name, userId);
+            if (nameQuote != null) {
+                errors.add(nameQuote);
+            }
+            String emailQuote = checkEmail(email, userId);
+            if (emailQuote != null) {
+                errors.add(emailQuote);
+            }
             removePhoto(userId);
+
+            return errors;
+        }
+        if (name != null && email != null && password != null) { // Запрос c изменением пароля и без изменения фотографии
+            String nameQuote = checkName(name, userId);
+            if (nameQuote != null) {
+                errors.add(nameQuote);
+            }
+            String emailQuote = checkEmail(email, userId);
+            if (emailQuote != null) {
+                errors.add(emailQuote);
+            }
+            String passwordQuote = checkPassword(password, userId);
+            if (passwordQuote != null) {
+                errors.add(passwordQuote);
+            }
+
+            return errors;
+        }
+        if (name != null && email != null) { // Запрос без изменения пароля и фотографии
+            String nameQuote = checkName(name, userId);
+            if (nameQuote != null) {
+                errors.add(nameQuote);
+            }
+            String emailQuote = checkEmail(email, userId);
+            if (emailQuote != null) {
+                errors.add(emailQuote);
+            }
+
+            return errors;
         }
 
         return errors;
@@ -151,15 +201,10 @@ public class ProfileService {
         if (!avatar.getOriginalFilename().endsWith("jpg") && !avatar.getOriginalFilename().endsWith("png")) {
             return "Неподходящий формат фото";
         }
-        String link = userRepository.findPhotoById(userId);
-        if (link != null) {
-            File currentAvatar = new File(link);
-            currentAvatar.delete();
-        }
         String extension = FilenameUtils.getExtension(avatar.getOriginalFilename());
         try {
             BufferedImage bufferedImage = ImageIO.read(avatar.getInputStream());
-            BufferedImage editedImage = Scalr.resize(bufferedImage,36,36);
+            BufferedImage editedImage = Scalr.resize(bufferedImage, Scalr.Mode.FIT_EXACT,36,36);
             String pathToImage = "avatars/id" + userId + "avatar." + extension;
             Path path = Paths.get(pathToImage);
             ImageIO.write(editedImage, extension, path.toFile());
