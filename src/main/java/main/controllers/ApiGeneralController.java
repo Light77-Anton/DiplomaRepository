@@ -1,5 +1,6 @@
 package main.controllers;
 import main.api.request.CommentRequest;
+import main.api.request.ProfileRequest;
 import main.api.request.SettingsRequest;
 import main.api.response.*;
 import main.service.*;
@@ -123,21 +124,21 @@ public class ApiGeneralController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping(value = "profile/my", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> profile
-            (@RequestParam(value = "photo", required = false) MultipartFile avatar,
-                                     @RequestParam(value = "name") String name,
-                                     @RequestParam(value = "email") String email,
-                                     @RequestParam(value = "password", required = false) String password,
-                                     @RequestParam(value = "removePhoto", required = false) byte removePhoto,
+    @PostMapping(value = "profile/my", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE,MediaType.APPLICATION_JSON_VALUE }
+            , produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> profile(@RequestPart(value = "name") String name,
+                                     @RequestPart(value = "e_mail") String email,
+                                     @RequestPart(value = "photo") MultipartFile photo,
+                                     @RequestPart(value = "remove_photo") Byte removePhoto,
+                                     @RequestPart(value = "password") String password,
                                      Principal principal) {
-        if (profileService.checkProfileChanges(avatar, name, email, password, removePhoto, principal).isEmpty()) {
+        if (profileService.checkProfileChanges(name, email, password, removePhoto, photo, principal).isEmpty()) {
             ResultResponse resultResponse = new ResultResponse();
             resultResponse.setResult(true);
             return ResponseEntity.ok(resultResponse);
         }
         ResultDescriptionResponse response = new ResultDescriptionResponse();
-        response.setDescription(profileService.checkProfileChanges(avatar, name, email, password, removePhoto, principal));
+        response.setDescription(profileService.checkProfileChanges(name, email, password, removePhoto, photo, principal));
 
         return ResponseEntity.ok(response);
     }

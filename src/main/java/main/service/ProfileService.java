@@ -1,4 +1,5 @@
 package main.service;
+import main.api.request.ProfileRequest;
 import main.api.response.StatisticsResponse;
 import main.config.SecurityConfig;
 import main.model.Post;
@@ -77,133 +78,103 @@ public class ProfileService {
         return myStatisticsResponse;
     }
 
-    public List<String> checkProfileChanges(MultipartFile avatar, String name, String email, String password,
-                                            byte removePhoto, Principal principal) {
+    public List<String> checkProfileChanges(String name, String email, String password, Byte removePhoto,
+                                            MultipartFile photo, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        List<String> errors = new ArrayList<>();
+        List<String> emptyList = new ArrayList<>();
         int userId = currentUser.getId();
-        if (avatar != null && removePhoto == 0 && name != null && email != null && password != null) { //Запрос c изменением пароля и фотографии
-            String nameQuote = checkName(name, userId);
-            if (nameQuote != null) {
-                errors.add(nameQuote);
-            }
-            String emailQuote = checkEmail(email, userId);
-            if (emailQuote != null) {
-                errors.add(emailQuote);
-            }
-            String passwordQuote = checkPassword(password, userId);
-            if (passwordQuote != null) {
-                errors.add(passwordQuote);
-            }
-            String quote = checkAvatar(avatar, userId);
-            if (quote != null) {
-                errors.add(quote);
-            }
-
-            return errors;
+        if (photo != null && removePhoto == 0 && name != null && email != null && password != null) { //Запрос c изменением пароля и фотографии
+            List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
+            List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
+            List<String> listAfterThirdCheck = checkPassword(password, userId, listAfterSecondCheck);
+            List<String> listAfterFoughtCheck = checkPhoto(photo, userId, listAfterThirdCheck);
+            return listAfterFoughtCheck;
         }
-        if (avatar != null && removePhoto == 0 && name != null && email != null) { //Запрос изменение фотографии и изменение данных, без смены пароля
-            String nameQuote = checkName(name, userId);
-            if (nameQuote != null) {
-                errors.add(nameQuote);
-            }
-            String emailQuote = checkEmail(email, userId);
-            if (emailQuote != null) {
-                errors.add(emailQuote);
-            }
-            String quote = checkAvatar(avatar, userId);
-            if (quote != null) {
-                errors.add(quote);
-            }
-
-            return errors;
+        if (photo != null && removePhoto == 0 && name != null && email != null) { //Запрос изменение фотографии и изменение данных, без смены пароля
+            List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
+            List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
+            List<String> listAfterThirdCheck = checkPhoto(photo, userId, listAfterSecondCheck);
+            return listAfterThirdCheck;
         }
-        if (avatar.getOriginalFilename().equals("") && removePhoto == 1 && name != null && email != null) { // Запрос на удаление фотографии без изменения пароля
-            String nameQuote = checkName(name, userId);
-            if (nameQuote != null) {
-                errors.add(nameQuote);
+        if (photo != null) {
+            if (photo.getOriginalFilename().equals("") && removePhoto == 1 && name != null && email != null) { // Запрос на удаление фотографии без изменения пароля
+                List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
+                List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
+                if (listAfterSecondCheck.isEmpty()) {
+                    removePhoto(userId);
+                }
+                return listAfterSecondCheck;
             }
-            String emailQuote = checkEmail(email, userId);
-            if (emailQuote != null) {
-                errors.add(emailQuote);
-            }
-            removePhoto(userId);
-
-            return errors;
         }
         if (name != null && email != null && password != null) { // Запрос c изменением пароля и без изменения фотографии
-            String nameQuote = checkName(name, userId);
-            if (nameQuote != null) {
-                errors.add(nameQuote);
-            }
-            String emailQuote = checkEmail(email, userId);
-            if (emailQuote != null) {
-                errors.add(emailQuote);
-            }
-            String passwordQuote = checkPassword(password, userId);
-            if (passwordQuote != null) {
-                errors.add(passwordQuote);
-            }
-
-            return errors;
+            List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
+            List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
+            List<String> listAfterThirdCheck = checkPassword(password, userId, listAfterSecondCheck);
+            return listAfterThirdCheck;
         }
         if (name != null && email != null) { // Запрос без изменения пароля и фотографии
-            String nameQuote = checkName(name, userId);
-            if (nameQuote != null) {
-                errors.add(nameQuote);
-            }
-            String emailQuote = checkEmail(email, userId);
-            if (emailQuote != null) {
-                errors.add(emailQuote);
-            }
+            List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
+            List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
+            return listAfterSecondCheck;
+        }
 
+        return emptyList;
+    }
+
+    private List<String> checkName(String name, int userId, List<String> errors) {
+        if (name.equals("")) {
+            errors.add("Имя введено неверно");
             return errors;
         }
+        Optional<User> userWithSpecifiedName = userRepository.findByName(name);
+        if (userWithSpecifiedName.isPresent() && userWithSpecifiedName.get().getId() != userId) {
+            errors.add("Такое имя уже существует");
+            return errors;
+        }
+        userRepository.updateNameProfile(userId, name);
 
         return errors;
     }
 
-    private String checkName(String name, int userId) {
-        Optional<User> userName = userRepository.findByName(name);
-        if (name.equals("") || userName.isPresent()) {
-            return "Такое имя уже существует";
+    private List<String> checkEmail(String email, int userId, List<String> errors) {
+        if (!email.contains("@")) {
+            errors.add("Это явно не эмэйл");
+            return errors;
         }
-        userRepository.updateNameProfile(userId, name);
-
-        return null;
-    }
-
-    private String checkEmail(String email, int userId) {
-        Optional<User> userEmail = userRepository.findByEmail(email);
-        if (!email.contains("@") || userEmail.isPresent()) {
-            return "Такой эмэйл уже существует";
+        Optional<User> userWithSpecifiedEmail = userRepository.findByEmail(email);
+        if (userWithSpecifiedEmail.isPresent() && userWithSpecifiedEmail.get().getId() != userId) {
+            errors.add("Такой эмэйл уже существует");
+            return errors;
         }
         userRepository.updateEmailProfile(userId, email);
 
-        return null;
+        return errors;
     }
 
-    private String checkPassword(String password, int userId) {
+    private List<String> checkPassword(String password, int userId, List<String> errors) {
         if (password.length() < 6) {
-            return ("Пароль короче 6-ти символов");
+            errors.add("Пароль короче 6-ти символов");
+            return errors;
         }
         userRepository.updatePasswordProfile(userId, securityConfig.passwordEncoder().encode(password));
 
-        return null;
+        return errors;
     }
 
-    private String checkAvatar(MultipartFile avatar, int userId) {
-        if (avatar.getSize() > UPLOAD_LIMIT) {
-            return "Размер изображения должен быть не более 5 МБ";
+    private List<String> checkPhoto(MultipartFile photo, int userId, List<String> errors) {
+        if (photo.getSize() > UPLOAD_LIMIT) {
+            errors.add("Размер изображения должен быть не более 5 МБ");
+            return errors;
         }
-        if (!avatar.getOriginalFilename().endsWith("jpg") && !avatar.getOriginalFilename().endsWith("png")) {
-            return "Неподходящий формат фото";
+        if (!photo.getOriginalFilename().endsWith("jpg") && !photo.getOriginalFilename().endsWith("png")) {
+            errors.add("Неподходящий формат фото");
+            return errors;
         }
-        String extension = FilenameUtils.getExtension(avatar.getOriginalFilename());
+        String extension = FilenameUtils.getExtension(photo.getOriginalFilename());
         try {
-            BufferedImage bufferedImage = ImageIO.read(avatar.getInputStream());
+            BufferedImage bufferedImage = ImageIO.read(photo.getInputStream());
             BufferedImage editedImage = Scalr.resize(bufferedImage, Scalr.Mode.FIT_EXACT,36,36);
             String pathToImage = "avatars/id" + userId + "avatar." + extension;
             Path path = Paths.get(pathToImage);
@@ -213,7 +184,7 @@ public class ProfileService {
             ex.printStackTrace();
         }
 
-        return null;
+        return errors;
     }
 
     private void removePhoto(int userId) {
