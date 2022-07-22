@@ -1,6 +1,5 @@
 package main.controllers;
 import main.api.request.CommentRequest;
-import main.api.request.ProfileRequest;
 import main.api.request.SettingsRequest;
 import main.api.response.*;
 import main.service.*;

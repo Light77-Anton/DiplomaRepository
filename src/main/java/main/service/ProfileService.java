@@ -1,5 +1,4 @@
 package main.service;
-import main.api.request.ProfileRequest;
 import main.api.response.StatisticsResponse;
 import main.config.SecurityConfig;
 import main.model.Post;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
