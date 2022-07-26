@@ -31,8 +31,8 @@ public class CalendarService {
         List<Post> postsList = postRepository.findByYear(year);
         List<String> listWithDates = new ArrayList<>();
         for (Post post : postsList) {
-            String date = post.getTime().toString().substring(0, 4);
-            if (date.equals(year)) {
+            String date = post.getTime().toString().substring(0, 10);
+            if (date.substring(0, 4).equals(year)) {
                 listWithDates.add(date);
             }
         }

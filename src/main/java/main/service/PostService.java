@@ -1,7 +1,7 @@
 package main.service;
 import main.api.request.PostModerateRequest;
 import main.api.request.PostRequest;
-import main.api.request.VoteForPostRequest;
+import main.api.request.VoteRequest;
 import main.api.response.*;
 import main.dto.*;
 import main.model.*;
@@ -83,8 +83,8 @@ public class PostService {
                         .length)]);
             }
             String extension = FilenameUtils.getExtension(image.getOriginalFilename());
-            String pathToImage = "upload/"
-                    + firstSubfolder + "/" + secondSubfolder + "/" + thirdSubfolder + "/" + newImageName + "." + extension;
+            String pathToImage = "upload/" + firstSubfolder +
+                    "/" + secondSubfolder + "/" + thirdSubfolder + "/" + newImageName + "." + extension;
             Path path = Paths.get(pathToImage);
             File pathFile = path.toFile();
             pathFile.mkdirs();
@@ -97,12 +97,12 @@ public class PostService {
         return null;
     }
 
-    public ResultResponse setVoteForPost(Principal principal,
-                                         VoteForPostRequest voteForPostRequest,
+    public ResultErrorsResponse setVoteForPost(Principal principal,
+                                         VoteRequest voteRequest,
                                          int value) {
-        ResultResponse resultResponse = new ResultResponse();
-        if (voteForPostRequest.getPostId() == null) {
-            return resultResponse;
+        ResultErrorsResponse resultErrorsResponse = new ResultErrorsResponse();
+        if (voteRequest.getId() == null) {
+            return resultErrorsResponse;
         }
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
@@ -113,7 +113,7 @@ public class PostService {
         } else {
             oppositeValue = 1;
         }
-        Optional<Post> post = postRepository.findById(voteForPostRequest.getPostId());
+        Optional<Post> post = postRepository.findById(voteRequest.getId());
         if (post.isPresent()) {
             Optional<Vote> vote = voteRepository.findByUserAndPostId(currentUser.getId(), post.get().getId());
             if (vote.isEmpty()) {
@@ -123,67 +123,62 @@ public class PostService {
                 newVote.setTime(LocalDateTime.now());
                 newVote.setValue(value);
                 voteRepository.save(newVote);
-                resultResponse.setResult(true);
-                return resultResponse;
+                resultErrorsResponse.setResult(true);
+                return resultErrorsResponse;
             } else if (vote.isPresent() && vote.get().getValue() == oppositeValue) {
                 voteRepository.changeVote(currentUser.getId(), post.get().getId(), value);
-                resultResponse.setResult(true);
-                return resultResponse;
+                resultErrorsResponse.setResult(true);
+                return resultErrorsResponse;
             } else {
-                resultResponse.setResult(false);
-                return resultResponse;
+                return resultErrorsResponse;
             }
         } else {
-            resultResponse.setResult(false);
-            return resultResponse;
+            return resultErrorsResponse;
         }
     }
 
-    public ResultResponse checkModeratorDecision(PostModerateRequest postModerateRequest, Principal principal) {
-        ResultResponse resultResponse = new ResultResponse();
+    public ResultErrorsResponse checkModeratorDecision(PostModerateRequest postModerateRequest, Principal principal) {
+        ResultErrorsResponse resultErrorsResponse = new ResultErrorsResponse();
         if (postModerateRequest.getPostId() == null || postModerateRequest.getDecision() == null) {
-            return resultResponse;
+            return resultErrorsResponse;
         }
         Optional<Post> post = postRepository.findById(postModerateRequest.getPostId());
         if (post.isEmpty()) {
-            resultResponse.setResult(false);
-            return resultResponse;
+            return resultErrorsResponse;
         }
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         switch (postModerateRequest.getDecision()) {
-            case "ACCEPTED":
+            case "accepted":
                 postRepository.moderatePost("ACCEPTED", currentUser.getId(), postModerateRequest.getPostId());
-                resultResponse.setResult(true);
+                resultErrorsResponse.setResult(true);
                 break;
-            case "DECLINED":
+            case "declined":
                 postRepository.moderatePost("DECLINED", currentUser.getId(), postModerateRequest.getPostId());
-                resultResponse.setResult(true);
+                resultErrorsResponse.setResult(true);
                 break;
             default:
-                resultResponse.setResult(false);
         }
 
-        return resultResponse;
+        return resultErrorsResponse;
     }
 
-    public ResultDescriptionResponse updatePost(Integer id, PostRequest postRequest, Principal principal) {
+    public ResultErrorsResponse updatePost(Integer id, PostRequest postRequest, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         Post post = postRepository.findByIdAndUserId(id,currentUser.getId()).get();
-        ResultDescriptionResponse result = new ResultDescriptionResponse();
+        ResultErrorsResponse result = new ResultErrorsResponse();
         List<String> description;
-            boolean isActive = postRequest.isActive();
+            boolean isActive = postRequest.getIsActive() == 1;
             LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());// в формате "YYYY-MM-DDT12:00:00.000000000"
             String title = submethodsForService.checkTitleForPost(postRequest.getTitle());
             String text = submethodsForService.checkTextForPost(postRequest.getText());
             List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
             description = submethodsForService.checkDataForPost(title, text, tags, postRequest);
             if (description.isEmpty()) {
-                description.add("Все верно,изменения поста приняты");
-                result.setDescription(description);
+                result.setErrors(description);
                 result.setResult(true);
                 if (settingsService.isPremoderation()) {
                     post.setActive(isActive);
@@ -207,26 +202,25 @@ public class PostService {
                 return result;
             }
 
-        result.setDescription(description);
+        result.setErrors(description);
 
         return result;
     }
 
-    public ResultDescriptionResponse post(PostRequest postRequest, Principal principal) {
+    public ResultErrorsResponse post(PostRequest postRequest, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        ResultDescriptionResponse response = new ResultDescriptionResponse();
-        List<String> description;
-        boolean isActive = postRequest.isActive();
+        ResultErrorsResponse response = new ResultErrorsResponse();
+        List<String> errors;
+        boolean isActive = postRequest.getIsActive() == 1;
         LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp()); // в формате "YYYY-MM-DDT12:00:00.000000000"
         String title = submethodsForService.checkTitleForPost(postRequest.getTitle());
         String text = submethodsForService.checkTextForPost(postRequest.getText());
         List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
-        description = submethodsForService.checkDataForPost(title, text, tags, postRequest);
-        if (description.isEmpty()) {
-            description.add("Все верно,пост будет опубликован в указанное время");
-            response.setDescription(description);
+        errors = submethodsForService.checkDataForPost(title, text, tags, postRequest);
+        if (errors.isEmpty()) {
+            response.setErrors(new ArrayList<>());
             response.setResult(true);
             Post newPost = new Post();
             newPost.setActive(isActive);
@@ -248,7 +242,7 @@ public class PostService {
             }
             return response;
         }
-        response.setDescription(description);
+        response.setErrors(errors);
 
         return response;
     }
@@ -264,17 +258,17 @@ public class PostService {
         Pageable pageable = submethodsForService.getCheckedPageable(offset, limit);
         Page<Post> postsPage;
         switch (status) {
-            case "NEW":
+            case "new":
                 postsPage = postRepository.findAllNewPostsAsPage(pageable);
                 myPostResponse.setCount(postsPage.getTotalElements());
                 myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
                 break;
-            case "ACCEPTED":
+            case "accepted":
                 postsPage = postRepository.findAllAcceptedPostsByMe(currentUser.getId(), pageable);
                 myPostResponse.setCount(postsPage.getTotalElements());
                 myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
                 break;
-            case "DECLINED":
+            case "declined":
                 postsPage = postRepository.findAllDeclinedPostsByMe(currentUser.getId(), pageable);
                 myPostResponse.setCount(postsPage.getTotalElements());
                 myPostResponse.setPosts(submethodsForService.fillAndGetMyPostsList(postsPage.getContent()));
@@ -298,16 +292,16 @@ public class PostService {
         Pageable pageable = submethodsForService.getCheckedPageable(offset, limit);
         Page<Post> postsPage;
         switch (status) {
-            case "INACTIVE":
+            case "inactive":
                 postsPage = postRepository.findAllInactivePosts(currentUser.getId(), pageable);
                 break;
-            case "PENDING":
+            case "pending":
                 postsPage = postRepository.findAllPendingPosts(currentUser.getId(), pageable);
                 break;
-            case "DECLINED":
+            case "declined":
                 postsPage = postRepository.findAllDeclinedPosts(currentUser.getId(), pageable);
                 break;
-            case "ACCEPTED":
+            case "accepted":
                 postsPage = postRepository.findAllAcceptedPosts(currentUser.getId(), pageable);
                 break;
             default:
@@ -333,16 +327,16 @@ public class PostService {
         }
         postByIdResponse = new PostByIdResponse();
         PostByIdDTO postByIdDTO = new PostByIdDTO();
-        postByIdDTO.setPostId(post.get().getId());
+        postByIdDTO.setId(post.get().getId());
         postByIdDTO.setTimestamp(post.get().getTime().toEpochSecond(ZoneOffset.UTC));
         postByIdDTO.setActive(post.get().isActive());
         UserDataDTO userDataDTO = new UserDataDTO();
         userDataDTO.setId(post.get().getUser().getId());
         userDataDTO.setName(post.get().getUser().getName());
-        postByIdDTO.setUserData(userDataDTO);
+        postByIdDTO.setUser(userDataDTO);
         postByIdDTO.setTitle(post.get().getTitle());
         postByIdDTO.setText(post.get().getText());
-        postByIdDTO.setLikesCount(postRepository.findLikeCountById(post.get().getId()));
+        postByIdDTO.setLikeCount(postRepository.findLikeCountById(post.get().getId()));
         postByIdDTO.setDislikeCount(postRepository.findDislikeCountById(post.get().getId()));
         postByIdDTO.setViewCount(post.get().getViewCount());
         List<CommentsDataDTO> commentsDataDTOList = new ArrayList<>();
@@ -357,16 +351,16 @@ public class PostService {
             extendedUserDataDTO.setId(user.get().getId());
             extendedUserDataDTO.setName(user.get().getName());
             extendedUserDataDTO.setPhoto(user.get().getPhoto());
-            commentsDataDTO.setUserData(extendedUserDataDTO);
+            commentsDataDTO.setUser(extendedUserDataDTO);
             commentsDataDTOList.add(commentsDataDTO);
         }
-        postByIdDTO.setCommentsData(commentsDataDTOList);
+        postByIdDTO.setComments(commentsDataDTOList);
         List<String> tagsNamesList = new ArrayList<>();
         List<Tag> tagsList = post.get().getTags();
         for (Tag tag : tagsList) {
             tagsNamesList.add(tag.getName());
         }
-        postByIdDTO.setTagsData(tagsNamesList);
+        postByIdDTO.setTags(tagsNamesList);
         postByIdResponse.setPostData(postByIdDTO);
 
         if (currentUser == null) {
@@ -433,22 +427,21 @@ public class PostService {
         return postResponse;
     }
 
-    public PostResponse getPostsList(Integer offset,
-                                     Integer limit, String mode) {
+    public PostResponse getPostsList(Integer offset, Integer limit, String mode) {
         PostResponse postResponse = new PostResponse();
         Pageable pageable = submethodsForService.getCheckedPageable(offset, limit);
         Page<Post> page;
         if (mode == null) {
-            mode = "RECENT";
+            mode = "recent";
         }
         switch (mode) {
-            case "POPULAR":
+            case "popular":
                 page = postRepository.findAllAndOrderByCommentariesSize(pageable);
                 break;
-            case "EARLY":
+            case "early":
                 page = postRepository.findAllAndOrderByTimeAsc(pageable);
                 break;
-            case "BEST":
+            case "best":
                 page = postRepository.findAllAndOrderByVotesCount(pageable);
                 break;
             default:

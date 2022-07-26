@@ -15,8 +15,8 @@ public class PostRequest {
 
     @JsonProperty("timestamp")
     private LocalDateTime timestamp;
-    @JsonProperty("is_active")
-    private boolean isActive;
+    @JsonProperty("active")
+    private Byte isActive;
     @JsonProperty("title")
     private String title;
     @JsonProperty("tags")

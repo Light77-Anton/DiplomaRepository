@@ -2,7 +2,6 @@ package main.controllers;
 import main.api.request.LoginRequest;
 import main.api.request.PasswordRequest;
 import main.api.request.RegisterRequest;
-import main.api.request.RestoreRequest;
 import main.api.response.*;
 import main.service.AuthService;
 import main.service.CaptchaService;
@@ -56,18 +55,18 @@ public class ApiAuthController {
     }
 
     @PostMapping("register")
-    public ResponseEntity<RegisterResponse> authRegister(
+    public ResponseEntity<ResultErrorsResponse> authRegister(
             @RequestBody RegisterRequest registerRequest) throws Exception {
         if (!settingsService.isMultiuserMode()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        RegisterResponse registerResponse = registerService.checkData(registerRequest);
-        if (!registerResponse.getDescription().equals("все верно,пользователь создан")) {
+        ResultErrorsResponse resultErrorsResponse = registerService.checkData(registerRequest);
+        if (!resultErrorsResponse.getErrors().isEmpty()) {
 
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(registerResponse);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resultErrorsResponse);
         }
 
-        return ResponseEntity.ok(registerResponse);
+        return ResponseEntity.ok(resultErrorsResponse);
     }
 
     @GetMapping("captcha")
@@ -78,20 +77,20 @@ public class ApiAuthController {
     }
 
     @PostMapping("restore")
-    public ResponseEntity<ResultResponse> authRestore(@RequestBody RestoreRequest restoreRequest) {
+    public ResponseEntity<ResultErrorsResponse> authRestore(@RequestBody String email) {
 
-        return ResponseEntity.ok(authService.checkEmailAndGetCode(restoreRequest));
+        return ResponseEntity.ok(authService.checkEmailAndGetCode(email));
     }
 
     @PostMapping("password")
-    public ResponseEntity<ResultDescriptionResponse> changePassword(@RequestBody PasswordRequest passwordRequest) {
-        ResultDescriptionResponse response = new ResultDescriptionResponse();
+    public ResponseEntity<ResultErrorsResponse> changePassword(@RequestBody PasswordRequest passwordRequest) {
+        ResultErrorsResponse resultErrorsResponse = new ResultErrorsResponse();
         if (authService.checkPasswordChange(passwordRequest).isEmpty()) {
-            response.setResult(true);
-            return ResponseEntity.ok(response);
+            resultErrorsResponse.setResult(true);
+            return ResponseEntity.ok(resultErrorsResponse);
         }
-        response.setDescription(authService.checkPasswordChange(passwordRequest));
+        resultErrorsResponse.setErrors(authService.checkPasswordChange(passwordRequest));
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(resultErrorsResponse);
     }
 }

@@ -59,8 +59,7 @@ public class ApiGeneralController {
     }
 
     @GetMapping("tag")
-    public ResponseEntity<TagResponse> tag(
-            @RequestParam(value = "query", required = false) String query) {
+    public ResponseEntity<TagResponse> tag(@RequestParam(value = "query", required = false) String query) {
 
         return ResponseEntity.ok(tagService.getTagList(query));
     }
@@ -74,16 +73,22 @@ public class ApiGeneralController {
 
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("comment")
-    public ResponseEntity<ResultDescriptionResponse> comment(@RequestBody CommentRequest commentRequest,
+    public ResponseEntity<CommentResponse> comment(@RequestBody CommentRequest commentRequest,
                                   Principal principal) {
-        ResultDescriptionResponse response = submethodsForService.checkAndAddComment(commentRequest, principal);
-        for (String string : response.getDescription()) {
-            if (!string.equals("Ваш комментарий добавлен")) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-            }
+        List<String> errors = submethodsForService.checkAndAddComment(commentRequest, principal);
+        CommentResponse commentResponse = new CommentResponse();
+        String possibleId = errors.get(0);
+        if (possibleId.substring(0, 2).equals("id")) {
+            commentResponse.setId(Integer.parseInt(possibleId.substring(5)));
+            commentResponse.setResult(null);
+            commentResponse.setErrors(null);
+            return ResponseEntity.ok(commentResponse);
         }
+        commentResponse.setId(null);
+        commentResponse.setResult(false);
+        commentResponse.setErrors(errors);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(commentResponse);
     }
 
     @PreAuthorize("hasAuthority('user:write')")
@@ -112,8 +117,8 @@ public class ApiGeneralController {
 
     @PreAuthorize("hasAuthority('user:moderate')")
     @PostMapping("tag")
-    public ResponseEntity<ResultResponse> addNewTag(@RequestBody String name) {
-        ResultResponse resultResponse = new ResultResponse();
+    public ResponseEntity<ResultErrorsResponse> addNewTag(@RequestBody String name) {
+        ResultErrorsResponse resultResponse = new ResultErrorsResponse();
         if (!tagService.checkAndAddTag(name)) {
             return ResponseEntity.ok(resultResponse);
         }
@@ -125,37 +130,40 @@ public class ApiGeneralController {
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping(value = "profile/my", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE,MediaType.APPLICATION_JSON_VALUE }
             , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> profile(@RequestPart(value = "name") String name,
-                                     @RequestPart(value = "e_mail") String email,
+    public ResponseEntity<ResultErrorsResponse> profile(@RequestPart(value = "name") String name,
+                                     @RequestPart(value = "email") String email,
                                      @RequestPart(value = "photo") MultipartFile photo,
-                                     @RequestPart(value = "remove_photo") Byte removePhoto,
+                                     @RequestPart(value = "removePhoto") String removePhoto,
                                      @RequestPart(value = "password") String password,
                                      Principal principal) {
         if (profileService.checkProfileChanges(name, email, password, removePhoto, photo, principal).isEmpty()) {
-            ResultResponse resultResponse = new ResultResponse();
+            ResultErrorsResponse resultResponse = new ResultErrorsResponse();
             resultResponse.setResult(true);
             return ResponseEntity.ok(resultResponse);
         }
-        ResultDescriptionResponse response = new ResultDescriptionResponse();
-        response.setDescription(profileService.checkProfileChanges(name, email, password, removePhoto, photo, principal));
+        ResultErrorsResponse response = new ResultErrorsResponse();
+        response.setErrors(profileService.checkProfileChanges(name, email, password, removePhoto, photo, principal));
 
         return ResponseEntity.ok(response);
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping(value = "image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResultDescriptionResponse> uploadImage
-            (@RequestParam(value = "image", required = true) MultipartFile image) {
-        List<String> result = new ArrayList<>();
-        ResultDescriptionResponse response = new ResultDescriptionResponse();
-        if (postService.uploadImageAndGetLink(image).equals("Размер изображения должен быть не более 5 МБ")
-                || postService.uploadImageAndGetLink(image).equals("Неподходящий формат изображения")) {
-            response.setDescription(result);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    public ResponseEntity<ImageResponse> uploadImage(@RequestPart(value = "image", required = true) MultipartFile image) {
+        String result = postService.uploadImageAndGetLink(image);
+        List<String> error = new ArrayList<>();
+        ImageResponse imageResponse = new ImageResponse();
+        if (result.equals("Размер изображения должен быть не более 5 МБ")
+                || result.equals("Неподходящий формат изображения")) {
+            error.add(result);
+            imageResponse.setImage(null);
+            imageResponse.setErrors(error);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(imageResponse);
         }
-        response.setResult(true);
-        response.setDescription(result);
+        imageResponse.setImage(result);
+        imageResponse.setResult(null);
+        imageResponse.setErrors(null);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(imageResponse);
     }
 }

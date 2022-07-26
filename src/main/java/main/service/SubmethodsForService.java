@@ -1,7 +1,6 @@
 package main.service;
 import main.api.request.CommentRequest;
 import main.api.request.PostRequest;
-import main.api.response.ResultDescriptionResponse;
 import main.dto.MyPostDTO;
 import main.dto.UserDataDTO;
 import main.model.*;
@@ -31,20 +30,20 @@ public class SubmethodsForService {
     private VoteRepository voteRepository;
 
     public List<String> checkDataForPost(String title, String text, List<Tag> tags, PostRequest postRequest) {
-        List<String> description = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
         if (title.equals("")) {
-            description.add("Заголовок не установлен");
+            errors.add("Заголовок не установлен");
         }
         if (postRequest.getTags() != null) {
             if (postRequest.getTags().size() != tags.size()) {
-                description.add("Такого тэга(-ов) не существует");
+                errors.add("Такого тэга(-ов) не существует");
             }
         }
         if (text.equals("")) {
-            description.add("Текст публикации слишком короткий");
+            errors.add("Текст публикации слишком короткий");
         }
 
-        return description;
+        return errors;
     }
 
     public Optional<Post> getOptionalPostByIdAndUserId(Integer postId, Principal principal) {
@@ -59,15 +58,15 @@ public class SubmethodsForService {
         List<PostDTO> list = new ArrayList<>();
         for (Post post : postsList) {
             PostDTO postDTO = new PostDTO();
-            postDTO.setPostId(post.getId());
+            postDTO.setId(post.getId());
             postDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
             UserDataDTO userDataDTO = new UserDataDTO();
             userDataDTO.setId(post.getUser().getId());
             userDataDTO.setName(post.getUser().getName());
-            postDTO.setUserData(userDataDTO);
+            postDTO.setUser(userDataDTO);
             postDTO.setTitle(post.getTitle());
             postDTO.setAnnounce(postRepository.extractAnnounceFromTextById(post.getId()) + "...");
-            postDTO.setLikesCount(postRepository.findLikeCountById(post.getId()));
+            postDTO.setLikeCount(postRepository.findLikeCountById(post.getId()));
             postDTO.setDislikeCount(postRepository.findDislikeCountById(post.getId()));
             postDTO.setCommentCount(post.getCommentaries().size());
             postDTO.setViewCount(postRepository.findViewCountById(post.getId()));
@@ -76,57 +75,52 @@ public class SubmethodsForService {
         return list;
     }
 
-    public ResultDescriptionResponse checkAndAddComment(CommentRequest commentRequest, Principal principal) {
-        ResultDescriptionResponse resultDescriptionResponse = new ResultDescriptionResponse();
-        List<String> description = new ArrayList<>();
+    public List<String> checkAndAddComment(CommentRequest commentRequest, Principal principal) {
+        List<String> errors = new ArrayList<>();
         if (commentRequest.getPostId() == null) {
-            description.add("Не указан пост");
-            resultDescriptionResponse.setDescription(description);
-            return resultDescriptionResponse;
-        }
-        if (commentRequest.getText() == null) {
-            description.add("Комментарий пуст");
-            resultDescriptionResponse.setDescription(description);
-            return resultDescriptionResponse;
-        }
-        Optional<Post> post = postRepository.findById(commentRequest.getPostId());
-        if (post.isEmpty()) {
-            description.add("Такого поста не существует");
+            errors.add("Не указан пост");
         } else {
-            if (commentRequest.getParentId() != null) {
-                Optional<Comment> parentComment = commentRepository.findById(commentRequest.getParentId());
-                if (parentComment.isEmpty()) {
-                    description.add("Такого комментария не существует");
+            Optional<Post> post = postRepository.findById(commentRequest.getPostId());
+            if (post.isEmpty()) {
+                errors.add("Такого поста не существует");
+            } else {
+                if (commentRequest.getParentId() != null) {
+                    Optional<Comment> parentComment = commentRepository.findById(commentRequest.getParentId());
+                    if (parentComment.isEmpty()) {
+                        errors.add("Такого комментария не существует");
+                    }
                 }
             }
         }
-        if (commentRequest.getText().length() <= 5) {
-            description.add("Комментарий слишком короткий");
+        if (commentRequest.getText() == null) {
+            errors.add("Комментарий пуст");
+        } else {
+            if (commentRequest.getText().length() <= 5) {
+                errors.add("Комментарий слишком короткий");
+            }
         }
-        if (description.isEmpty()) {
+        if (errors.isEmpty()) {
             main.model.User currentUser = userRepository.findByEmail
                             (principal.getName())
                     .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
             Comment newComment = new Comment();
             newComment.setUser(currentUser);
-            newComment.setPost(post.get());
+            newComment.setPost(postRepository.findById(commentRequest.getPostId()).get());
             newComment.setParentId(commentRequest.getParentId());
             newComment.setTime(LocalDateTime.now());
             newComment.setText(commentRequest.getText());
             commentRepository.save(newComment);
-            resultDescriptionResponse.setResult(true);
-            description.add("Ваш комментарий добавлен");
-            resultDescriptionResponse.setDescription(description);
+            errors.add("id : " + commentRepository.findIdByUserId(currentUser.getId()).get().toString());
         }
 
-        return resultDescriptionResponse;
+        return errors;
     }
 
     public List<MyPostDTO> fillAndGetMyPostsList(List<Post> postsList) {
         List<MyPostDTO> myPostsList = new ArrayList<>();
         for (Post post : postsList) {
             MyPostDTO myPostDTO = new MyPostDTO();
-            myPostDTO.setPostId(post.getId());
+            myPostDTO.setId(post.getId());
             myPostDTO.setTimestamp(post.getTime().toEpochSecond(ZoneOffset.UTC));
             myPostDTO.setTitle(post.getTitle());
             myPostDTO.setAnnounce(postRepository.extractAnnounceFromTextById(post.getId()) + "...");
@@ -137,7 +131,7 @@ public class SubmethodsForService {
             UserDataDTO userDataDTO = new UserDataDTO();
             userDataDTO.setId(post.getUser().getId());
             userDataDTO.setName(post.getUser().getName());
-            myPostDTO.setUserData(userDataDTO);
+            myPostDTO.setUser(userDataDTO);
             myPostsList.add(myPostDTO);
         }
 

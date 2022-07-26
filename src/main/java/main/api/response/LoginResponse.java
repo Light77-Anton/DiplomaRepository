@@ -8,6 +8,6 @@ import org.springframework.stereotype.Component;
 public class LoginResponse {
 
     private boolean result;
-    private LoginDTO userData;
+    private LoginDTO user;
 
 }

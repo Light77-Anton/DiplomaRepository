@@ -1,18 +1,13 @@
 package main.service;
 import main.api.request.PasswordRequest;
-import main.api.request.RestoreRequest;
 import main.api.response.LoginResponse;
-import main.api.response.ResultResponse;
+import main.api.response.ResultErrorsResponse;
 import main.config.SecurityConfig;
 import main.model.CaptchaCode;
 import main.model.repositories.CaptchaCodeRepository;
 import main.model.repositories.PostRepository;
 import main.model.repositories.UserRepository;
 import main.dto.LoginDTO;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -31,11 +26,7 @@ import java.util.Random;
 @Service
 public class AuthService {
 
-    //Logger logger = LogManager.getLogger(AuthService.class);
-    //Marker marker = MarkerManager.getMarker("CORRECT");
-
     private static final String CHANGE_PASSWORD = "/login/change-password/";
-
     private final AuthenticationManager authenticationManager;
 
     @Autowired
@@ -71,13 +62,12 @@ public class AuthService {
             loginDTO.setModerationCount(null);
         }
         loginDTO.setSettings(false);
-        loginResponse.setUserData(loginDTO);
+        loginResponse.setUser(loginDTO);
 
         return loginResponse;
     }
 
     public LoginResponse getLogin(String loginEmail, String loginPassword) {
-        //logger.info(marker, "Переданные данные : " + loginEmail + " " + loginPassword);
         Authentication auth = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken
                         (loginEmail, loginPassword));
@@ -88,22 +78,21 @@ public class AuthService {
     }
 
     public boolean getLogout() {
-        Boolean result = true;
         SecurityContextHolder.clearContext();
 
-        return result;
+        return true;
     }
 
-    public ResultResponse checkEmailAndGetCode(RestoreRequest restoreRequest) {
-        ResultResponse resultResponse = new ResultResponse();
-        if (restoreRequest.getEmail() == null) {
-            return resultResponse;
+    public ResultErrorsResponse checkEmailAndGetCode(String email) {
+        ResultErrorsResponse resultErrorsResponse = new ResultErrorsResponse();
+        if (email == null) {
+            return resultErrorsResponse;
         }
-        Optional<main.model.User> user = userRepository.findByEmail(restoreRequest.getEmail());
+        Optional<main.model.User> user = userRepository.findByEmail(email);
         if (user.isPresent()) {
             SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
             simpleMailMessage.setFrom("testEmailForApp77@gmail.com");
-            simpleMailMessage.setTo(restoreRequest.getEmail());
+            simpleMailMessage.setTo(email);
             simpleMailMessage.setSubject("Код для восстановления пароля");
             char[] availableChars = "abcdefghijklmnopqrstuvwxyz0123456789".toCharArray();
             StringBuilder hash = new StringBuilder();
@@ -115,18 +104,18 @@ public class AuthService {
             simpleMailMessage.setText(CHANGE_PASSWORD + hash.toString());
             javaMailSender.send(simpleMailMessage);
             userRepository.addRestoreCode(user.get().getId(), CHANGE_PASSWORD + hash.toString());
-            resultResponse.setResult(true);
-            return resultResponse;
+            resultErrorsResponse.setResult(true);
+            return resultErrorsResponse;
         }
 
-        return resultResponse;
+        return resultErrorsResponse;
     }
 
     public List<String> checkPasswordChange(PasswordRequest passwordRequest) {
         List<String> errors = new ArrayList<>();
         if (passwordRequest.getPassword() == null || passwordRequest.getCode() == null ||
                 passwordRequest.getCaptcha() == null || passwordRequest.getCaptchaSecret() == null) {
-            errors.add("Нужно ввести новый пароль,восстановительный код,секретный код капчи и код с картинки");
+            errors.add("Нужно ввести новый пароль,восстановительный код и код с картинки");
             return errors;
         }
         if (passwordRequest.getPassword().length() < 6) {

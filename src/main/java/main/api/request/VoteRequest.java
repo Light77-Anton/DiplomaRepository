@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RestoreRequest {
+public class VoteRequest {
 
-    @JsonProperty("e_mail")
-    private String email;
+    @JsonProperty("post_id")
+    private Integer id;
 }

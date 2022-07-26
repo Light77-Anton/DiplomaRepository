@@ -1,7 +1,7 @@
 package main.controllers;
 import main.api.request.PostModerateRequest;
 import main.api.request.PostRequest;
-import main.api.request.VoteForPostRequest;
+import main.api.request.VoteRequest;
 import main.api.response.*;
 import main.model.Post;
 import main.model.repositories.UserRepository;
@@ -13,6 +13,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @RequestMapping("/api/post/")
@@ -109,12 +111,6 @@ public class ApiPostController {
                                  @RequestParam(value = "limit", required = false) Integer limit,
                                  @RequestParam(value = "status", required = true) String status,
                                  Principal principal) {
-        if (!status.equals("INACTIVE") && !status.equals("PENDING") &&
-                !status.equals("ACCEPTED") && !status.equals("DECLINED")) {
-            FailMessageResponse message = new FailMessageResponse();
-            message.setFailMessage("Такого статуса не существует");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
 
         return ResponseEntity.ok(postService.getMyPost(offset, limit, status, principal));
     }
@@ -125,30 +121,34 @@ public class ApiPostController {
                                                                  @RequestParam(value = "limit", required = false) Integer limit,
                                                                  @RequestParam(value = "status", required = true) String status,
                                                                  Principal principal) {
-        if (!status.equals("NEW") && !status.equals("ACCEPTED") && !status.equals("DECLINED")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
 
         return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("/")
-    public ResponseEntity<ResultDescriptionResponse> post(@RequestBody PostRequest postRequest, Principal principal) {
+    public ResponseEntity<ResultErrorsResponse> post(@RequestBody PostRequest postRequest, Principal principal) {
+        if (!postService.post(postRequest, principal).isResult()) {
+            return ResponseEntity.ok(postService.post(postRequest, principal));
+        }
+        ResultErrorsResponse resultErrorsResponse = new ResultErrorsResponse();
+        resultErrorsResponse.setResult(true);
 
-        return ResponseEntity.ok(postService.post(postRequest, principal));
+        return ResponseEntity.ok(resultErrorsResponse);
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @PutMapping("{id}")
-    public ResponseEntity<ResultDescriptionResponse> updatePost(@PathVariable Integer id,
+    public ResponseEntity<ResultErrorsResponse> updatePost(@PathVariable Integer id,
                                      @RequestBody PostRequest postRequest,
                                      Principal principal) {
         Optional<Post> post = submethodsForService.getOptionalPostByIdAndUserId(id, principal);
         if (post.isEmpty()) {
-            FailMessageResponse message = new FailMessageResponse();
-            message.setFailMessage("документ не найден");
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            ResultErrorsResponse resultErrorsResponse = new ResultErrorsResponse();
+            List<String> error = new ArrayList<>();
+            error.add("Такого поста не найдено");
+            resultErrorsResponse.setErrors(error);
+            return ResponseEntity.ok(resultErrorsResponse);
         }
 
         return ResponseEntity.ok(postService.updatePost(id, postRequest, principal));
@@ -156,7 +156,7 @@ public class ApiPostController {
 
     @PreAuthorize("hasAuthority('user:moderate')")
     @PostMapping("moderation")
-    public ResponseEntity<ResultResponse> moderatePost(Principal principal,
+    public ResponseEntity<ResultErrorsResponse> moderatePost(Principal principal,
                                        @RequestBody PostModerateRequest postModerateRequest) {
 
         return ResponseEntity.ok(postService.checkModeratorDecision(postModerateRequest, principal));
@@ -164,17 +164,15 @@ public class ApiPostController {
 
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("like")
-    public ResponseEntity<ResultResponse> likePost(Principal principal,
-                               @RequestBody VoteForPostRequest voteForPostRequest) {
+    public ResponseEntity<ResultErrorsResponse> likePost(Principal principal, @RequestBody() VoteRequest voteRequest) {
 
-        return ResponseEntity.ok(postService.setVoteForPost(principal, voteForPostRequest, 1));
+        return ResponseEntity.ok(postService.setVoteForPost(principal, voteRequest, 1));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("dislike")
-    public ResponseEntity<ResultResponse> dislikePost(Principal principal,
-                                   @RequestBody VoteForPostRequest voteForPostRequest) {
+    public ResponseEntity<ResultErrorsResponse> dislikePost(Principal principal, @RequestBody VoteRequest voteRequest) {
 
-        return ResponseEntity.ok(postService.setVoteForPost(principal, voteForPostRequest, 0));
+        return ResponseEntity.ok(postService.setVoteForPost(principal, voteRequest, 0));
     }
 }

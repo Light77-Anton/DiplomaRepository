@@ -4,12 +4,12 @@ import lombok.Data;
 @Data
 public class PostDTO {
 
-    private int postId;
+    private int id;
     private long timestamp;
-    private UserDataDTO userData;
+    private UserDataDTO user;
     private String title;
     private String announce;
-    private int likesCount;
+    private int likeCount;
     private int dislikeCount;
     private int commentCount;
     private int viewCount;
