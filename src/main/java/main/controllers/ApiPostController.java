@@ -58,10 +58,10 @@ public class ApiPostController {
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "query", required = false) String query) {
         if (query == null) {
-            return ResponseEntity.ok(postService.getPostsList(offset, limit, "RECENT"));
+            return ResponseEntity.ok(postService.getPostsList(offset, limit, "recent"));
         }
         if (query.equals("") || query.matches("\\s+")) {
-            return ResponseEntity.ok(postService.getPostsList(offset, limit, "RECENT"));
+            return ResponseEntity.ok(postService.getPostsList(offset, limit, "recent"));
         }
 
         return ResponseEntity.ok(postService.getPostsListByQuery(offset, limit, query));
@@ -82,7 +82,7 @@ public class ApiPostController {
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "tag", required = false) String tagName) {
         if (tagName == null) {
-            return ResponseEntity.ok(postService.getPostsList(offset, limit, "RECENT"));
+            return ResponseEntity.ok(postService.getPostsList(offset, limit, "recent"));
         }
 
         return ResponseEntity.ok(postService.getPostsByTag(offset, limit, tagName));
@@ -117,10 +117,11 @@ public class ApiPostController {
 
     @PreAuthorize("hasAuthority('user:moderate')")
     @GetMapping("moderation")
-    public ResponseEntity<MyPostResponse> findPostsForModeration(@RequestParam(value = "offset", required = false) Integer offset,
-                                                                 @RequestParam(value = "limit", required = false) Integer limit,
-                                                                 @RequestParam(value = "status", required = true) String status,
-                                                                 Principal principal) {
+    public ResponseEntity<MyPostResponse> findPostsForModeration
+            (@RequestParam(value = "offset", required = false) Integer offset,
+             @RequestParam(value = "limit", required = false) Integer limit,
+             @RequestParam(value = "status", required = true) String status,
+             Principal principal) {
 
         return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
     }
