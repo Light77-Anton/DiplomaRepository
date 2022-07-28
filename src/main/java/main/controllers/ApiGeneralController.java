@@ -132,9 +132,9 @@ public class ApiGeneralController {
             , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ResultErrorsResponse> profile(@RequestPart(value = "name") String name,
                                      @RequestPart(value = "email") String email,
-                                     @RequestPart(value = "photo") MultipartFile photo,
-                                     @RequestPart(value = "removePhoto") String removePhoto,
-                                     @RequestPart(value = "password") String password,
+                                     @RequestPart(value = "photo", required = false) MultipartFile photo,
+                                     @RequestPart(value = "removePhoto", required = false) String removePhoto,
+                                     @RequestPart(value = "password", required = false) String password,
                                      Principal principal) {
         if (profileService.checkProfileChanges(name, email, password, removePhoto, photo, principal).isEmpty()) {
             ResultErrorsResponse resultResponse = new ResultErrorsResponse();
