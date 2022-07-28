@@ -431,6 +431,9 @@ public class PostService {
         PostResponse postResponse = new PostResponse();
         Pageable pageable = submethodsForService.getCheckedPageable(offset, limit);
         Page<Post> page;
+        if (mode == null) {
+            mode = "";
+        }
         switch (mode) {
             case "popular":
                 page = postRepository.findAllAndOrderByCommentariesSize(pageable);

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@RequestMapping("/api/post/")
+@RequestMapping("/api/post")
 @Controller
 public class ApiPostController {
 
@@ -43,7 +43,7 @@ public class ApiPostController {
         this.settingsService = settingsService;
     }
 
-    @GetMapping("/")
+    @GetMapping("")
     public ResponseEntity<PostResponse> post(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -52,7 +52,7 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getPostsList(offset,limit,mode));
     }
 
-    @GetMapping("search")
+    @GetMapping("/search")
     public ResponseEntity<PostResponse> postSearch(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -67,7 +67,7 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getPostsListByQuery(offset, limit, query));
     }
 
-    @GetMapping("byDate")
+    @GetMapping("/byDate")
     public ResponseEntity<PostResponse> postByDate(
             @RequestParam(value = "date", required = true) String date,
             @RequestParam(value = "offset", required = false) Integer offset,
@@ -76,7 +76,7 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getPostsByDate(offset, limit, date));
     }
 
-    @GetMapping("byTag")
+    @GetMapping("/byTag")
     public ResponseEntity<PostResponse> postByTag(
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -88,7 +88,7 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getPostsByTag(offset, limit, tagName));
     }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<PostByIdResponse> postById(@PathVariable Integer id, Principal principal) {
         if (principal == null) {
             if (postService.getPostById(id,null) == null) {
@@ -106,7 +106,7 @@ public class ApiPostController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @GetMapping("my")
+    @GetMapping("/my")
     public ResponseEntity<MyPostResponse> myPost(@RequestParam(value = "offset", required = false) Integer offset,
                                  @RequestParam(value = "limit", required = false) Integer limit,
                                  @RequestParam(value = "status", required = true) String status,
@@ -116,7 +116,7 @@ public class ApiPostController {
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")
-    @GetMapping("moderation")
+    @GetMapping("/moderation")
     public ResponseEntity<MyPostResponse> findPostsForModeration
             (@RequestParam(value = "offset", required = false) Integer offset,
              @RequestParam(value = "limit", required = false) Integer limit,
@@ -127,7 +127,7 @@ public class ApiPostController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping("/")
+    @PostMapping("")
     public ResponseEntity<ResultErrorsResponse> post(@RequestBody PostRequest postRequest, Principal principal) {
         if (!postService.post(postRequest, principal).isResult()) {
             return ResponseEntity.ok(postService.post(postRequest, principal));
@@ -139,7 +139,7 @@ public class ApiPostController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PutMapping("{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ResultErrorsResponse> updatePost(@PathVariable Integer id,
                                      @RequestBody PostRequest postRequest,
                                      Principal principal) {
@@ -156,7 +156,7 @@ public class ApiPostController {
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")
-    @PostMapping("moderation")
+    @PostMapping("/moderation")
     public ResponseEntity<ResultErrorsResponse> moderatePost(Principal principal,
                                        @RequestBody PostModerateRequest postModerateRequest) {
 
@@ -164,14 +164,14 @@ public class ApiPostController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping("like")
+    @PostMapping("/like")
     public ResponseEntity<ResultErrorsResponse> likePost(Principal principal, @RequestBody() VoteRequest voteRequest) {
 
         return ResponseEntity.ok(postService.setVoteForPost(principal, voteRequest, 1));
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping("dislike")
+    @PostMapping("/dislike")
     public ResponseEntity<ResultErrorsResponse> dislikePost(Principal principal, @RequestBody VoteRequest voteRequest) {
 
         return ResponseEntity.ok(postService.setVoteForPost(principal, voteRequest, 0));
