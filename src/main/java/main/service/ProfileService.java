@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
@@ -186,6 +188,12 @@ public class ProfileService {
     }
 
     private void removePhoto(int userId) {
-       userRepository.removePhotoProfile(userId);
+        String path = userRepository.findPhotoById(userId);
+        userRepository.removePhotoProfile(userId);
+        try{
+            Files.deleteIfExists(Paths.get(path));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }
