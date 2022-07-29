@@ -61,7 +61,7 @@ public class ApiAuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         ResultErrorsResponse resultErrorsResponse = registerService.checkData(registerRequest);
-        if (!resultErrorsResponse.getErrors().isEmpty()) {
+        if (resultErrorsResponse.getErrors() == null) {
 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(resultErrorsResponse);
         }
