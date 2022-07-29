@@ -14,7 +14,7 @@ import java.util.List;
 public class PostRequest {
 
     @JsonProperty("timestamp")
-    private LocalDateTime timestamp;
+    private Long timestamp;
     @JsonProperty("active")
     private Byte isActive;
     @JsonProperty("title")

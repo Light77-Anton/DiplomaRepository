@@ -11,6 +11,7 @@ import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import java.security.Principal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -151,14 +152,16 @@ public class SubmethodsForService {
         return pageable;
     }
 
-    public LocalDateTime checkLocalDateTimeForPost(LocalDateTime fromPostRequestTime) {
+    public LocalDateTime checkLocalDateTimeForPost(Long timestamp) {
         LocalDateTime ldt;
-        if (fromPostRequestTime == null) {
+        if (timestamp == null) {
             ldt = LocalDateTime.now();
-        } else if (fromPostRequestTime.isBefore(LocalDateTime.now())) {
+            return ldt;
+        }
+        ldt = LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), TimeZone.getDefault().toZoneId());
+        if (ldt.isBefore(LocalDateTime.now())) {
             ldt = LocalDateTime.now();
-        } else {
-            ldt = fromPostRequestTime;
+            return ldt;
         }
 
         return ldt;

@@ -301,7 +301,7 @@ public class PostService {
             case "declined":
                 postsPage = postRepository.findAllDeclinedPosts(currentUser.getId(), pageable);
                 break;
-            case "accepted":
+            case "published":
                 postsPage = postRepository.findAllAcceptedPosts(currentUser.getId(), pageable);
                 break;
             default:

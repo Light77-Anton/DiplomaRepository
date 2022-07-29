@@ -10,9 +10,11 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-Optional<User> findByEmail(String email);
+    @Query(value = "SELECT u FROM users AS u WHERE email = ?1", nativeQuery = true)
+    Optional<User> findByEmail(String email);
 
-Optional<User> findByName(String name);
+    @Query(value = "SELECT u FROM users AS u WHERE name = ?1", nativeQuery = true)
+    Optional<User> findByName(String name);
 
     @Transactional
     @Modifying
@@ -42,7 +44,7 @@ Optional<User> findByName(String name);
 @Transactional
 @Modifying
 @Query(value = "UPDATE users SET code = ?2 WHERE id = ?1", nativeQuery = true)
-void addRestoreCode(int UserId, String code);
+void addRestoreCode(int userId, String code);
 
 @Query(value = "SELECT * FROM users WHERE code = ?1", nativeQuery = true)
 Optional<User> findByCode(String code);
