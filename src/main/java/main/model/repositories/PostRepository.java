@@ -1,5 +1,6 @@
 package main.model.repositories;
 import main.model.Post;
+import main.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -92,7 +93,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Transactional
     @Modifying
     @Query(value = "UPDATE posts SET view_count = ?1 WHERE id = ?2", nativeQuery = true)
-    int setNewViewCount(int newViewCount, int postId);
+    void setNewViewCount(int newViewCount, int postId);
 
     @Query(value = "SELECT * FROM posts AS p WHERE p.id = ?1 AND p.user_id = ?2", nativeQuery = true)
     Optional<Post> findByIdAndUserId(int id, int userId);
@@ -100,12 +101,12 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Transactional
     @Modifying
     @Query(value = "UPDATE posts SET is_active = ?2, \"time\" = ?3, title = ?4, text = ?5, moderation_status = ?6 WHERE id = ?1", nativeQuery = true)
-    int updatePost(int id, boolean isActive, LocalDateTime ldt, String title, String text, String status);
+    void updatePost(int id, boolean isActive, LocalDateTime ldt, String title, String text, String status);
 
     @Transactional
     @Modifying
     @Query(value = "UPDATE posts SET moderation_status = ?1, moderator_id = ?2 WHERE id = ?3", nativeQuery = true)
-    int moderatePost(String status, int moderatorId, int postId);
+    void moderatePost(String status, int moderatorId, int postId);
 
     @Query(value = "SELECT COUNT(p.view_count) FROM posts AS p WHERE p.user_id = ?1", nativeQuery = true)
     int findViewCountByUserId(int userId);
@@ -121,4 +122,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @Query(value = "SELECT MAX(p.id) FROM posts AS p WHERE p.user_id = ?1", nativeQuery = true)
     int findLastPostIdByUserId(int userId);
+
+    @Query(value = "SELECT * FROM posts WHERE id = ?1", nativeQuery = true)
+    Optional<Post> findPostById(int postId);
 }

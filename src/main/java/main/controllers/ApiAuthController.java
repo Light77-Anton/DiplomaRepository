@@ -2,6 +2,7 @@ package main.controllers;
 import main.api.request.LoginRequest;
 import main.api.request.PasswordRequest;
 import main.api.request.RegisterRequest;
+import main.api.request.StringRequest;
 import main.api.response.*;
 import main.service.AuthService;
 import main.service.CaptchaService;
@@ -49,9 +50,11 @@ public class ApiAuthController {
 
     @PreAuthorize("hasAuthority('user:write')")
     @GetMapping("logout")
-    public ResponseEntity<Boolean> logout() {
+    public ResponseEntity<ResultErrorsResponse> logout() {
+        ResultErrorsResponse resultErrorsResponse = new ResultErrorsResponse();
+        resultErrorsResponse.setResult(authService.getLogout());
 
-        return ResponseEntity.ok(authService.getLogout());
+        return ResponseEntity.ok(resultErrorsResponse);
     }
 
     @PostMapping("register")
@@ -77,9 +80,9 @@ public class ApiAuthController {
     }
 
     @PostMapping("restore")
-    public ResponseEntity<ResultErrorsResponse> authRestore(@RequestBody String email) {
+    public ResponseEntity<ResultErrorsResponse> authRestore(@RequestBody StringRequest email) {
 
-        return ResponseEntity.ok(authService.checkEmailAndGetCode(email));
+        return ResponseEntity.ok(authService.checkEmailAndGetCode(email.getEmail()));
     }
 
     @PostMapping("password")

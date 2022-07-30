@@ -142,7 +142,7 @@ public class PostService {
         if (postModerateRequest.getPostId() == null || postModerateRequest.getDecision() == null) {
             return resultErrorsResponse;
         }
-        Optional<Post> post = postRepository.findById(postModerateRequest.getPostId());
+        Optional<Post> post = postRepository.findPostById(postModerateRequest.getPostId());
         if (post.isEmpty()) {
             return resultErrorsResponse;
         }
@@ -180,7 +180,7 @@ public class PostService {
             if (description.isEmpty()) {
                 result.setErrors(description);
                 result.setResult(true);
-                if (settingsService.isPremoderation()) {
+                if (settingsService.isPremoderation() && !currentUser.isModerator()) {
                     post.setActive(isActive);
                     post.setTime(ldt);
                     post.setTitle(title);
@@ -231,7 +231,7 @@ public class PostService {
             newPost.setTime(ldt);
             newPost.setTitle(title);
             newPost.setText(text);
-            if (settingsService.isPremoderation()) {
+            if (settingsService.isPremoderation() && !currentUser.isModerator()) {
                 newPost.setModerationStatus("NEW");
             } else {
                 newPost.setModerationStatus("ACCEPTED");

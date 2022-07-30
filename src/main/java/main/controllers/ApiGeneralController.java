@@ -1,6 +1,7 @@
 package main.controllers;
 import main.api.request.CommentRequest;
 import main.api.request.SettingsRequest;
+import main.api.request.StringRequest;
 import main.api.response.*;
 import main.service.*;
 import org.springframework.http.HttpStatus;
@@ -117,9 +118,9 @@ public class ApiGeneralController {
 
     @PreAuthorize("hasAuthority('user:moderate')")
     @PostMapping("tag")
-    public ResponseEntity<ResultErrorsResponse> addNewTag(@RequestBody String name) {
+    public ResponseEntity<ResultErrorsResponse> addNewTag(@RequestBody StringRequest name) {
         ResultErrorsResponse resultResponse = new ResultErrorsResponse();
-        if (!tagService.checkAndAddTag(name)) {
+        if (!tagService.checkAndAddTag(name.getName())) {
             return ResponseEntity.ok(resultResponse);
         }
         resultResponse.setResult(true);
