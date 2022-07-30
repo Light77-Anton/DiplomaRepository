@@ -150,11 +150,11 @@ public class PostService {
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         switch (postModerateRequest.getDecision()) {
-            case "accepted":
+            case "accept":
                 postRepository.moderatePost("ACCEPTED", currentUser.getId(), postModerateRequest.getPostId());
                 resultErrorsResponse.setResult(true);
                 break;
-            case "declined":
+            case "decline":
                 postRepository.moderatePost("DECLINED", currentUser.getId(), postModerateRequest.getPostId());
                 resultErrorsResponse.setResult(true);
                 break;
