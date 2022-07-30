@@ -1,5 +1,6 @@
 package main.controllers;
 import main.api.request.CommentRequest;
+import main.api.request.PostModerateRequest;
 import main.api.request.SettingsRequest;
 import main.api.request.StringRequest;
 import main.api.response.*;
@@ -169,13 +170,10 @@ public class ApiGeneralController {
     }
 
     @PreAuthorize("hasAuthority('user:moderate')")
-    @GetMapping("/moderation")
-    public ResponseEntity<MyPostResponse> findPostsForModeration
-            (@RequestParam(value = "offset", required = false) Integer offset,
-             @RequestParam(value = "limit", required = false) Integer limit,
-             @RequestParam(value = "status", required = true) String status,
-             Principal principal) {
+    @PostMapping("/moderation")
+    public ResponseEntity<ResultErrorsResponse> moderatePost(Principal principal,
+                                                             @RequestBody PostModerateRequest postModerateRequest) {
 
-        return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
+        return ResponseEntity.ok(postService.checkModeratorDecision(postModerateRequest, principal));
     }
 }

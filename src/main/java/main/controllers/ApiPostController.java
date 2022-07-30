@@ -1,5 +1,4 @@
 package main.controllers;
-import main.api.request.PostModerateRequest;
 import main.api.request.PostRequest;
 import main.api.request.VoteRequest;
 import main.api.response.*;
@@ -144,14 +143,6 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.updatePost(id, postRequest, principal));
     }
 
-    @PreAuthorize("hasAuthority('user:moderate')")
-    @PostMapping("/moderation")
-    public ResponseEntity<ResultErrorsResponse> moderatePost(Principal principal,
-                                       @RequestBody PostModerateRequest postModerateRequest) {
-
-        return ResponseEntity.ok(postService.checkModeratorDecision(postModerateRequest, principal));
-    }
-
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("/like")
     public ResponseEntity<ResultErrorsResponse> likePost(Principal principal, @RequestBody() VoteRequest voteRequest) {
@@ -164,5 +155,16 @@ public class ApiPostController {
     public ResponseEntity<ResultErrorsResponse> dislikePost(Principal principal, @RequestBody VoteRequest voteRequest) {
 
         return ResponseEntity.ok(postService.setVoteForPost(principal, voteRequest, 0));
+    }
+
+    @PreAuthorize("hasAuthority('user:moderate')")
+    @GetMapping("/moderation")
+    public ResponseEntity<MyPostResponse> findPostsForModeration
+            (@RequestParam(value = "offset", required = false) Integer offset,
+             @RequestParam(value = "limit", required = false) Integer limit,
+             @RequestParam(value = "status", required = true) String status,
+             Principal principal) {
+
+        return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
     }
 }
