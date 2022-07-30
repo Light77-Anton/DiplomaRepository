@@ -115,17 +115,6 @@ public class ApiPostController {
         return ResponseEntity.ok(postService.getMyPost(offset, limit, status, principal));
     }
 
-    @PreAuthorize("hasAuthority('user:moderate')")
-    @GetMapping("/moderation")
-    public ResponseEntity<MyPostResponse> findPostsForModeration
-            (@RequestParam(value = "offset", required = false) Integer offset,
-             @RequestParam(value = "limit", required = false) Integer limit,
-             @RequestParam(value = "status", required = true) String status,
-             Principal principal) {
-
-        return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
-    }
-
     @PreAuthorize("hasAuthority('user:write')")
     @PostMapping("")
     public ResponseEntity<ResultErrorsResponse> post(@RequestBody PostRequest postRequest, Principal principal) {

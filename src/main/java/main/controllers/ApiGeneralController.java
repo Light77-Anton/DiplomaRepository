@@ -167,4 +167,15 @@ public class ApiGeneralController {
 
         return ResponseEntity.ok(imageResponse);
     }
+
+    @PreAuthorize("hasAuthority('user:moderate')")
+    @GetMapping("/moderation")
+    public ResponseEntity<MyPostResponse> findPostsForModeration
+            (@RequestParam(value = "offset", required = false) Integer offset,
+             @RequestParam(value = "limit", required = false) Integer limit,
+             @RequestParam(value = "status", required = true) String status,
+             Principal principal) {
+
+        return ResponseEntity.ok(postService.getPostsForModeration(offset, limit, status, principal));
+    }
 }
