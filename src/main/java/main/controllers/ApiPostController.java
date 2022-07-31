@@ -5,6 +5,7 @@ import main.api.response.*;
 import main.model.Post;
 import main.model.repositories.UserRepository;
 import main.service.*;
+import org.json.simple.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -88,7 +89,7 @@ public class ApiPostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostByIdResponse> postById(@PathVariable Integer id, Principal principal) {
+    public ResponseEntity<JSONObject> postById(@PathVariable Integer id, Principal principal) {
         if (principal == null) {
             if (postService.getPostById(id,null) == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

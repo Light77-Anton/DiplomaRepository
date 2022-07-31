@@ -7,6 +7,7 @@ import main.dto.*;
 import main.model.*;
 import main.model.repositories.*;
 import org.apache.commons.io.FilenameUtils;
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -114,7 +115,7 @@ public class PostService {
             oppositeValue = 1;
         }
         Optional<Post> post = postRepository.findById(voteRequest.getId());
-        if (post.isPresent()) {
+        if (post.isPresent() && post.get().getUser().getId() != currentUser.getId()) {
             Optional<Vote> vote = voteRepository.findByUserAndPostId(currentUser.getId(), post.get().getId());
             if (vote.isEmpty()) {
                 Vote newVote = new Vote();
@@ -316,16 +317,16 @@ public class PostService {
         return myPostResponse;
     }
 
-    public PostByIdResponse getPostById(Integer id, User currentUser) { //
-        PostByIdResponse postByIdResponse = null;
+    public JSONObject getPostById(Integer id, User currentUser) {
         Optional<Post> post = postRepository.findById(id);
         if (!post.isPresent()) {
-            return postByIdResponse;
+            return null;
         }
-        if (!post.get().isActive() || !post.get().getModerationStatus().equals("ACCEPTED") || !post.get().getTime().isBefore(LocalDateTime.now())) {
-            return postByIdResponse;
+        if (!post.get().isActive() ||
+                !post.get().getModerationStatus().equals("ACCEPTED") ||
+                !post.get().getTime().isBefore(LocalDateTime.now())) {
+            return null;
         }
-        postByIdResponse = new PostByIdResponse();
         PostByIdDTO postByIdDTO = new PostByIdDTO();
         postByIdDTO.setId(post.get().getId());
         postByIdDTO.setTimestamp(post.get().getTime().toEpochSecond(ZoneOffset.UTC));
@@ -361,8 +362,6 @@ public class PostService {
             tagsNamesList.add(tag.getName());
         }
         postByIdDTO.setTags(tagsNamesList);
-        postByIdResponse.setPostData(postByIdDTO);
-
         if (currentUser == null) {
             int postId = post.get().getId();
             int newViewCount = post.get().getViewCount() + 1;
@@ -376,7 +375,24 @@ public class PostService {
             }
         }
 
-        return postByIdResponse;
+        return transferPostDataToObject(postByIdDTO);
+    }
+
+    public JSONObject transferPostDataToObject(PostByIdDTO dto) {
+        JSONObject o = new JSONObject();
+        o.put("id", dto.getId());
+        o.put("timestamp", dto.getTimestamp());
+        o.put("active", dto.isActive());
+        o.put("user", dto.getUser());
+        o.put("title", dto.getTitle());
+        o.put("text", dto.getText());
+        o.put("likeCount", dto.getLikeCount());
+        o.put("dislikeCount", dto.getDislikeCount());
+        o.put("viewCount", dto.getViewCount());
+        o.put("comments", dto.getComments());
+        o.put("tags", dto.getTags());
+
+        return o;
     }
 
     public PostResponse getPostsByTag(Integer offset,
