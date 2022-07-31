@@ -1,6 +1,7 @@
 package main.api.response;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Data;
 import org.springframework.stereotype.Component;
 import java.util.List;
@@ -10,10 +11,15 @@ import java.util.List;
 public class ImageResponse {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonProperty("")
+    @JsonProperty
     private String image;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Boolean result;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<String> errors;
+
+    @JsonValue
+    public String getImage() {
+        return this.image;
+    }
 }
