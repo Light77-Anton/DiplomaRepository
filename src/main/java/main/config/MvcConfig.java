@@ -11,12 +11,12 @@ public class MvcConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
 
-        registry.addResourceHandler("**").addResourceLocations("classpath:/upload/");
-        registry.addResourceHandler("**").addResourceLocations("classpath:/avatars/");
-        registry.addResourceHandler("js/**").addResourceLocations("classpath:/resources/js");
-        registry.addResourceHandler("css/**").addResourceLocations("classpath:/resources/css");
-        registry.addResourceHandler("fonts/**").addResourceLocations("classpath:/resources/fonts");
-        registry.addResourceHandler("img/**").addResourceLocations("classpath:/resources/img");
-        registry.addResourceHandler("**").addResourceLocations("classpath://resources/");
+        registry.addResourceHandler("/**").addResourceLocations("classpath:/upload/");
+        registry.addResourceHandler("/**").addResourceLocations("classpath:/avatars/");
+        registry.addResourceHandler("js/**").addResourceLocations("classpath:/resources/static/js/");
+        registry.addResourceHandler("css/**").addResourceLocations("classpath:/resources/static/css/");
+        registry.addResourceHandler("fonts/**").addResourceLocations("classpath:/resources/static/fonts/");
+        registry.addResourceHandler("img/**").addResourceLocations("classpath:/resources/static/img/");
+        registry.addResourceHandler("/**").addResourceLocations("classpath://resources/static/");
     }
 }
