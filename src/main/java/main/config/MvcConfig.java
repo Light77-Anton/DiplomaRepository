@@ -13,10 +13,10 @@ public class MvcConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("**").addResourceLocations("classpath:/upload/");
         registry.addResourceHandler("**").addResourceLocations("classpath:/avatars/");
-        registry.addResourceHandler("js/**").addResourceLocations("classpath:/");
-        registry.addResourceHandler("css/**").addResourceLocations("classpath:/");
-        registry.addResourceHandler("fonts/**").addResourceLocations("classpath:/");
-        registry.addResourceHandler("img/**").addResourceLocations("classpath:/");
-        registry.addResourceHandler("**").addResourceLocations("classpath:/");
+        registry.addResourceHandler("js/**").addResourceLocations("classpath:/resources/js");
+        registry.addResourceHandler("css/**").addResourceLocations("classpath:/resources/css");
+        registry.addResourceHandler("fonts/**").addResourceLocations("classpath:/resources/fonts");
+        registry.addResourceHandler("img/**").addResourceLocations("classpath:/resources/img");
+        registry.addResourceHandler("**").addResourceLocations("classpath://resources/");
     }
 }
