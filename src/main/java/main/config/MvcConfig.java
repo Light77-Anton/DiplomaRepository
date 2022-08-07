@@ -1,10 +1,12 @@
 package main.config;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@Order(Ordered.LOWEST_PRECEDENCE)
 public class MvcConfig implements WebMvcConfigurer {
 
     @Override
