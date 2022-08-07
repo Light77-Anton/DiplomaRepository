@@ -1,7 +1,4 @@
-
 spring:
-  resources:
-    add-mappings: false
   mail:
     host: smtp.gmail.com
     port: 587
