@@ -1,12 +1,10 @@
 package main.config;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-@EnableWebMvc
 @Order(2)
 public class MvcConfig implements WebMvcConfigurer {
 
@@ -15,12 +13,5 @@ public class MvcConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/upload/**").addResourceLocations("file:upload/");
         registry.addResourceHandler("/avatars/**").addResourceLocations("file:avatars/");
-        registry.addResourceHandler("/js/**").addResourceLocations("classpath:/static/js/");
-        registry.addResourceHandler("/css/**").addResourceLocations("classpath:/static/css/");
-        registry.addResourceHandler("/fonts/**").addResourceLocations("classpath:/static/fonts/");
-        registry.addResourceHandler("/img/**").addResourceLocations("classpath:/static/img/");
-        registry.addResourceHandler("/favicon.ico").addResourceLocations("file:/");
-        registry.addResourceHandler("/default-1.png").addResourceLocations("file:/");
-
     }
 }
