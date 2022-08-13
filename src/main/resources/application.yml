@@ -16,9 +16,9 @@ spring:
     locations: classpath:db/migration
     baselineOnMigrate: true
   datasource:
-    url: jdbc:postgresql://ec2-52-48-159-67.eu-west-1.compute.amazonaws.com:5432/df5u6m8po2frq0?sslmode=require
-    sername: hrzntorvvlbxkd
-    password: ed3c757378324f26b77ae0e9aac73bd45c1125ae310d69a923265d5b65c897b9
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=public&ssl=false
+    username: postgres
+    password: postgretest
   jpa:
     show-sql: true
     format_sql: true
