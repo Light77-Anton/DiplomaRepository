@@ -15,22 +15,23 @@
 
 ##Для локального запуска приложения требуется
 
-* [Java Runtime Environment]()
+* [Java Development Kit 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
 * [Postgresql 14.4](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads)
 
 ###Настройка переменных сред
 
 Нужно прописать следующее:
 
-* user variables -> Path -> новая строка C:\Program Files\Java\bin(путь до папки bin Java)
-* system variables -> создать новую переменную CLASSPATH и в ней также указать C:\Program Files\Java\bin
-* user variables -> Path -> новая строка C:\Program Files\Postgresql\bin(путь до папки bin PSQL)
+* system variables -> создать новую переменную JAVA_HOME и в ней также указать C:\Program Files\jdk(или собственный путь до папки jdk)
+* system variables -> Path -> новая строка C:\Program Files\jdk\bin(или собственный путь до папки %JAVA_HOME%/bin)
+* user variables -> Path -> новая строка C:\Program Files\Postgresql\bin(или собственный путь до папки bin PSQL)
+* user variables -> Path -> новая строка C:\Program Files\Postgresql\lib(или собственный путь до папки lib PSQL)
 
 ###Подготовка базы данных
       
 * откройте pgAdmin в папке C:\Program Files\Postgresql\pgAdmin 4\bin
 * создайте аккаунт(superuser) c именем _postgres_ и паролем _postgretest_
-* скачайте [кластер](https://disk.yandex.ru/d/DYis6sJK0FMuIg)
+* скачайте [кластер](https://disk.yandex.ru/d/lNG5Pm98ERrLuw)
 * откройте cmd в папке со скаченным файлом(cd **путь до папки с файлом**)
 * пропишите 
 ```
@@ -46,7 +47,7 @@
  java -jar DiplomaRepository-0.0.1-SNAPSHOT.jar
 ```
 
-##ссылкa на рабочий проект (на деплой хероку)
+##ссылкa на рабочий проект (на деплой heroku)
 
 [ссылка](https://diploma-project-baumans.herokuapp.com)
 
