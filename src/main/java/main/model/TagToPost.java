@@ -1,6 +1,5 @@
 package main.model;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import javax.persistence.*;
 
@@ -8,11 +7,19 @@ import javax.persistence.*;
 @Table(name = "tag2post")
 @Getter
 @Setter
-@NoArgsConstructor
 public class TagToPost{
 
+    public TagToPost() {
+
+    }
+
+    public TagToPost(int postId, int tagId) {
+        this.postId = postId;
+        this.tagId = tagId;
+    }
+
     @EmbeddedId
-    private Key id;
+    private TagToPostId id;
 
     @Column(name = "post_id", insertable = false, updatable = false, nullable = false)
     private int postId;

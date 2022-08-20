@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Integer> {
 
+    @Query(value = "SELECT COUNT(*) FROM posts", nativeQuery = true)
+    double findPostsCount();
+
     @Query(value = "SELECT * FROM posts AS p WHERE p.user_id = ?1", nativeQuery = true)
     List<Post> findAllMyPosts(int userId);
 

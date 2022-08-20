@@ -202,6 +202,11 @@ public class SubmethodsForService {
             Optional<Tag> tag = tagRepository.findByNameContaining(tagName);
             if (tag.isPresent()) {
                 tags.add(tag.get());
+            } else {
+                Tag newTag = new Tag();
+                newTag.setName(tagName);
+                tagRepository.save(newTag);
+                tags.add(newTag);
             }
         }
 

@@ -1,20 +1,22 @@
 package main.model.repositories;
 import main.model.TagToPost;
+import main.model.TagToPostId;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
-public interface TagToPostRepository extends JpaRepository<TagToPost, Integer> {
+public interface TagToPostRepository extends JpaRepository<TagToPost, TagToPostId> {
 
-@Transactional
-@Modifying
-@Query(value = "INSERT INTO tag2post (post_id, tag_id) VALUES (?1, ?2)", nativeQuery = true)
-int insertTagToPost(int postId, int tagId);
+    //List<TagToPost> findByIdPost(int postId);
 
-@Query(value = "SELECT * FROM tag2post AS ttp WHERE ttp.post_id = ?1", nativeQuery = true)
-List<TagToPost> findAllByPostId(int postId);
+    //List<TagToPost> findByIdTag(int tagId);
+
+    @Query(value = "SELECT * FROM tag2post AS ttp WHERE ttp.post_id = ?1", nativeQuery = true)
+    List<TagToPost> findAllByPostId(int postId);
+
+    @Query(value = "SELECT * FROM tag2post AS ttp WHERE ttp.tag_id = ?1", nativeQuery = true)
+    List<TagToPost> findAllByTagId(int tagId);
+
 }

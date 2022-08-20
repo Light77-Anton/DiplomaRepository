@@ -2,7 +2,6 @@ package main.controllers;
 import main.api.request.CommentRequest;
 import main.api.request.PostModerateRequest;
 import main.api.request.SettingsRequest;
-import main.api.request.StringRequest;
 import main.api.response.*;
 import main.service.*;
 import org.springframework.http.HttpStatus;
@@ -62,6 +61,7 @@ public class ApiGeneralController {
 
     @GetMapping("tag")
     public ResponseEntity<TagResponse> tag(@RequestParam(value = "query", required = false) String query) {
+        tagService.checkAndDeleteUnusedTags();
 
         return ResponseEntity.ok(tagService.getTagList(query));
     }
@@ -115,18 +115,6 @@ public class ApiGeneralController {
         settingsService.changeGlobalSettings(settingsRequest);
 
         return ResponseEntity.ok().build();
-    }
-
-    @PreAuthorize("hasAuthority('user:moderate')")
-    @PostMapping("tag")
-    public ResponseEntity<ResultErrorsResponse> addNewTag(@RequestBody StringRequest name) {
-        ResultErrorsResponse resultResponse = new ResultErrorsResponse();
-        if (!tagService.checkAndAddTag(name.getName())) {
-            return ResponseEntity.ok(resultResponse);
-        }
-        resultResponse.setResult(true);
-
-        return ResponseEntity.ok(resultResponse);
     }
 
     @PreAuthorize("hasAuthority('user:write')")

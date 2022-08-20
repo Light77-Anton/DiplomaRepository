@@ -103,7 +103,7 @@ public class AuthService {
             }
             simpleMailMessage.setText(CHANGE_PASSWORD + hash.toString());
             javaMailSender.send(simpleMailMessage);
-            userRepository.addRestoreCode(user.get().getId(), CHANGE_PASSWORD + hash.toString());
+            userRepository.addRestoreCode(user.get().getId(), hash.toString());
             resultErrorsResponse.setResult(true);
             return resultErrorsResponse;
         }

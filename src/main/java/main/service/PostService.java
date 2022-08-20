@@ -90,7 +90,7 @@ public class PostService {
             File pathFile = path.toFile();
             pathFile.mkdirs();
             ImageIO.write(bufferedImage, extension, pathFile);
-            return pathToImage;
+            return "/" + pathToImage;
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -198,7 +198,9 @@ public class PostService {
                 }
                 tagToPostRepository.deleteAll(tagToPostRepository.findAllByPostId(post.getId()));
                 for (Tag tag : tags) {
-                    tagToPostRepository.insertTagToPost(post.getId(), tag.getId());
+                    TagToPost tagToPost = new TagToPost();
+                    tagToPost.setId(new TagToPostId(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId()));
+                    tagToPostRepository.save(tagToPost);
                 }
                 return result;
             }
@@ -239,7 +241,9 @@ public class PostService {
             }
             postRepository.save(newPost);
             for (Tag tag : tags) {
-                tagToPostRepository.insertTagToPost(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId());
+                TagToPost tagToPost = new TagToPost();
+                tagToPost.setId(new TagToPostId(postRepository.findLastPostIdByUserId(currentUser.getId()), tag.getId()));
+                tagToPostRepository.save(tagToPost);
             }
             return response;
         }

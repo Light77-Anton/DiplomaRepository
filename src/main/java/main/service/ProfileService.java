@@ -98,8 +98,8 @@ public class ProfileService {
             List<String> listAfterThirdCheck = checkPhoto(photo, userId, listAfterSecondCheck);
             return listAfterThirdCheck;
         }
-        if (photo != null) {
-            if (photo.getOriginalFilename().equals("") && removePhoto.equals("1") && name != null && email != null) { // Запрос на удаление фотографии без изменения пароля
+        if (photo == null || photo.getOriginalFilename().equals("")) {
+            if (removePhoto.equals("1") && name != null && email != null) { // Запрос на удаление фотографии без изменения пароля
                 List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
                 List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
                 if (listAfterSecondCheck.isEmpty()) {
@@ -179,7 +179,7 @@ public class ProfileService {
             String pathToImage = "avatars/id" + userId + "avatar." + extension;
             Path path = Paths.get(pathToImage);
             ImageIO.write(editedImage, extension, path.toFile());
-            userRepository.updatePhotoProfile(userId, path.toString());
+            userRepository.updatePhotoProfile(userId,"\\" + path.toString());
         } catch (Exception ex) {
             ex.printStackTrace();
         }
