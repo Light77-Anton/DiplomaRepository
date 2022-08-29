@@ -51,6 +51,9 @@ public class SubmethodsForService {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        if (currentUser.isModerator()) {
+            return postRepository.findByIdAndModeratorId(postId, currentUser.getId());
+        }
 
         return postRepository.findByIdAndUserId(postId,currentUser.getId());
     }
@@ -76,29 +79,25 @@ public class SubmethodsForService {
         return list;
     }
 
-    public List<String> checkAndAddComment(CommentRequest commentRequest, Principal principal) {
-        List<String> errors = new ArrayList<>();
+    public HashMap<String, String> checkAndAddComment(CommentRequest commentRequest, Principal principal) {
+        HashMap<String, String> errors = new HashMap<>();
         if (commentRequest.getPostId() == null) {
-            errors.add("Не указан пост");
+            errors.put("post", "Не указан пост");
         } else {
             Optional<Post> post = postRepository.findById(commentRequest.getPostId());
             if (post.isEmpty()) {
-                errors.add("Такого поста не существует");
+                errors.put("post", "Такого поста не существует");
             } else {
                 if (commentRequest.getParentId() != null) {
                     Optional<Comment> parentComment = commentRepository.findById(commentRequest.getParentId());
                     if (parentComment.isEmpty()) {
-                        errors.add("Такого комментария не существует");
+                        errors.put("comment", "Такого комментария не существует");
                     }
                 }
             }
         }
-        if (commentRequest.getText() == null) {
-            errors.add("Комментарий пуст");
-        } else {
-            if (commentRequest.getText().length() <= 5) {
-                errors.add("Комментарий слишком короткий");
-            }
+        if (commentRequest.getText() == null || commentRequest.getText().length() <= 5) {
+            errors.put("text", "Текст комментария не задан или слишком короткий");
         }
         if (errors.isEmpty()) {
             main.model.User currentUser = userRepository.findByEmail
@@ -111,10 +110,16 @@ public class SubmethodsForService {
             newComment.setTime(LocalDateTime.now());
             newComment.setText(commentRequest.getText());
             commentRepository.save(newComment);
-            errors.add("id : " + commentRepository.findIdByUserId(currentUser.getId()).get().toString());
         }
 
         return errors;
+    }
+
+    public int getCommentId(Principal principal) {
+        main.model.User currentUser = userRepository.findByEmail
+                        (principal.getName())
+                .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
+        return commentRepository.findIdByUserId(currentUser.getId()).get();
     }
 
     public List<MyPostDTO> fillAndGetMyPostsList(List<Post> postsList) {

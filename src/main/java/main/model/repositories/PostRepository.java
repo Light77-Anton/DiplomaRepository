@@ -1,6 +1,5 @@
 package main.model.repositories;
 import main.model.Post;
-import main.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,7 +30,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query(value = "SELECT COUNT(pv) FROM posts AS p INNER JOIN post_votes AS pv ON pv.post_id = p.id WHERE pv.value = 0 AND p.id = ?1", nativeQuery = true)
     int findDislikeCountById(int postId);
 
-    @Query(value = "SELECT COUNT(p.view_count) FROM posts AS p WHERE p.id = ?1", nativeQuery = true)
+    @Query(value = "SELECT p.view_count FROM posts AS p WHERE p.id = ?1", nativeQuery = true)
     int findViewCountById(int postId);
 
     @Query(value = "SELECT SUBSTRING(p.text, 0, 150) FROM posts AS p WHERE p.id = ?1", nativeQuery = true)
@@ -46,7 +45,7 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     @Query(value = "SELECT * FROM posts AS p "
             + "RIGHT JOIN tag2post AS ttp ON ttp.post_id = p.id "
             + "RIGHT JOIN tags AS t ON ttp.tag_id = t.id "
-            + "WHERE ttp.tag_id = ?1", nativeQuery = true)
+            + "WHERE ttp.tag_id = ?1 AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time < now()", nativeQuery = true)
     Page<Post> findByTagContaining(int tagId, Pageable pageable);
 
     @Query(value = "SELECT * FROM posts AS p WHERE EXTRACT(YEAR FROM DATE(p.time)) = EXTRACT(YEAR FROM TO_DATE(?1, 'YYYY')) AND p.is_active = true AND p.moderation_status = 'ACCEPTED' AND p.time < now()", nativeQuery = true)
@@ -100,6 +99,9 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @Query(value = "SELECT * FROM posts AS p WHERE p.id = ?1 AND p.user_id = ?2", nativeQuery = true)
     Optional<Post> findByIdAndUserId(int id, int userId);
+
+    @Query(value = "SELECT * FROM posts AS p WHERE p.id = ?1 AND p.moderator_id = ?2", nativeQuery = true)
+    Optional<Post> findByIdAndModeratorId(int id, int moderatorId);
 
     @Transactional
     @Modifying

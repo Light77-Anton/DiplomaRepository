@@ -57,10 +57,7 @@ public class ApiPostController {
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "query", required = false) String query) {
-        if (query == null) {
-            return ResponseEntity.ok(postService.getPostsList(offset, limit, "recent"));
-        }
-        if (query.equals("") || query.matches("\\s+")) {
+        if (query == null || query.equals("") || query.matches("\\s+")) {
             return ResponseEntity.ok(postService.getPostsList(offset, limit, "recent"));
         }
 
@@ -81,7 +78,7 @@ public class ApiPostController {
             @RequestParam(value = "offset", required = false) Integer offset,
             @RequestParam(value = "limit", required = false) Integer limit,
             @RequestParam(value = "tag", required = false) String tagName) {
-        if (tagName == null) {
+        if (tagName == null || tagName.equals("")) {
             return ResponseEntity.ok(postService.getPostsList(offset, limit, "recent"));
         }
 

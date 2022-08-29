@@ -169,7 +169,12 @@ public class PostService {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
-        Post post = postRepository.findByIdAndUserId(id,currentUser.getId()).get();
+        Post post;
+        if (currentUser.isModerator()) {
+            post = postRepository.findByIdAndModeratorId(id, currentUser.getId()).get();
+        } else {
+            post = postRepository.findByIdAndUserId(id,currentUser.getId()).get();
+        }
         ResultErrorsResponse result = new ResultErrorsResponse();
         List<String> description;
             boolean isActive = postRequest.getIsActive() == 1;
@@ -181,21 +186,16 @@ public class PostService {
             if (description.isEmpty()) {
                 result.setErrors(description);
                 result.setResult(true);
+                post.setActive(isActive);
+                post.setTime(ldt);
+                post.setTitle(title);
+                post.setText(text);
                 if (settingsService.isPremoderation() && !currentUser.isModerator()) {
-                    post.setActive(isActive);
-                    post.setTime(ldt);
-                    post.setTitle(title);
-                    post.setText(text);
                     post.setModerationStatus("NEW");
-                    postRepository.save(post);
                 } else {
-                    post.setActive(isActive);
-                    post.setTime(ldt);
-                    post.setTitle(title);
-                    post.setText(text);
                     post.setModerationStatus("ACCEPTED");
-                    postRepository.save(post);
                 }
+                postRepository.save(post);
                 tagToPostRepository.deleteAll(tagToPostRepository.findAllByPostId(post.getId()));
                 for (Tag tag : tags) {
                     TagToPost tagToPost = new TagToPost();
@@ -217,7 +217,7 @@ public class PostService {
         ResultErrorsResponse response = new ResultErrorsResponse();
         List<String> errors;
         boolean isActive = postRequest.getIsActive() == 1;
-        LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp()); // в формате "YYYY-MM-DDT12:00:00.000000000"
+        LocalDateTime ldt = submethodsForService.checkLocalDateTimeForPost(postRequest.getTimestamp());
         String title = submethodsForService.checkTitleForPost(postRequest.getTitle());
         String text = submethodsForService.checkTextForPost(postRequest.getText());
         List<Tag> tags = submethodsForService.checkTagsListForPost(postRequest.getTags());
@@ -329,7 +329,9 @@ public class PostService {
         if (!post.get().isActive() ||
                 !post.get().getModerationStatus().equals("ACCEPTED") ||
                 !post.get().getTime().isBefore(LocalDateTime.now())) {
-            return null;
+            if (!currentUser.isModerator() && currentUser.getId() != post.get().getUser().getId()) {
+                return null;
+            }
         }
         PostByIdDTO postByIdDTO = new PostByIdDTO();
         postByIdDTO.setId(post.get().getId());

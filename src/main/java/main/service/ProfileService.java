@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -78,31 +77,31 @@ public class ProfileService {
         return myStatisticsResponse;
     }
 
-    public List<String> checkProfileChanges(String name, String email, String password, String removePhoto,
+    public List<String> checkProfileChanges(String name, String email, String password, Byte removePhoto,
                                             MultipartFile photo, Principal principal) {
         main.model.User currentUser = userRepository.findByEmail
                         (principal.getName())
                 .orElseThrow(() -> new UsernameNotFoundException(principal.getName()));
         List<String> emptyList = new ArrayList<>();
         int userId = currentUser.getId();
-        if (photo != null && removePhoto.equals("0") && name != null && email != null && password != null) { //Запрос c изменением пароля и фотографии
+        if (photo != null && removePhoto == 0 && name != null && email != null && password != null) { //Запрос c изменением пароля и фотографии
             List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
             List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
             List<String> listAfterThirdCheck = checkPassword(password, userId, listAfterSecondCheck);
             List<String> listAfterFoughtCheck = checkPhoto(photo, userId, listAfterThirdCheck);
             return listAfterFoughtCheck;
         }
-        if (photo != null && removePhoto.equals("0") && name != null && email != null) { //Запрос изменение фотографии и изменение данных, без смены пароля
+        if (photo != null && removePhoto == 0 && name != null && email != null) { //Запрос изменение фотографии и изменение данных, без смены пароля
             List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
             List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
             List<String> listAfterThirdCheck = checkPhoto(photo, userId, listAfterSecondCheck);
             return listAfterThirdCheck;
         }
         if (photo == null || photo.getOriginalFilename().equals("")) {
-            if (removePhoto.equals("1") && name != null && email != null) { // Запрос на удаление фотографии без изменения пароля
+            if (removePhoto == 1 && name != null && email != null) { // Запрос на удаление фотографии без изменения пароля
                 List<String> listAfterFirstCheck = checkName(name, userId, emptyList);
                 List<String> listAfterSecondCheck = checkEmail(email, userId, listAfterFirstCheck);
-                if (listAfterSecondCheck.isEmpty()) {
+                if (listAfterSecondCheck.isEmpty() && userRepository.findPhotoById(userId) != null) {
                     removePhoto(userId);
                 }
                 return listAfterSecondCheck;
@@ -188,7 +187,7 @@ public class ProfileService {
     }
 
     private void removePhoto(int userId) {
-        String path = userRepository.findPhotoById(userId);
+        String path = userRepository.findPhotoById(userId).substring(1);
         userRepository.removePhotoProfile(userId);
         try{
             Files.deleteIfExists(Paths.get(path));

@@ -1,100 +1,87 @@
-CREATE SCHEMA IF NOT EXISTS dfschema;
 
-CREATE TABLE dfschema.users (
+CREATE TABLE users (
 
-    id int NOT NULL AUTO_INCREMENT,
-    is_moderator int NOT NULL,
-    reg_time DATETIME NOT NULL,
+    id SERIAL NOT NULL,
+    is_moderator SMALLINT NOT NULL,
+    reg_time TIMESTAMP NOT NULL,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     code VARCHAR(255),
     photo TEXT,
     PRIMARY KEY (id)
+);
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+CREATE TABLE posts (
 
-CREATE TABLE dfschema.posts (
-
-    id int NOT NULL AUTO_INCREMENT,
-    is_active int NOT NULL,
-    moderation_status ENUM('NEW','ACCEPTED','DECLINED') NOT NULL DEFAULT 'NEW',
-    moderation_id int,
-    user_id int NOT NULL,
-    time DATETIME NOT NULL,
+    id SERIAL NOT NULL,
+    is_active SMALLINT NOT NULL,
+    moderation_status VARCHAR(255) DEFAULT 'NEW',
+    moderation_id INT,
+    user_id INT NOT NULL,
+    time TIMESTAMP NOT NULL,
     title VARCHAR(255) NOT NULL,
     text TEXT NOT NULL,
-    view_count int NOT NULL,
-    PRIMARY KEY (id)
+    view_count INT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id)
+);
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+CREATE TABLE post_votes (
 
-CREATE TABLE dfschema.post_votes (
+    id SERIAL NOT NULL,
+    user_id INT NOT NULL,
+    post_id INT NOT NULL,
+    time TIMESTAMP NOT NULL,
+    value SMALLINT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_post FOREIGN KEY (post_id) REFERENCES posts (id)
+);
 
-    id int NOT NULL AUTO_INCREMENT,
-    user_id int NOT NULL,
-    post_id int NOT NULL,
-    time DATETIME NOT NULL,
-    value int NOT NULL,
-    PRIMARY KEY (id)
+CREATE TABLE tags (
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-CREATE TABLE dfschema.tags (
-
-    id int NOT NULL AUTO_INCREMENT,
+    id SERIAL NOT NULL,
     name VARCHAR(255) NOT NULL,
     PRIMARY KEY (id)
+);
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+CREATE TABLE tag2post (
 
-CREATE TABLE dfschema.tag2post (
+     id SERIAL NOT NULL,
+     post_id INT NOT NULL,
+     tag_id INT NOT NULL,
+     PRIMARY KEY (id),
+     CONSTRAINT fk_post FOREIGN KEY (post_id) REFERENCES posts (id),
+     CONSTRAINT fk_tag FOREIGN KEY (tag_id) REFERENCES tags (id)
+);
 
-     id int NOT NULL AUTO_INCREMENT,
-     post_id int NOT NULL,
-     tag_id int NOT NULL,
-     PRIMARY KEY (id)
+CREATE TABLE post_comments (
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-CREATE TABLE dfschema.post_comments (
-
-    id int NOT NULL AUTO_INCREMENT,
-    parent_id int NOT NULL,
-    post_id int NOT NULL,
-    user_id int NOT NULL,
-    time DATETIME NOT NULL,
+    id SERIAL NOT NULL,
+    parent_id INT NOT NULL,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    time TIMESTAMP NOT NULL,
     text TEXT NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_post FOREIGN KEY (post_id) REFERENCES posts (id),
+    CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
+CREATE TABLE captcha_codes (
+
+    id SERIAL NOT NULL,
+    time TIMESTAMP NOT NULL,
+    code TEXT NOT NULL,
+    secret_code TEXT NOT NULL,
     PRIMARY KEY (id)
+);
 
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
+CREATE TABLE global_settings (
 
-CREATE TABLE dfschema.captcha_codes (
-
-    id int NOT NULL AUTO_INCREMENT,
-    time DATETIME NOT NULL,
-    code int NOT NULL,
-    secret_code int NOT NULL,
-    PRIMARY KEY (id)
-
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-CREATE TABLE dfschema.global_settings (
-
-    code VARCHAR(255),
-    name VARCHAR(255),
-    value VARCHAR(255)
-
-)ENGINE=InnoDB DEFAULT CHARSET=UTF8;
-
-INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (1, now(), 'Василий', 'vasily@mail.ru', '12345');
-
-INSERT INTO users (is_moderator,reg_time,name,email,password) VALUES (0, now(), 'Петр', 'petr@mail.ru', '54321');
-
-INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (1, 'ACCEPTED', 1, now(), 'заголовок первого поста', 'текст первого поста', 0);
-
-INSERT INTO posts (is_active,moderation_status,user_id,time,title,text,view_count) VALUES (0, 'NEW', 2, now(), 'заголовок второго поста', 'текст второго поста', 0);
-
-INSERT INTO tags (name) VALUES ("первый тэг");
-
-INSERT INTO tags (name) VALUES ("второй тэг");
+    id SERIAL NOT NULL,
+    code VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    value VARCHAR(255) NOT NULL
+);

@@ -1,6 +1,7 @@
 package main.controllers;
 import main.api.request.CommentRequest;
 import main.api.request.PostModerateRequest;
+import main.api.request.ProfileRequest;
 import main.api.request.SettingsRequest;
 import main.api.response.*;
 import main.service.*;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @RequestMapping("/api/")
@@ -67,8 +69,7 @@ public class ApiGeneralController {
     }
 
     @GetMapping("calendar")
-    public ResponseEntity<CalendarResponse> calendar(@RequestParam(value = "year",
-            required = false) String year) {
+    public ResponseEntity<CalendarResponse> calendar(@RequestParam(value = "year", required = false) String year) {
 
         return ResponseEntity.ok(calendarService.getPostsPerYear(year));
     }
@@ -77,11 +78,10 @@ public class ApiGeneralController {
     @PostMapping("comment")
     public ResponseEntity<CommentResponse> comment(@RequestBody CommentRequest commentRequest,
                                   Principal principal) {
-        List<String> errors = submethodsForService.checkAndAddComment(commentRequest, principal);
+        HashMap<String, String> errors = submethodsForService.checkAndAddComment(commentRequest, principal);
         CommentResponse commentResponse = new CommentResponse();
-        String possibleId = errors.get(0);
-        if (possibleId.substring(0, 2).equals("id")) {
-            commentResponse.setId(Integer.parseInt(possibleId.substring(5)));
+        if (errors.isEmpty()) {
+            commentResponse.setId(submethodsForService.getCommentId(principal));
             commentResponse.setResult(null);
             commentResponse.setErrors(null);
             return ResponseEntity.ok(commentResponse);
@@ -118,21 +118,44 @@ public class ApiGeneralController {
     }
 
     @PreAuthorize("hasAuthority('user:write')")
-    @PostMapping(value = "profile/my", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE,MediaType.APPLICATION_JSON_VALUE }
-            , produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ResultErrorsResponse> profile(@RequestPart(value = "name") String name,
-                                     @RequestPart(value = "email") String email,
-                                     @RequestPart(value = "photo", required = false) MultipartFile photo,
-                                     @RequestPart(value = "removePhoto", required = false) String removePhoto,
-                                     @RequestPart(value = "password", required = false) String password,
-                                     Principal principal) {
-        if (profileService.checkProfileChanges(name, email, password, removePhoto, photo, principal).isEmpty()) {
+    @PostMapping(value = "profile/my", consumes = { MediaType.MULTIPART_FORM_DATA_VALUE },
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ResultErrorsResponse> editProfileWithAvatar(@ModelAttribute ProfileRequest profileRequest,
+                                                                      @RequestParam(value = "photo") MultipartFile photo,
+                                                                      Principal principal) {
+        List<String> result = profileService.checkProfileChanges(profileRequest.getName(), profileRequest.getEmail(),
+                profileRequest.getPassword(), profileRequest.getRemovePhoto(), photo, principal);
+        if (result.isEmpty()) {
             ResultErrorsResponse resultResponse = new ResultErrorsResponse();
             resultResponse.setResult(true);
             return ResponseEntity.ok(resultResponse);
         }
         ResultErrorsResponse response = new ResultErrorsResponse();
-        response.setErrors(profileService.checkProfileChanges(name, email, password, removePhoto, photo, principal));
+        response.setErrors(result);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PreAuthorize("hasAuthority('user:write')")
+    @PostMapping("profile/my")
+    public ResponseEntity<ResultErrorsResponse> editProfile(@RequestBody ProfileRequest profileRequest,
+                                                            Principal principal) {
+        List<String> result;
+        if (profileRequest.getRemovePhoto() == null || profileRequest.getRemovePhoto() == 0) {
+            result = profileService.checkProfileChanges(profileRequest.getName(), profileRequest.getEmail(),
+                    profileRequest.getPassword(), (byte) 0, null, principal);
+        } else {
+            result = profileService.checkProfileChanges(profileRequest.getName(), profileRequest.getEmail(),
+                    profileRequest.getPassword(), (byte) 1, null, principal);
+        }
+
+        if (result.isEmpty()) {
+            ResultErrorsResponse resultResponse = new ResultErrorsResponse();
+            resultResponse.setResult(true);
+            return ResponseEntity.ok(resultResponse);
+        }
+        ResultErrorsResponse response = new ResultErrorsResponse();
+        response.setErrors(result);
 
         return ResponseEntity.ok(response);
     }

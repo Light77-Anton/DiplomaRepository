@@ -67,7 +67,7 @@ public class RegisterService {
                 newUser.setPassword(securityConfig.passwordEncoder().encode(registerRequest.getPassword()));
                 createNewUser(newUser);
                 resultErrorsResponse.setResult(true);
-                resultErrorsResponse.setErrors(null);
+                resultErrorsResponse.setErrors(errors);
                 return resultErrorsResponse;
             } else {
                 errors.add("Код с картинки введён неверно");

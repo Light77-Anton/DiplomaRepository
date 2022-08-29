@@ -15,6 +15,6 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
     @Query(value = "INSERT INTO post_comments (post_id, user_id, \"time\", text) VALUES (?1, ?2, now(), ?3)", nativeQuery = true)
     void insertComment(int postId, int userId, String text);
 
-    @Query(value = "SELECT pc.id FROM post_comments AS pc WHERE pc.user_id = ?1 GROUP BY pc.id ORDER BY MAX(pc.time)", nativeQuery = true)
+    @Query(value = "SELECT pc.id FROM post_comments AS pc WHERE pc.user_id = ?1 GROUP BY pc.id ORDER BY MAX(pc.time) LIMIT 1", nativeQuery = true)
     Optional<Integer> findIdByUserId(int userId);
 }

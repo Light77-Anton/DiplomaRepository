@@ -16,6 +16,7 @@
 ##Для локального запуска приложения требуется
 
 * [Java Development Kit 17](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+* [Maven](https://maven.apache.org/download.cgi)
 * [Postgresql 14.4](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads)
 
 ###Настройка переменных сред
@@ -24,6 +25,8 @@
 
 * system variables -> создать новую переменную JAVA_HOME и в ней также указать C:\Program Files\jdk(или собственный путь до папки jdk)
 * system variables -> Path -> новая строка C:\Program Files\jdk\bin(или собственный путь до папки %JAVA_HOME%/bin)
+* system variables -> создать новую переменную MAVEN_HOME и в ней также указать C:\Program Files\Maven\apache-maven(или собственный путь до папки maven)
+* system variables -> Path -> новая строка C:\Program Files\Maven\apache-maven\bin(или собственный путь до папки %MAVEN_HOME%/bin)
 * user variables -> Path -> новая строка C:\Program Files\Postgresql\bin(или собственный путь до папки bin PSQL)
 * user variables -> Path -> новая строка C:\Program Files\Postgresql\lib(или собственный путь до папки lib PSQL)
 
